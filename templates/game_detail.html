@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Game Details - Chess Progress Tracker{% endblock %}
+
+{% block content %}
+<div class="page">
+    <h2>Game Details</h2>
+
+    <div class="game-detail">
+        <div class="game-header">
+            <div class="game-players">
+                <div class="player {{ 'current' if game.color == 'white' else '' }}">
+                    <span class="color-badge white">♔</span>
+                    <span class="player-name">
+                        {% if game.color == 'white' %}
+                            {{ game.username }} ({{ game.user_rating }})
+                        {% else %}
+                            {{ game.opponent }} ({{ game.opponent_rating }})
+                        {% endif %}
+                    </span>
+                </div>
+                <div class="vs">vs</div>
+                <div class="player {{ 'current' if game.color == 'black' else '' }}">
+                    <span class="color-badge black">♚</span>
+                    <span class="player-name">
+                        {% if game.color == 'black' %}
+                            {{ game.username }} ({{ game.user_rating }})
+                        {% else %}
+                            {{ game.opponent }} ({{ game.opponent_rating }})
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <div class="game-info">
+                <p><strong>Result:</strong> <span class="result-badge {{ game.result }}">{{ game.result }}</span></p>
+                <p><strong>Date:</strong> {{ game.date_played | timestamp_to_date }}</p>
+                <p><strong>Time Control:</strong> {{ game.time_control }}</p>
+                <p><strong>Time Class:</strong> {{ game.time_class }}</p>
+            </div>
+        </div>
+
+        {% if game.url %}
+        <div class="game-link">
+            <a href="{{ game.url }}" target="_blank" class="btn btn-secondary">View on Chess.com</a>
+        </div>
+        {% endif %}
+
+        {% if game.pgn %}
+        <div class="pgn-section">
+            <h3>Game Notation (PGN)</h3>
+            <pre class="pgn">{{ game.pgn }}</pre>
+        </div>
+        {% endif %}
+
+        <div class="analysis-section">
+            <h3>Your Analysis</h3>
+
+            {% if game.loss_reason or game.learning_recommendations or game.notes %}
+                <div class="analysis-content">
+                    {% if game.loss_reason %}
+                    <div class="analysis-item">
+                        <h4>Loss Reason:</h4>
+                        <p>{{ game.loss_reason }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if game.learning_recommendations %}
+                    <div class="analysis-item">
+                        <h4>Learning Recommendations:</h4>
+                        <p>{{ game.learning_recommendations }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if game.notes %}
+                    <div class="analysis-item">
+                        <h4>Notes:</h4>
+                        <p>{{ game.notes }}</p>
+                    </div>
+                    {% endif %}
+
+                    <a href="{{ url_for('analyze_game', game_id=game.id) }}" class="btn btn-secondary">Edit Analysis</a>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <p>No analysis added yet.</p>
+                    <a href="{{ url_for('analyze_game', game_id=game.id) }}" class="btn btn-primary">Add Analysis</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="actions">
+        <a href="{{ url_for('index') }}" class="btn">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

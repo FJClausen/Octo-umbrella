@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}Analyze Game - Chess Progress Tracker{% endblock %}
+
+{% block content %}
+<div class="page">
+    <h2>Analyze Game</h2>
+
+    <div class="game-summary">
+        <p>
+            <strong>Game:</strong>
+            {{ game.username }} ({{ game.user_rating }})
+            vs {{ game.opponent }} ({{ game.opponent_rating }})
+            - <span class="result-badge {{ game.result }}">{{ game.result }}</span>
+        </p>
+        <p><strong>Date:</strong> {{ game.date_played | timestamp_to_date }}</p>
+    </div>
+
+    <div class="card">
+        <form method="POST" class="form">
+            <div class="form-group">
+                <label for="loss_reason">Loss Reason / What Went Wrong</label>
+                <textarea id="loss_reason" name="loss_reason" rows="4"
+                          placeholder="e.g., Blundered in the opening, Time pressure in endgame, Missed tactical shot">{{ game.loss_reason if game.loss_reason else '' }}</textarea>
+                <small>Describe what caused the loss or what mistakes were made</small>
+            </div>
+
+            <div class="form-group">
+                <label for="learning_recommendations">Learning Recommendations</label>
+                <textarea id="learning_recommendations" name="learning_recommendations" rows="4"
+                          placeholder="e.g., Study Sicilian Defense, Practice rook endgames, Work on time management">{{ game.learning_recommendations if game.learning_recommendations else '' }}</textarea>
+                <small>What should you study or practice to improve?</small>
+            </div>
+
+            <div class="form-group">
+                <label for="notes">Additional Notes</label>
+                <textarea id="notes" name="notes" rows="4"
+                          placeholder="Any other observations or thoughts about this game">{{ game.notes if game.notes else '' }}</textarea>
+                <small>Any other thoughts or observations</small>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Analysis</button>
+                <a href="{{ url_for('view_game', game_id=game.id) }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <div class="info-box">
+        <h3>Analysis Tips:</h3>
+        <ul>
+            <li><strong>Loss Reason:</strong> Be specific about what went wrong (opening mistake, tactical blunder, time pressure, etc.)</li>
+            <li><strong>Recommendations:</strong> Identify specific areas to study or practice based on this game</li>
+            <li><strong>Notes:</strong> Add any other insights that might help you improve</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
