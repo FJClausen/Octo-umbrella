@@ -46,6 +46,72 @@
         </div>
         {% endif %}
 
+        {% if game.analyzed %}
+        <div class="engine-analysis-section">
+            <h3>⚙️ Engine Analysis</h3>
+            <div class="engine-stats-grid">
+                {% if game.opening_name %}
+                <div class="engine-stat">
+                    <h4>Opening</h4>
+                    <p>{{ game.opening_name }}</p>
+                    <small>{{ game.eco_code }}</small>
+                </div>
+                {% endif %}
+
+                <div class="engine-stat">
+                    <h4>Avg CPL</h4>
+                    <p class="stat-value">{{ game.avg_centipawn_loss|round(1) if game.avg_centipawn_loss else 'N/A' }}</p>
+                    <small>Centipawn Loss</small>
+                </div>
+
+                <div class="engine-stat">
+                    <h4>Blunders</h4>
+                    <p class="stat-value {{ 'error-high' if game.blunders_count > 2 else '' }}">{{ game.blunders_count }}</p>
+                    <small>Major Mistakes</small>
+                </div>
+
+                <div class="engine-stat">
+                    <h4>Mistakes</h4>
+                    <p class="stat-value">{{ game.mistakes_count }}</p>
+                    <small>Bad Moves</small>
+                </div>
+
+                <div class="engine-stat">
+                    <h4>Inaccuracies</h4>
+                    <p class="stat-value">{{ game.inaccuracies_count }}</p>
+                    <small>Imprecise Moves</small>
+                </div>
+            </div>
+
+            <div class="phase-accuracy-section">
+                <h4>Accuracy by Phase</h4>
+                <div class="accuracy-bars">
+                    <div class="accuracy-bar">
+                        <span class="phase-label">Opening</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: {{ game.opening_accuracy if game.opening_accuracy else 0 }}%"></div>
+                        </div>
+                        <span class="accuracy-value">{{ game.opening_accuracy|round(1) if game.opening_accuracy else 'N/A' }}%</span>
+                    </div>
+                    <div class="accuracy-bar">
+                        <span class="phase-label">Middlegame</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: {{ game.middlegame_accuracy if game.middlegame_accuracy else 0 }}%"></div>
+                        </div>
+                        <span class="accuracy-value">{{ game.middlegame_accuracy|round(1) if game.middlegame_accuracy else 'N/A' }}%</span>
+                    </div>
+                    <div class="accuracy-bar">
+                        <span class="phase-label">Endgame</span>
+                        <div class="bar-container">
+                            <div class="bar-fill" style="width: {{ game.endgame_accuracy if game.endgame_accuracy else 0 }}%"></div>
+                        </div>
+                        <span class="accuracy-value">{{ game.endgame_accuracy|round(1) if game.endgame_accuracy else 'N/A' }}%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
         {% if game.pgn %}
         <div class="pgn-section">
             <h3>Game Notation (PGN)</h3>

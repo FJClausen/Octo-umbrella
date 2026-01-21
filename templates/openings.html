@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Opening Analysis - Chess Progress Tracker{% endblock %}
+
+{% block content %}
+<div class="page">
+    <h2>📚 Opening Performance Analysis</h2>
+
+    <div class="info-box">
+        <p>This page shows your performance with different chess openings. Focus on openings with low win rates for study, and play your best openings more often!</p>
+        <p><strong>Minimum 3 games required</strong> for an opening to appear here.</p>
+    </div>
+
+    {% if openings %}
+    <div class="card">
+        <h3>Your Openings ({{ openings|length }})</h3>
+
+        <table class="analysis-table">
+            <thead>
+                <tr>
+                    <th>ECO</th>
+                    <th>Opening Name</th>
+                    <th>Games</th>
+                    <th>Record (W-L)</th>
+                    <th>Win Rate</th>
+                    <th>Avg CPL</th>
+                    <th>Avg Accuracy</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for opening in openings %}
+                <tr class="opening-row {{ 'good-opening' if opening.win_rate >= 60 else ('bad-opening' if opening.win_rate < 40 else '') }}">
+                    <td><strong>{{ opening.eco_code }}</strong></td>
+                    <td>{{ opening.opening_name }}</td>
+                    <td>{{ opening.games_played }}</td>
+                    <td>{{ opening.wins }}-{{ opening.losses }}</td>
+                    <td>
+                        {% if opening.win_rate >= 60 %}
+                            <span class="badge-success">{{ opening.win_rate }}%</span>
+                        {% elif opening.win_rate < 40 %}
+                            <span class="badge-danger">{{ opening.win_rate }}%</span>
+                        {% else %}
+                            <span class="badge">{{ opening.win_rate }}%</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ opening.avg_cpl if opening.avg_cpl else 'N/A' }}</td>
+                    <td>{{ opening.avg_accuracy if opening.avg_accuracy else 'N/A' }}%</td>
+                    <td>
+                        {% if opening.win_rate >= 60 %}
+                            <span class="status-good">✅ Play More</span>
+                        {% elif opening.win_rate < 40 %}
+                            <span class="status-bad">⚠️ Study/Avoid</span>
+                        {% else %}
+                            <span class="status-neutral">→ Neutral</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h3>📊 Quick Insights</h3>
+        {% set good_openings = openings | selectattr('win_rate', 'ge', 60) | list %}
+        {% set bad_openings = openings | selectattr('win_rate', 'lt', 40) | list %}
+
+        <div class="opening-insights">
+            <div class="insight-item">
+                <h4>{{ good_openings|length }}</h4>
+                <p>Strong Openings (≥60% win rate)</p>
+            </div>
+            <div class="insight-item">
+                <h4>{{ bad_openings|length }}</h4>
+                <p>Weak Openings (<40% win rate)</p>
+            </div>
+            <div class="insight-item">
+                <h4>{{ openings|length }}</h4>
+                <p>Total Openings Played</p>
+            </div>
+        </div>
+
+        {% if bad_openings %}
+        <div class="highlight-box">
+            <h4>🎯 Action Items:</h4>
+            <ul>
+                {% for opening in bad_openings[:3] %}
+                <li>{{ opening.opening_name }} ({{ opening.eco_code }}) - {{ opening.win_rate }}% win rate → Study theory or consider avoiding</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+    </div>
+
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <h3>No Opening Data Yet</h3>
+            <p>Run <a href="{{ url_for('engine_analysis_page') }}">Engine Analysis</a> on your games first to see opening performance.</p>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="actions">
+        <a href="{{ url_for('engine_analysis_page') }}" class="btn btn-primary">Run Analysis</a>
+        <a href="{{ url_for('insights') }}" class="btn btn-secondary">View Insights</a>
+        <a href="{{ url_for('index') }}" class="btn">Back to Dashboard</a>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.opening-row.good-opening {
+    background-color: #d4edda;
+}
+
+.opening-row.bad-opening {
+    background-color: #f8d7da;
+}
+
+.badge-danger {
+    background-color: var(--danger-color);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.status-good {
+    color: var(--success-color);
+    font-weight: 600;
+}
+
+.status-bad {
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.status-neutral {
+    color: var(--light-text);
+    font-weight: 600;
+}
+
+.opening-insights {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.insight-item {
+    text-align: center;
+    padding: 1.5rem;
+    background: var(--light-bg);
+    border-radius: 8px;
+}
+
+.insight-item h4 {
+    font-size: 2.5rem;
+    color: var(--secondary-color);
+    margin-bottom: 0.5rem;
+}
+
+.insight-item p {
+    color: var(--light-text);
+    font-size: 0.9rem;
+}
+
+.highlight-box {
+    background: #fff3cd;
+    border-left: 4px solid var(--warning-color);
+    padding: 1rem 1.5rem;
+    margin-top: 1.5rem;
+    border-radius: 4px;
+}
+
+.highlight-box h4 {
+    margin-bottom: 0.5rem;
+}
+
+.highlight-box ul {
+    margin-left: 1.5rem;
+}
+
+.highlight-box li {
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .opening-insights {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
