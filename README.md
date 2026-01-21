@@ -1,17 +1,34 @@
 # Chess Progress Tracker
 
-A web-based tool for tracking your chess progress by importing games from chess.com, analyzing losses, and identifying areas for improvement.
+A comprehensive web-based tool for tracking your chess progress by importing games from chess.com, running deep engine analysis with Stockfish, and automatically identifying areas for improvement.
 
 ## Features
 
+### Game Import & Management
 - **Automatic Game Import**: Fetch games directly from chess.com using their public API
-- **Game Analysis**: Add custom analysis to each game including:
-  - Loss reasons (what went wrong)
-  - Learning recommendations (what to study)
-  - Personal notes
-- **Progress Tracking**: View statistics and track your improvement over time
-- **Rating History**: Visualize your rating progression with charts
-- **Loss Pattern Analysis**: Identify common mistakes and weaknesses
+- **Game Database**: SQLite-based storage with full PGN data
+- **Manual Analysis**: Add custom notes, loss reasons, and learning recommendations
+
+### Engine Analysis (Stockfish Integration)
+- **Deep Position Analysis**: Run Stockfish on every move of your games
+- **Centipawn Loss (CPL)**: Measure accuracy with centipawn loss calculation
+- **Phase-by-Phase Accuracy**: Get accuracy scores for Opening, Middlegame, and Endgame
+- **Automatic Blunder Detection**: Identify blunders (CPL > 100), mistakes (CPL 50-100), and inaccuracies (CPL 25-50)
+- **Opening Analysis**: ECO codes and opening names extracted from PGN
+- **Batch Analysis**: Analyze multiple games at once
+
+### Automated Insights
+- **Weakest Phase Detection**: Automatically identifies if you struggle in opening, middlegame, or endgame
+- **Opening Performance**: Win rate breakdown by ECO code and opening name
+- **Pattern Recognition**: Identifies which openings you should play more or avoid
+- **Personalized Recommendations**: Get automated study suggestions based on your game data
+- **Time Trouble Tracking**: Identify games where time management was an issue
+
+### Statistics & Visualization
+- **Progress Tracking**: View overall statistics and track improvement over time
+- **Rating History**: Visualize rating progression with interactive charts
+- **Opening Statistics**: Detailed win/loss records by opening with minimum game thresholds
+- **Phase Performance**: Compare your accuracy across different game phases
 
 ## Installation
 
@@ -43,6 +60,25 @@ python app.py
 http://localhost:5000
 ```
 
+### Running on Replit (Recommended for Easy Setup)
+
+For a hassle-free setup with no local installation required:
+
+1. Go to [Replit](https://replit.com) and sign up/login
+2. Click "+ Create" → "Import from GitHub"
+3. Paste your repository URL
+4. Replit will automatically:
+   - Install Python and dependencies
+   - Set up Stockfish engine
+   - Configure the environment
+
+5. Click the "Run" button
+6. The app opens in Replit's webview
+
+**See [REPLIT_SETUP.md](REPLIT_SETUP.md) for detailed Replit instructions and troubleshooting.**
+
+**For complete beginner setup instructions, see [QUICKSTART.md](QUICKSTART.md).**
+
 ## Usage
 
 ### Importing Games
@@ -63,6 +99,41 @@ http://localhost:5000
    - **Notes**: Any additional observations
 4. Save your analysis
 
+### Running Engine Analysis
+
+1. Click "Engine Analysis" in the navigation bar
+2. You'll see all unanalyzed games
+3. Options:
+   - Click "Analyze" next to individual games (takes 10-30 seconds)
+   - Click "Analyze All Games" for batch processing (runs in background)
+4. Analysis includes:
+   - Centipawn loss for each move
+   - Opening identification (ECO code and name)
+   - Blunder/mistake/inaccuracy detection
+   - Accuracy by phase (Opening/Middlegame/Endgame)
+
+**Note**: First analysis may take a few minutes. Subsequent analyses are cached.
+
+### Viewing Insights & Recommendations
+
+1. Click "Insights" in the navigation bar
+2. See automated analysis:
+   - **Your Weakest Phase**: Which phase (Opening/Middlegame/Endgame) needs work
+   - **Openings to Avoid**: Openings with <40% win rate
+   - **Best Openings**: Openings with >60% win rate
+   - **Phase Performance**: Accuracy breakdown by phase
+   - **Personalized Recommendations**: What to study based on your patterns
+
+### Checking Opening Performance
+
+1. Click "Openings" in the navigation bar
+2. View detailed stats for each opening you've played (minimum 3 games):
+   - Win rate percentage
+   - Games played (W-L record)
+   - Average centipawn loss
+   - Average accuracy
+   - Status indicator (Play More / Study/Avoid / Neutral)
+
 ### Viewing Statistics
 
 1. Click "Statistics" in the navigation bar
@@ -79,15 +150,24 @@ Octo-umbrella/
 ├── app.py                  # Main Flask application
 ├── database.py             # Database operations
 ├── chess_api.py            # Chess.com API integration
+├── engine_analysis.py      # Stockfish engine integration
 ├── requirements.txt        # Python dependencies
 ├── chess_progress.db       # SQLite database (created on first run)
+├── README.md               # Main documentation
+├── QUICKSTART.md           # Beginner-friendly setup guide
+├── REPLIT_SETUP.md         # Replit-specific setup guide
+├── replit.nix              # Replit Nix configuration
+├── .replit                 # Replit run configuration
 ├── templates/              # HTML templates
 │   ├── base.html
 │   ├── index.html
 │   ├── fetch_games.html
 │   ├── game_detail.html
 │   ├── analyze_game.html
-│   └── statistics.html
+│   ├── statistics.html
+│   ├── engine_analysis.html  # Engine analysis page
+│   ├── insights.html          # Automated insights dashboard
+│   └── openings.html          # Opening performance analysis
 └── static/                 # Static files
     └── style.css
 ```
@@ -111,9 +191,27 @@ games (
     pgn TEXT,
     url TEXT,
     color TEXT,
+
+    -- Manual analysis fields
     loss_reason TEXT,
     learning_recommendations TEXT,
     notes TEXT,
+
+    -- Engine analysis fields
+    eco_code TEXT,
+    opening_name TEXT,
+    move_count INTEGER,
+    avg_centipawn_loss REAL,
+    opening_accuracy REAL,
+    middlegame_accuracy REAL,
+    endgame_accuracy REAL,
+    blunders_count INTEGER,
+    mistakes_count INTEGER,
+    inaccuracies_count INTEGER,
+    time_trouble INTEGER,
+    analyzed INTEGER,
+    analysis_date INTEGER,
+
     created_at INTEGER,
     updated_at INTEGER
 )
