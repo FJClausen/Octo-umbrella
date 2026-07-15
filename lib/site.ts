@@ -3,7 +3,7 @@
  * Colors live in tailwind.config.ts.
  */
 export const site = {
-  teamName: process.env.NEXT_PUBLIC_TEAM_NAME || "Lightning FC",
+  teamName: process.env.NEXT_PUBLIC_TEAM_NAME || "Mundo Rainbows",
   season: process.env.NEXT_PUBLIC_SEASON || "Fall 2026",
   tagline: "Girls Soccer",
 };
