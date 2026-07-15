@@ -1,288 +1,130 @@
-# Chess Progress Tracker
+# ⚽ Girls Soccer Team Site
 
-A comprehensive web-based tool for tracking your chess progress by importing games from chess.com, running deep engine analysis with Stockfish, and automatically identifying areas for improvement.
+A mobile-first team hub for a youth soccer team, built with **Next.js** and
+**Supabase**. Parents get a calendar with RSVPs, team news, a snack sign-up
+schedule, and a roster. Coaches get a private **Coaches Corner** with approvals,
+a full contact list, lineups & game plans, private notes, and shared documents.
+
+- **Framework:** Next.js 14 (App Router, TypeScript, Tailwind CSS)
+- **Backend:** Supabase (Postgres + Auth + Storage) with Row Level Security
+- **Hosting:** Vercel (free tier)
+
+---
 
 ## Features
 
-### Game Import & Management
-- **Automatic Game Import**: Fetch games directly from chess.com using their public API
-- **Game Database**: SQLite-based storage with full PGN data
-- **Manual Analysis**: Add custom notes, loss reasons, and learning recommendations
+### For parents (login required, approved by a coach)
+- **Home dashboard** — next event, your snack duties, latest news
+- **Calendar** — games, practices, and events; RSVP per child
+- **Team news** — announcements from coaches (with photos)
+- **Snack schedule** — claim open snack slots
+- **Roster** — first name + number + position only (kid-safe)
+- **Account** — edit your name/phone and see your linked players
 
-### Engine Analysis (Stockfish Integration)
-- **Deep Position Analysis**: Run Stockfish on every move of your games
-- **Centipawn Loss (CPL)**: Measure accuracy with centipawn loss calculation
-- **Phase-by-Phase Accuracy**: Get accuracy scores for Opening, Middlegame, and Endgame
-- **Automatic Blunder Detection**: Identify blunders (CPL > 100), mistakes (CPL 50-100), and inaccuracies (CPL 25-50)
-- **Opening Analysis**: ECO codes and opening names extracted from PGN
-- **Batch Analysis**: Analyze multiple games at once
+### Coaches Corner (coaches only — invisible to parents)
+- **Approvals** — approve/deny new families, promote an assistant coach
+- **Contacts** — full names, parent email/phone, emergency & medical info
+- **Events / News / Snacks** — full create/edit/delete
+- **Roster** — add players, link them to a parent account, upload photos
+- **Lineups & game plans** — formation + plan per game, with live RSVP headcount
+- **Private notes** and **shared documents/links**
 
-### Automated Insights
-- **Weakest Phase Detection**: Automatically identifies if you struggle in opening, middlegame, or endgame
-- **Opening Performance**: Win rate breakdown by ECO code and opening name
-- **Pattern Recognition**: Identifies which openings you should play more or avoid
-- **Personalized Recommendations**: Get automated study suggestions based on your game data
-- **Time Trouble Tracking**: Identify games where time management was an issue
+### How access works
+- The **first person to sign up automatically becomes the head coach** (approved).
+- Everyone after that signs up as a **pending parent** and must be approved by a
+  coach in **Coaches Corner → Approvals**.
+- A coach can promote an approved parent to **assistant coach** at any time.
+- Privacy is enforced in the database (Row Level Security), not just the UI:
+  parents can never read last names, contact info, coach notes, or lineups.
 
-### Statistics & Visualization
-- **Progress Tracking**: View overall statistics and track improvement over time
-- **Rating History**: Visualize rating progression with interactive charts
-- **Opening Statistics**: Detailed win/loss records by opening with minimum game thresholds
-- **Phase Performance**: Compare your accuracy across different game phases
+---
 
-## Installation
+## Setup
 
-### Prerequisites
+### 1. Create a Supabase project
+1. Go to [supabase.com](https://supabase.com) and create a new project.
+2. Once it's ready, open **Project Settings → API** and copy:
+   - **Project URL**
+   - **anon public** key
 
-- Python 3.7 or higher
-- pip (Python package manager)
+### 2. Create the database schema
+1. In Supabase, open **SQL Editor → New query**.
+2. Paste the contents of [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) and **Run**.
+   This creates all tables, security policies, the storage bucket, and the
+   sign-up/approval logic.
+3. (Optional) To start with sample events/news/snacks, run
+   [`supabase/seed.sql`](supabase/seed.sql) the same way.
 
-### Setup
+### 3. Configure email auth
+In **Authentication → Providers → Email**, make sure Email is enabled. For the
+easiest start you can turn **"Confirm email"** off (Authentication → Providers →
+Email → *Confirm email*), so approved parents can sign in immediately. If you
+leave it on, new users must click a confirmation link before signing in.
 
-1. Clone the repository:
+### 4. Run locally
 ```bash
-git clone <repository-url>
-cd Octo-umbrella
+cp .env.local.example .env.local     # then fill in the values
+npm install
+npm run dev
+```
+Fill `.env.local` with:
+```
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR-ANON-KEY
+NEXT_PUBLIC_TEAM_NAME=Lightning FC        # your team name
+NEXT_PUBLIC_SEASON=Fall 2026              # your season label
+```
+Open http://localhost:3000, tap **Request an account**, and sign up. Because
+you're first, you become the head coach automatically.
+
+> Want a specific person to be the head coach? Have **them** sign up first. To
+> promote someone later, run this in the SQL editor:
+> ```sql
+> update public.profiles set role = 'coach', status = 'approved'
+> where email = 'coach@example.com';
+> ```
+
+### 5. Deploy to Vercel
+1. Push this repo to GitHub.
+2. In [Vercel](https://vercel.com), **Add New → Project** and import the repo.
+3. Add the same environment variables (from `.env.local`) in the Vercel project
+   settings.
+4. Deploy. Add your custom domain if you have one.
+5. In Supabase **Authentication → URL Configuration**, set the **Site URL** to
+   your Vercel URL so confirmation/reset emails link correctly.
+
+---
+
+## Customizing the look
+- **Team name / season:** `NEXT_PUBLIC_TEAM_NAME` and `NEXT_PUBLIC_SEASON`
+  env vars (see `lib/site.ts`).
+- **Colors (blue & green theme):** edit the `brand` colors in
+  [`tailwind.config.ts`](tailwind.config.ts) — the whole site restyles from
+  there.
+
+---
+
+## Project structure
+```
+app/
+  (app)/            Protected area (requires an approved account)
+    home, calendar, news, snacks, roster, account
+    coaches/        Coaches Corner (requires role = coach)
+  login, signup, pending, auth/signout
+components/         Nav, forms, cards, RSVP + snack controls
+lib/
+  supabase/         Browser + server + middleware Supabase clients
+  auth.ts           getCurrentProfile / requireApproved / requireCoach
+  types.ts          Hand-written Database types
+supabase/
+  migrations/0001_init.sql   Schema, RLS, storage, triggers
+  seed.sql                   Optional sample data
 ```
 
-2. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-3. Run the application:
-```bash
-python app.py
-```
-
-4. Open your browser and navigate to:
-```
-http://localhost:5000
-```
-
-### Running on Replit (Recommended for Easy Setup)
-
-For a hassle-free setup with no local installation required:
-
-1. Go to [Replit](https://replit.com) and sign up/login
-2. Click "+ Create" → "Import from GitHub"
-3. Paste your repository URL
-4. Replit will automatically:
-   - Install Python and dependencies
-   - Set up Stockfish engine
-   - Configure the environment
-
-5. Click the "Run" button
-6. The app opens in Replit's webview
-
-**See [REPLIT_SETUP.md](REPLIT_SETUP.md) for detailed Replit instructions and troubleshooting.**
-
-**For complete beginner setup instructions, see [QUICKSTART.md](QUICKSTART.md).**
-
-## Usage
-
-### Importing Games
-
-1. Click on "Import Games" in the navigation bar
-2. Enter your chess.com username
-3. Select the year and month (defaults to current month)
-4. Click "Import Games"
-5. Games will be automatically fetched and stored in the database
-
-### Analyzing Games
-
-1. From the Dashboard, click "View" on any game
-2. Click "Add Analysis" or "Edit Analysis"
-3. Fill in:
-   - **Loss Reason**: What caused the loss (e.g., "Blundered in opening", "Time pressure")
-   - **Learning Recommendations**: What to study (e.g., "Study Sicilian Defense", "Practice endgames")
-   - **Notes**: Any additional observations
-4. Save your analysis
-
-### Running Engine Analysis
-
-1. Click "Engine Analysis" in the navigation bar
-2. You'll see all unanalyzed games
-3. Options:
-   - Click "Analyze" next to individual games (takes 10-30 seconds)
-   - Click "Analyze All Games" for batch processing (runs in background)
-4. Analysis includes:
-   - Centipawn loss for each move
-   - Opening identification (ECO code and name)
-   - Blunder/mistake/inaccuracy detection
-   - Accuracy by phase (Opening/Middlegame/Endgame)
-
-**Note**: First analysis may take a few minutes. Subsequent analyses are cached.
-
-### Viewing Insights & Recommendations
-
-1. Click "Insights" in the navigation bar
-2. See automated analysis:
-   - **Your Weakest Phase**: Which phase (Opening/Middlegame/Endgame) needs work
-   - **Openings to Avoid**: Openings with <40% win rate
-   - **Best Openings**: Openings with >60% win rate
-   - **Phase Performance**: Accuracy breakdown by phase
-   - **Personalized Recommendations**: What to study based on your patterns
-
-### Checking Opening Performance
-
-1. Click "Openings" in the navigation bar
-2. View detailed stats for each opening you've played (minimum 3 games):
-   - Win rate percentage
-   - Games played (W-L record)
-   - Average centipawn loss
-   - Average accuracy
-   - Status indicator (Play More / Study/Avoid / Neutral)
-
-### Viewing Statistics
-
-1. Click "Statistics" in the navigation bar
-2. View:
-   - Overall win/loss/draw statistics
-   - Rating progression chart
-   - Most common loss reasons
-   - Learning recommendations breakdown
-
-## Project Structure
-
-```
-Octo-umbrella/
-├── app.py                  # Main Flask application
-├── database.py             # Database operations
-├── chess_api.py            # Chess.com API integration
-├── engine_analysis.py      # Stockfish engine integration
-├── requirements.txt        # Python dependencies
-├── chess_progress.db       # SQLite database (created on first run)
-├── README.md               # Main documentation
-├── QUICKSTART.md           # Beginner-friendly setup guide
-├── REPLIT_SETUP.md         # Replit-specific setup guide
-├── replit.nix              # Replit Nix configuration
-├── .replit                 # Replit run configuration
-├── templates/              # HTML templates
-│   ├── base.html
-│   ├── index.html
-│   ├── fetch_games.html
-│   ├── game_detail.html
-│   ├── analyze_game.html
-│   ├── statistics.html
-│   ├── engine_analysis.html  # Engine analysis page
-│   ├── insights.html          # Automated insights dashboard
-│   └── openings.html          # Opening performance analysis
-└── static/                 # Static files
-    └── style.css
-```
-
-## Database Schema
-
-The application uses SQLite with the following schema:
-
-```sql
-games (
-    id INTEGER PRIMARY KEY,
-    chess_com_id TEXT UNIQUE,
-    username TEXT,
-    opponent TEXT,
-    result TEXT,
-    time_class TEXT,
-    time_control TEXT,
-    user_rating INTEGER,
-    opponent_rating INTEGER,
-    date_played INTEGER,
-    pgn TEXT,
-    url TEXT,
-    color TEXT,
-
-    -- Manual analysis fields
-    loss_reason TEXT,
-    learning_recommendations TEXT,
-    notes TEXT,
-
-    -- Engine analysis fields
-    eco_code TEXT,
-    opening_name TEXT,
-    move_count INTEGER,
-    avg_centipawn_loss REAL,
-    opening_accuracy REAL,
-    middlegame_accuracy REAL,
-    endgame_accuracy REAL,
-    blunders_count INTEGER,
-    mistakes_count INTEGER,
-    inaccuracies_count INTEGER,
-    time_trouble INTEGER,
-    analyzed INTEGER,
-    analysis_date INTEGER,
-
-    created_at INTEGER,
-    updated_at INTEGER
-)
-```
-
-## API Usage
-
-The application uses the [chess.com Public API](https://www.chess.com/news/view/published-data-api). No authentication is required, but your chess.com profile must be public.
-
-### Endpoints Used:
-- `GET /pub/player/{username}/games/{year}/{month}` - Fetch monthly games
-
-## Development
-
-### Running in Development Mode
-
-The application runs in debug mode by default when started with `python app.py`. This enables:
-- Auto-reload on code changes
-- Detailed error pages
-- Debug logging
-
-### Production Deployment
-
-For production deployment:
-
-1. Set a secure secret key in `app.py`:
-```python
-app.secret_key = 'your-secure-random-secret-key-here'
-```
-
-2. Use a production WSGI server like Gunicorn:
-```bash
-pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5000 app:app
-```
-
-## Tips for Effective Analysis
-
-1. **Be Specific**: When adding loss reasons, be as specific as possible (e.g., "Missed knight fork on move 15" rather than just "tactical mistake")
-
-2. **Track Patterns**: After analyzing multiple games, check the Statistics page to identify recurring issues
-
-3. **Set Goals**: Use learning recommendations to create a structured study plan
-
-4. **Regular Reviews**: Import and analyze games regularly to track your progress over time
-
-## Troubleshooting
-
-### Games Not Importing
-- Ensure your chess.com profile is public
-- Verify the username is correct (case-insensitive)
-- Check that you have games in the selected month
-
-### Database Issues
-- The database file `chess_progress.db` is created automatically
-- To reset the database, delete the file and restart the application
-
-## Future Enhancements
-
-Potential features for future development:
-- Support for other chess platforms (Lichess, Chess24)
-- Game replay with board visualization
-- Opening repertoire tracking
-- Puzzle integration
-- Multi-user support with authentication
-- Export data to CSV/PDF reports
-
-## License
-
-This project is open source and available under the MIT License.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+## Security notes
+- All data access is guarded by **Row Level Security**. The app's `anon` key is
+  safe to expose to the browser; it can only do what the policies allow.
+- Snack claiming/releasing goes through `SECURITY DEFINER` functions so a parent
+  can only claim an open slot or release their own.
+- Kid-safe by design: last names, contact info, medical/emergency details, coach
+  notes, and lineups are readable only by coaches.
