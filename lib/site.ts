@@ -6,6 +6,10 @@ export const site = {
   teamName: process.env.NEXT_PUBLIC_TEAM_NAME || "Mundo Rainbows",
   season: process.env.NEXT_PUBLIC_SEASON || "Fall 2026",
   tagline: "Girls Soccer",
+  // Set NEXT_PUBLIC_LOGO_URL once the team crest is hosted somewhere (e.g.
+  // Supabase Storage or a file committed to /public) to swap it in across
+  // the nav bar and sign-in screen with no further code changes.
+  logoUrl: process.env.NEXT_PUBLIC_LOGO_URL || null,
 };
 
 export const PLAYER_POSITIONS = [

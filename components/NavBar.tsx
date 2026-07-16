@@ -18,11 +18,13 @@ export function NavBar({
   season,
   isCoach,
   fullName,
+  logoUrl,
 }: {
   teamName: string;
   season: string;
   isCoach: boolean;
   fullName: string;
+  logoUrl?: string | null;
 }) {
   const pathname = usePathname();
   const items = PARENT_NAV;
@@ -33,11 +35,21 @@ export function NavBar({
     <>
       {/* Top bar */}
       <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="rainbow-bar h-1 w-full" />
         <div className="mx-auto flex h-14 max-w-4xl items-center justify-between px-4">
           <Link href="/home" className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-green text-white">
-              ⚽
-            </span>
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={logoUrl}
+                alt={teamName}
+                className="h-9 w-9 rounded-full object-cover"
+              />
+            ) : (
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-blue-dark text-white">
+                ⚽
+              </span>
+            )}
             <span className="flex flex-col leading-tight">
               <span className="text-sm font-bold text-brand-ink">
                 {teamName}

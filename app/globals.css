@@ -39,4 +39,16 @@ body {
   .badge {
     @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
   }
+  /* Nods to the crest's rainbow arc — used sparingly as an accent stripe. */
+  .rainbow-bar {
+    background: linear-gradient(
+      90deg,
+      #e2483d,
+      #f2a93b,
+      #f5d949,
+      #6fbe44,
+      #3e7fc1,
+      #6c4a9c
+    );
+  }
 }
