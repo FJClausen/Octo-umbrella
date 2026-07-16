@@ -10,6 +10,40 @@ function clean(value: FormDataEntryValue | null): string | null {
   return s === "" ? null : s;
 }
 
+function num(value: FormDataEntryValue | null): number | null {
+  const s = String(value ?? "").trim();
+  if (s === "") return null;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : null;
+}
+
+const TYPE_TITLES: Record<string, string> = {
+  game: "Game",
+  practice: "Practice",
+  event: "Team Event",
+};
+
+/** Shared form parsing for create/update. Title falls back to the type name. */
+function eventPayload(formData: FormData, starts_at: string) {
+  const type = String(formData.get("type") || "game");
+  const jersey = clean(formData.get("jersey_color"));
+  return {
+    type,
+    title:
+      String(formData.get("title") || "").trim() ||
+      TYPE_TITLES[type] ||
+      "Event",
+    opponent: clean(formData.get("opponent")),
+    location: clean(formData.get("location")),
+    starts_at,
+    ends_at: clean(formData.get("ends_at")),
+    notes: clean(formData.get("notes")),
+    jersey_color: jersey === "blue" || jersey === "red" ? jersey : null,
+    score_us: num(formData.get("score_us")),
+    score_them: num(formData.get("score_them")),
+  };
+}
+
 function revalidate() {
   revalidatePath("/coaches/events");
   revalidatePath("/calendar");
@@ -25,15 +59,7 @@ export async function createEvent(formData: FormData) {
 
   const { data: inserted } = await supabase
     .from("events")
-    .insert({
-      type: String(formData.get("type") || "game"),
-      title: String(formData.get("title") || "Event").trim() || "Event",
-      opponent: clean(formData.get("opponent")),
-      location: clean(formData.get("location")),
-      starts_at,
-      ends_at: clean(formData.get("ends_at")),
-      notes: clean(formData.get("notes")),
-    })
+    .insert(eventPayload(formData, starts_at))
     .select("id")
     .single();
 
@@ -59,15 +85,7 @@ export async function updateEvent(formData: FormData) {
 
   await supabase
     .from("events")
-    .update({
-      type: String(formData.get("type") || "game"),
-      title: String(formData.get("title") || "Event").trim() || "Event",
-      opponent: clean(formData.get("opponent")),
-      location: clean(formData.get("location")),
-      starts_at,
-      ends_at: clean(formData.get("ends_at")),
-      notes: clean(formData.get("notes")),
-    })
+    .update(eventPayload(formData, starts_at))
     .eq("id", id);
 
   if (formData.get("add_snack_slot") === "on") {

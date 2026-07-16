@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { Card, EventTypeBadge } from "@/components/ui";
+import { ScoreBadge } from "@/components/EventCard";
 import { RsvpControl } from "@/components/RsvpControl";
 import { SnackButton } from "@/components/SnackButton";
 import { formatEventWhen, formatDay } from "@/lib/format";
@@ -91,18 +92,26 @@ export default async function EventDetailPage({
             </Link>
           ) : null}
         </div>
-        <h1 className="mt-2 text-xl font-bold text-brand-ink">
-          {event.title}
-          {event.opponent ? (
-            <span className="font-normal text-slate-500">
-              {" "}
-              vs {event.opponent}
-            </span>
-          ) : null}
+        <h1 className="mt-2 flex flex-wrap items-center gap-2 text-xl font-bold text-brand-ink">
+          <span>
+            {event.title}
+            {event.opponent ? (
+              <span className="font-normal text-slate-500">
+                {" "}
+                vs {event.opponent}
+              </span>
+            ) : null}
+          </span>
+          <ScoreBadge event={event} />
         </h1>
         <dl className="mt-3 space-y-1 text-sm text-slate-600">
           <div>⏱️ {formatEventWhen(event.starts_at, event.ends_at)}</div>
           {event.location ? <div>📍 {event.location}</div> : null}
+          {event.jersey_color === "blue" ? (
+            <div>👕 Wear blue jerseys (home)</div>
+          ) : event.jersey_color === "red" ? (
+            <div>👕 Wear red jerseys (away)</div>
+          ) : null}
         </dl>
         {event.notes ? (
           <p className="mt-3 whitespace-pre-wrap rounded-lg bg-slate-50 p-3 text-sm text-slate-700">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { formatDate } from "@/lib/format";
 
 type EventOption = { id: string; title: string; starts_at: string };
@@ -59,6 +59,7 @@ export function PracticePlanEditor({
   initialWarmup = "",
   initialExercises = "",
   initialScrimmages = "",
+  initialImageUrl = null,
   events,
   templates,
   onSave,
@@ -69,15 +70,10 @@ export function PracticePlanEditor({
   initialWarmup?: string;
   initialExercises?: string;
   initialScrimmages?: string;
+  initialImageUrl?: string | null;
   events: EventOption[];
   templates: Template[];
-  onSave: (
-    eventId: string | null,
-    sessionDate: string,
-    warmup: string,
-    exercises: string,
-    scrimmages: string
-  ) => Promise<{ error?: string } | void>;
+  onSave: (formData: FormData) => Promise<{ error?: string } | void>;
   saveLabel?: string;
 }) {
   const [eventId, setEventId] = useState(initialEventId ?? "");
@@ -85,6 +81,7 @@ export function PracticePlanEditor({
   const [warmup, setWarmup] = useState(initialWarmup);
   const [exercises, setExercises] = useState(initialExercises);
   const [scrimmages, setScrimmages] = useState(initialScrimmages);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,17 +89,21 @@ export function PracticePlanEditor({
   function handleSave() {
     setError(null);
     startTransition(async () => {
-      const result = await onSave(
-        eventId || null,
-        sessionDate,
-        warmup,
-        exercises,
-        scrimmages
-      );
+      const formData = new FormData();
+      formData.set("event_id", eventId);
+      formData.set("session_date", sessionDate);
+      formData.set("warmup", warmup);
+      formData.set("exercises", exercises);
+      formData.set("scrimmages", scrimmages);
+      const file = imageInputRef.current?.files?.[0];
+      if (file) formData.set("image", file);
+
+      const result = await onSave(formData);
       if (result?.error) {
         setError(result.error);
       } else {
         setSaved(true);
+        if (imageInputRef.current) imageInputRef.current.value = "";
       }
     });
   }
@@ -170,6 +171,33 @@ export function PracticePlanEditor({
         }}
         templates={templates}
       />
+
+      <div>
+        <label className="label">
+          Attach a photo or note (optional — e.g. drill diagram)
+        </label>
+        <input
+          ref={imageInputRef}
+          type="file"
+          accept="image/*"
+          className="text-sm"
+          onChange={() => setSaved(false)}
+        />
+        {initialImageUrl ? (
+          <p className="mt-1 text-xs text-slate-500">
+            📎 Photo attached —{" "}
+            <a
+              href={initialImageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-blue underline"
+            >
+              view
+            </a>{" "}
+            (uploading a new one replaces it)
+          </p>
+        ) : null}
+      </div>
 
       <div className="flex items-center gap-3">
         <button

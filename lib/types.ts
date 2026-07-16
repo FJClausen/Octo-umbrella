@@ -80,6 +80,9 @@ export interface Database {
           starts_at: string;
           ends_at: string | null;
           notes: string | null;
+          jersey_color: string | null;
+          score_us: number | null;
+          score_them: number | null;
           created_at: string;
         };
         Insert: {
@@ -91,6 +94,9 @@ export interface Database {
           starts_at: string;
           ends_at?: string | null;
           notes?: string | null;
+          jersey_color?: string | null;
+          score_us?: number | null;
+          score_them?: number | null;
         };
         Update: Partial<Database["public"]["Tables"]["events"]["Insert"]>;
         Relationships: [];
@@ -166,6 +172,7 @@ export interface Database {
           warmup: string | null;
           exercises: string | null;
           scrimmages: string | null;
+          image_url: string | null;
           created_at: string;
         };
         Insert: {
@@ -175,6 +182,7 @@ export interface Database {
           warmup?: string | null;
           exercises?: string | null;
           scrimmages?: string | null;
+          image_url?: string | null;
         };
         Update: Partial<
           Database["public"]["Tables"]["practice_plans"]["Insert"]
@@ -186,12 +194,14 @@ export interface Database {
           id: string;
           title: string;
           description: string;
+          image_url: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           title: string;
           description?: string;
+          image_url?: string | null;
         };
         Update: Partial<
           Database["public"]["Tables"]["exercise_templates"]["Insert"]

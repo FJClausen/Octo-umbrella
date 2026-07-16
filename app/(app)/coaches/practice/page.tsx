@@ -72,6 +72,17 @@ export default async function PracticePlannerPage({
                 placeholder="How to run the drill…"
               />
             </div>
+            <div>
+              <label className="label">
+                Photo / note (optional — e.g. drill diagram)
+              </label>
+              <input
+                type="file"
+                name="image"
+                accept="image/*"
+                className="text-sm"
+              />
+            </div>
             <SubmitButton>Save template</SubmitButton>
           </form>
 
@@ -82,11 +93,27 @@ export default async function PracticePlannerPage({
                   key={t.id}
                   className="flex items-start justify-between gap-2 rounded-lg bg-slate-50 p-2 text-sm"
                 >
-                  <div>
-                    <p className="font-medium text-brand-ink">{t.title}</p>
-                    {t.description ? (
-                      <p className="text-slate-500">{t.description}</p>
+                  <div className="flex items-start gap-2">
+                    {t.image_url ? (
+                      <a
+                        href={t.image_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={t.image_url}
+                          alt=""
+                          className="h-12 w-12 rounded object-cover"
+                        />
+                      </a>
                     ) : null}
+                    <div>
+                      <p className="font-medium text-brand-ink">{t.title}</p>
+                      {t.description ? (
+                        <p className="text-slate-500">{t.description}</p>
+                      ) : null}
+                    </div>
                   </div>
                   <form action={deleteExerciseTemplate}>
                     <input type="hidden" name="id" value={t.id} />
@@ -132,6 +159,11 @@ export default async function PracticePlannerPage({
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-brand-ink">
                   {formatDate(p.session_date)}
+                  {p.image_url ? (
+                    <span className="ml-1.5 text-sm" title="Photo attached">
+                      📎
+                    </span>
+                  ) : null}
                 </p>
                 {p.event_id && eventTitleById.get(p.event_id) ? (
                   <span className="text-sm text-slate-400">
@@ -150,6 +182,7 @@ export default async function PracticePlannerPage({
                     initialWarmup={p.warmup ?? ""}
                     initialExercises={p.exercises ?? ""}
                     initialScrimmages={p.scrimmages ?? ""}
+                    initialImageUrl={p.image_url}
                     events={eventOptions}
                     templates={templateList}
                     onSave={savePracticePlan.bind(null, p.id)}

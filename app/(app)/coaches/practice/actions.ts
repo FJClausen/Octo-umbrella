@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireCoach } from "@/lib/auth";
+import { uploadPhotoDetailed } from "@/lib/upload";
+import type { Database } from "@/lib/types";
 
 function revalidate() {
   revalidatePath("/coaches/practice");
@@ -11,23 +13,31 @@ function revalidate() {
 
 export async function savePracticePlan(
   planId: string | null,
-  eventId: string | null,
-  sessionDate: string,
-  warmup: string,
-  exercises: string,
-  scrimmages: string
+  formData: FormData
 ): Promise<{ error?: string }> {
   await requireCoach();
+
+  const sessionDate = String(formData.get("session_date") || "").trim();
   if (!sessionDate) return { error: "Please pick a session date." };
   const supabase = createClient();
 
-  const payload = {
-    event_id: eventId,
+  const payload: Database["public"]["Tables"]["practice_plans"]["Insert"] = {
+    event_id: String(formData.get("event_id") || "").trim() || null,
     session_date: sessionDate,
-    warmup: warmup.trim() || null,
-    exercises: exercises.trim() || null,
-    scrimmages: scrimmages.trim() || null,
+    warmup: String(formData.get("warmup") || "").trim() || null,
+    exercises: String(formData.get("exercises") || "").trim() || null,
+    scrimmages: String(formData.get("scrimmages") || "").trim() || null,
   };
+
+  const uploaded = await uploadPhotoDetailed(
+    supabase,
+    formData.get("image"),
+    "practice"
+  );
+  if (uploaded && !uploaded.ok) {
+    return { error: `Photo upload failed: ${uploaded.error}` };
+  }
+  if (uploaded?.ok) payload.image_url = uploaded.url;
 
   const { error } = planId
     ? await supabase.from("practice_plans").update(payload).eq("id", planId)
@@ -53,9 +63,24 @@ export async function createExerciseTemplate(formData: FormData) {
   const title = String(formData.get("title") || "").trim();
   if (!title) return;
   const supabase = createClient();
+
+  const uploaded = await uploadPhotoDetailed(
+    supabase,
+    formData.get("image"),
+    "practice"
+  );
+  if (uploaded && !uploaded.ok) {
+    redirect(
+      `/coaches/practice?error=${encodeURIComponent(
+        `Photo upload failed: ${uploaded.error}`
+      )}`
+    );
+  }
+
   const { error } = await supabase.from("exercise_templates").insert({
     title,
     description: String(formData.get("description") || "").trim(),
+    image_url: uploaded?.ok ? uploaded.url : null,
   });
   if (error) {
     redirect(`/coaches/practice?error=${encodeURIComponent(error.message)}`);

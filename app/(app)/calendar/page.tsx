@@ -1,74 +1,13 @@
-import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { PageHeader, Card, EventTypeBadge, EmptyState } from "@/components/ui";
-import { formatEventWhen } from "@/lib/format";
+import { getCurrentProfile } from "@/lib/auth";
+import { PageHeader, EmptyState } from "@/components/ui";
+import { EventCard } from "@/components/EventCard";
 
 export const metadata = { title: "Calendar" };
 
-type SnackInfo = { claimed_by: string | null; claimed_by_name: string | null };
-
-function EventRow({
-  event,
-  snack,
-}: {
-  event: {
-    id: string;
-    type: string;
-    title: string;
-    opponent: string | null;
-    location: string | null;
-    starts_at: string;
-    ends_at: string | null;
-  };
-  snack?: SnackInfo;
-}) {
-  return (
-    <Link href={`/calendar/${event.id}`}>
-      <Card className="hover:border-brand-green/40">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <EventTypeBadge type={event.type} />
-              <span className="truncate font-semibold text-brand-ink">
-                {event.title}
-                {event.opponent ? (
-                  <span className="font-normal text-slate-500">
-                    {" "}
-                    vs {event.opponent}
-                  </span>
-                ) : null}
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-slate-600">
-              {formatEventWhen(event.starts_at, event.ends_at)}
-            </p>
-            {event.location ? (
-              <p className="text-sm text-slate-400">📍 {event.location}</p>
-            ) : null}
-            {snack ? (
-              <p className="mt-0.5 text-sm">
-                🍊{" "}
-                {snack.claimed_by ? (
-                  <span className="text-slate-500">
-                    Snacks: {snack.claimed_by_name || "covered"}
-                  </span>
-                ) : (
-                  <span className="font-medium text-amber-600">
-                    Snacks: not assigned yet — tap to sign up
-                  </span>
-                )}
-              </p>
-            ) : null}
-          </div>
-          <span className="text-slate-300">→</span>
-        </div>
-      </Card>
-    </Link>
-  );
-}
-
 export default async function CalendarPage() {
   const supabase = createClient();
+  const current = await getCurrentProfile();
   const dayStart = `${new Date().toISOString().slice(0, 10)}T00:00:00`;
 
   const [{ data: upcoming }, { data: past }, { data: snackSlots }] =
@@ -83,7 +22,7 @@ export default async function CalendarPage() {
         .select("*")
         .lt("starts_at", dayStart)
         .order("starts_at", { ascending: false })
-        .limit(10),
+        .limit(20),
       supabase
         .from("snack_slots")
         .select("event_id, claimed_by, claimed_by_name"),
@@ -94,6 +33,9 @@ export default async function CalendarPage() {
       .filter((s) => s.event_id)
       .map((s) => [s.event_id as string, s])
   );
+
+  const playedGames = (past ?? []).filter((e) => e.type === "game");
+  const otherPast = (past ?? []).filter((e) => e.type !== "game");
 
   return (
     <div className="space-y-6">
@@ -108,7 +50,12 @@ export default async function CalendarPage() {
         </h2>
         {upcoming && upcoming.length > 0 ? (
           upcoming.map((e) => (
-            <EventRow key={e.id} event={e} snack={snackByEvent.get(e.id)} />
+            <EventCard
+              key={e.id}
+              event={e}
+              snack={snackByEvent.get(e.id)}
+              currentUserId={current?.userId}
+            />
           ))
         ) : (
           <EmptyState
@@ -118,14 +65,27 @@ export default async function CalendarPage() {
         )}
       </section>
 
-      {past && past.length > 0 ? (
+      {playedGames.length > 0 ? (
+        <section className="space-y-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+            Played Games
+          </h2>
+          <div className="space-y-2">
+            {playedGames.map((e) => (
+              <EventCard key={e.id} event={e} />
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {otherPast.length > 0 ? (
         <section className="space-y-2">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
             Past
           </h2>
           <div className="space-y-2 opacity-75">
-            {past.map((e) => (
-              <EventRow key={e.id} event={e} />
+            {otherPast.map((e) => (
+              <EventCard key={e.id} event={e} />
             ))}
           </div>
         </section>

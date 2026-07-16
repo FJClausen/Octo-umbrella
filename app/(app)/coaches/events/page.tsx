@@ -54,13 +54,12 @@ function EventFields({ event }: { event?: EventRow }) {
         </select>
       </div>
       <div>
-        <label className="label">Title</label>
+        <label className="label">Title (optional)</label>
         <input
           name="title"
-          required
           defaultValue={event?.title ?? ""}
           className="input"
-          placeholder="e.g. Home Game"
+          placeholder="Defaults to Game / Practice / Team Event"
         />
       </div>
       <div>
@@ -71,6 +70,18 @@ function EventFields({ event }: { event?: EventRow }) {
           className="input"
           placeholder="e.g. Northside United"
         />
+      </div>
+      <div>
+        <label className="label">Jersey color (games)</label>
+        <select
+          name="jersey_color"
+          defaultValue={event?.jersey_color ?? ""}
+          className="input"
+        >
+          <option value="">— not set —</option>
+          <option value="blue">🔵 Blue (home game)</option>
+          <option value="red">🔴 Red (away game)</option>
+        </select>
       </div>
       <div>
         <label className="label">Location</label>
@@ -109,6 +120,28 @@ function EventFields({ event }: { event?: EventRow }) {
           className="input"
           placeholder="Arrive 30 minutes early…"
         />
+      </div>
+      <div className="sm:col-span-2">
+        <label className="label">Final score (games — fill in after playing)</label>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            name="score_us"
+            min={0}
+            defaultValue={event?.score_us ?? ""}
+            className="input w-24"
+            placeholder="Us"
+          />
+          <span className="text-slate-400">–</span>
+          <input
+            type="number"
+            name="score_them"
+            min={0}
+            defaultValue={event?.score_them ?? ""}
+            className="input w-24"
+            placeholder="Them"
+          />
+        </div>
       </div>
     </div>
   );
