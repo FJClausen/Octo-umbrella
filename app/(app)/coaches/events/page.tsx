@@ -1,8 +1,11 @@
 import { format } from "date-fns";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, EventTypeBadge, SubmitButton } from "@/components/ui";
 import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/site";
 import { formatEventWhen } from "@/lib/format";
+import { newEventMessage } from "@/lib/whatsapp";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 import type { EventRow, SnackSlot } from "@/lib/types";
 import {
   createEvent,
@@ -111,7 +114,11 @@ function EventFields({ event }: { event?: EventRow }) {
   );
 }
 
-export default async function ManageEventsPage() {
+export default async function ManageEventsPage({
+  searchParams,
+}: {
+  searchParams: { share?: string };
+}) {
   const supabase = createClient();
   const [{ data: events }, { data: snackSlots }] = await Promise.all([
     supabase.from("events").select("*").order("starts_at", { ascending: false }),
@@ -124,8 +131,36 @@ export default async function ManageEventsPage() {
       .map((s) => [s.event_id as string, s])
   );
 
+  const shareEvent = searchParams.share
+    ? (events ?? []).find((e) => e.id === searchParams.share)
+    : undefined;
+
   return (
     <div className="space-y-6">
+      {shareEvent ? (
+        <div className="card border-[#25D366]/40 bg-[#25D366]/5 p-4">
+          <p className="font-semibold text-brand-ink">
+            ✅ Event added: {shareEvent.title}
+          </p>
+          <p className="mb-3 text-sm text-slate-500">
+            Want to alert the team? This opens WhatsApp with the announcement
+            pre-written — pick your team group and hit send.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <WhatsAppButton
+              text={newEventMessage(
+                shareEvent,
+                snackSlotByEvent.get(shareEvent.id) ?? null
+              )}
+              label="Announce on WhatsApp"
+            />
+            <Link href="/coaches/events" className="text-sm text-slate-500">
+              Skip
+            </Link>
+          </div>
+        </div>
+      ) : null}
+
       <details className="card p-4">
         <summary className="cursor-pointer font-semibold text-brand-ink">
           + Add an event
@@ -160,6 +195,11 @@ export default async function ManageEventsPage() {
                   {formatEventWhen(e.starts_at, e.ends_at)}
                 </p>
               </div>
+              <WhatsAppButton
+                text={newEventMessage(e, slot ?? null)}
+                label="Share"
+                small
+              />
             </div>
 
             <details className="mt-3">

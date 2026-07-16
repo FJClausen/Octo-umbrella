@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { addDays } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
-import { Card } from "@/components/ui";
+import { Card, EventTypeBadge } from "@/components/ui";
+import { formatEventWhen } from "@/lib/format";
+import { reminderMessage } from "@/lib/whatsapp";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
 
 export const metadata = { title: "Coaches Corner" };
 
@@ -15,6 +19,7 @@ export default async function CoachesOverview() {
   const supabase = createClient();
   const today = new Date().toISOString().slice(0, 10);
   const dayStart = `${today}T00:00:00`;
+  const reminderEnd = `${addDays(new Date(), 2).toISOString().slice(0, 10)}T23:59:59`;
 
   const [pending, upcoming, players, openSnacks] = await Promise.all([
     count(
@@ -43,6 +48,24 @@ export default async function CoachesOverview() {
         .gte("slot_date", today)
     ),
   ]);
+
+  // Events within the next ~2 days, for one-tap WhatsApp reminders.
+  const [{ data: soonEvents }, { data: soonSnacks }] = await Promise.all([
+    supabase
+      .from("events")
+      .select("*")
+      .gte("starts_at", dayStart)
+      .lte("starts_at", reminderEnd)
+      .order("starts_at"),
+    supabase
+      .from("snack_slots")
+      .select("event_id, claimed_by, claimed_by_name"),
+  ]);
+  const snackByEvent = new Map(
+    (soonSnacks ?? [])
+      .filter((s) => s.event_id)
+      .map((s) => [s.event_id as string, s])
+  );
 
   const tiles = [
     {
@@ -75,6 +98,52 @@ export default async function CoachesOverview() {
           </Link>
         ))}
       </div>
+
+      {soonEvents && soonEvents.length > 0 ? (
+        <Card className="border-[#25D366]/40">
+          <h2 className="font-semibold text-brand-ink">
+            ⏰ Reminders due — next 2 days
+          </h2>
+          <p className="mb-3 text-sm text-slate-500">
+            One tap opens WhatsApp with the reminder pre-written — pick the
+            team group and send.
+          </p>
+          <ul className="space-y-3">
+            {soonEvents.map((e) => {
+              const snack = snackByEvent.get(e.id) ?? null;
+              return (
+                <li
+                  key={e.id}
+                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-3"
+                >
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <EventTypeBadge type={e.type} />
+                      <span className="text-sm font-medium text-brand-ink">
+                        {e.title}
+                        {e.opponent ? ` vs ${e.opponent}` : ""}
+                      </span>
+                    </div>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      {formatEventWhen(e.starts_at, e.ends_at)}
+                      {snack && !snack.claimed_by ? (
+                        <span className="ml-2 font-medium text-amber-600">
+                          🍊 snack slot still open
+                        </span>
+                      ) : null}
+                    </p>
+                  </div>
+                  <WhatsAppButton
+                    text={reminderMessage(e, snack)}
+                    label="Send reminder"
+                    small
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
+      ) : null}
 
       <Card>
         <h2 className="mb-2 font-semibold text-brand-ink">Quick actions</h2>

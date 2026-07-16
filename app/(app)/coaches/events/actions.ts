@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireCoach } from "@/lib/auth";
 
@@ -45,6 +46,8 @@ export async function createEvent(formData: FormData) {
   }
 
   revalidate();
+  // Land on the events list with a "share to WhatsApp" prompt for the new event.
+  if (inserted) redirect(`/coaches/events?share=${inserted.id}`);
 }
 
 export async function updateEvent(formData: FormData) {

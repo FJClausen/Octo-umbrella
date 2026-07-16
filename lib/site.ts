@@ -10,6 +10,8 @@ export const site = {
   // Supabase Storage or a file committed to /public) to swap it in across
   // the nav bar and sign-in screen with no further code changes.
   logoUrl: process.env.NEXT_PUBLIC_LOGO_URL || null,
+  // Public URL of the deployed site — used in WhatsApp share messages.
+  siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://mundorainbows.com",
 };
 
 export const PLAYER_POSITIONS = [
