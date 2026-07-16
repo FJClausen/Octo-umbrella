@@ -3,14 +3,38 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, EventTypeBadge, SubmitButton } from "@/components/ui";
 import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/site";
 import { formatEventWhen } from "@/lib/format";
-import type { EventRow } from "@/lib/types";
-import { createEvent, updateEvent, deleteEvent } from "./actions";
+import type { EventRow, SnackSlot } from "@/lib/types";
+import {
+  createEvent,
+  updateEvent,
+  deleteEvent,
+  removeEventSnackSlot,
+} from "./actions";
 
 export const metadata = { title: "Manage Events" };
 
 function toInputDT(value?: string | null): string {
   if (!value) return "";
   return format(new Date(value), "yyyy-MM-dd'T'HH:mm");
+}
+
+function AddSnackSlotFields() {
+  return (
+    <div className="rounded-lg border border-slate-200 p-3">
+      <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+        <input type="checkbox" name="add_snack_slot" />
+        Also create a snack slot for this event
+      </label>
+      <div className="mt-2">
+        <label className="label">Snack slot label (optional)</label>
+        <input
+          name="snack_label"
+          className="input"
+          placeholder="e.g. Half-time snack + water"
+        />
+      </div>
+    </div>
+  );
 }
 
 function EventFields({ event }: { event?: EventRow }) {
@@ -89,10 +113,16 @@ function EventFields({ event }: { event?: EventRow }) {
 
 export default async function ManageEventsPage() {
   const supabase = createClient();
-  const { data: events } = await supabase
-    .from("events")
-    .select("*")
-    .order("starts_at", { ascending: false });
+  const [{ data: events }, { data: snackSlots }] = await Promise.all([
+    supabase.from("events").select("*").order("starts_at", { ascending: false }),
+    supabase.from("snack_slots").select("*"),
+  ]);
+
+  const snackSlotByEvent = new Map<string, SnackSlot>(
+    (snackSlots ?? [])
+      .filter((s) => s.event_id)
+      .map((s) => [s.event_id as string, s])
+  );
 
   return (
     <div className="space-y-6">
@@ -102,26 +132,15 @@ export default async function ManageEventsPage() {
         </summary>
         <form action={createEvent} className="mt-4 space-y-4">
           <EventFields />
-          <div className="rounded-lg border border-slate-200 p-3">
-            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-              <input type="checkbox" name="add_snack_slot" />
-              Also create a snack slot for this event
-            </label>
-            <div className="mt-2">
-              <label className="label">Snack slot label (optional)</label>
-              <input
-                name="snack_label"
-                className="input"
-                placeholder="e.g. Half-time snack + water"
-              />
-            </div>
-          </div>
+          <AddSnackSlotFields />
           <SubmitButton>Add event</SubmitButton>
         </form>
       </details>
 
       <div className="space-y-2">
-        {(events ?? []).map((e) => (
+        {(events ?? []).map((e) => {
+          const slot = snackSlotByEvent.get(e.id);
+          return (
           <Card key={e.id}>
             <div className="flex items-center justify-between gap-2">
               <div>
@@ -150,17 +169,39 @@ export default async function ManageEventsPage() {
               <form action={updateEvent} className="mt-3 space-y-4">
                 <input type="hidden" name="id" value={e.id} />
                 <EventFields event={e} />
+                {!slot ? <AddSnackSlotFields /> : null}
                 <div className="flex gap-2">
                   <SubmitButton>Save</SubmitButton>
                 </div>
               </form>
+
+              {slot ? (
+                <div className="mt-3 flex items-center justify-between rounded-lg border border-slate-200 p-3 text-sm">
+                  <div>
+                    <p className="font-medium text-slate-700">
+                      🍊 Snack slot: {slot.label || "Team snack"}
+                    </p>
+                    <p className="text-slate-500">
+                      {slot.claimed_by
+                        ? `${slot.claimed_by_name || "Covered"} ✓`
+                        : "Open — needs a volunteer"}
+                    </p>
+                  </div>
+                  <form action={removeEventSnackSlot}>
+                    <input type="hidden" name="id" value={slot.id} />
+                    <SubmitButton variant="danger">Remove</SubmitButton>
+                  </form>
+                </div>
+              ) : null}
+
               <form action={deleteEvent} className="mt-2">
                 <input type="hidden" name="id" value={e.id} />
                 <SubmitButton variant="danger">Delete event</SubmitButton>
               </form>
             </details>
           </Card>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

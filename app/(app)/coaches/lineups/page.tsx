@@ -1,8 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card, EmptyState, SubmitButton, EventTypeBadge } from "@/components/ui";
+import { Card, EmptyState, EventTypeBadge, SubmitButton } from "@/components/ui";
 import { formatEventWhen } from "@/lib/format";
+import { DEFAULT_FORMATION_KEY, type FormationKey } from "@/lib/site";
 import type { Lineup } from "@/lib/types";
-import { saveLineup } from "./actions";
+import { LineupEditor } from "@/components/LineupEditor";
+import {
+  saveGeneralLineup,
+  saveEventLineup,
+  copyGeneralLineupToEvent,
+} from "./actions";
 
 export const metadata = { title: "Lineups & Game Plans" };
 
@@ -10,33 +16,39 @@ export default async function LineupsPage() {
   const supabase = createClient();
   const dayStart = `${new Date().toISOString().slice(0, 10)}T00:00:00`;
 
-  const { data: events } = await supabase
-    .from("events")
-    .select("*")
-    .gte("starts_at", dayStart)
-    .order("starts_at");
+  const [{ data: events }, { data: generalLineup }, { data: players }] =
+    await Promise.all([
+      supabase
+        .from("events")
+        .select("*")
+        .gte("starts_at", dayStart)
+        .order("starts_at"),
+      supabase.from("lineups").select("*").is("event_id", null).maybeSingle(),
+      supabase
+        .from("players")
+        .select("id, first_name")
+        .eq("active", true)
+        .order("first_name"),
+    ]);
 
   const eventIds = (events ?? []).map((e) => e.id);
 
-  const [{ data: lineups }, { data: goingRsvps }, { data: players }] =
-    eventIds.length
-      ? await Promise.all([
-          supabase.from("lineups").select("*").in("event_id", eventIds),
-          supabase
-            .from("rsvps")
-            .select("event_id, player_id, status")
-            .in("event_id", eventIds)
-            .eq("status", "going"),
-          supabase.from("players").select("id, first_name"),
-        ])
-      : [{ data: [] }, { data: [] }, { data: [] }];
+  const [{ data: eventLineups }, { data: goingRsvps }] = eventIds.length
+    ? await Promise.all([
+        supabase.from("lineups").select("*").in("event_id", eventIds),
+        supabase
+          .from("rsvps")
+          .select("event_id, player_id, status")
+          .in("event_id", eventIds)
+          .eq("status", "going"),
+      ])
+    : [{ data: [] }, { data: [] }];
 
   const lineupByEvent = new Map<string, Lineup>(
-    (lineups ?? []).map((l) => [l.event_id, l])
+    (eventLineups ?? []).map((l) => [l.event_id as string, l])
   );
-  const playerName = new Map(
-    (players ?? []).map((p) => [p.id, p.first_name])
-  );
+  const playerList = players ?? [];
+  const playerName = new Map(playerList.map((p) => [p.id, p.first_name]));
   const goingByEvent = new Map<string, string[]>();
   for (const r of goingRsvps ?? []) {
     const list = goingByEvent.get(r.event_id) ?? [];
@@ -45,11 +57,29 @@ export default async function LineupsPage() {
   }
 
   return (
-    <div className="space-y-4">
-      <p className="text-sm text-slate-500">
-        Plan your formation and starting lineup for each upcoming event. Only
-        coaches can see this. The “Going” list reflects parent RSVPs.
-      </p>
+    <div className="space-y-6">
+      <Card>
+        <h2 className="font-semibold text-brand-ink">General Lineup</h2>
+        <p className="mb-3 text-sm text-slate-500">
+          Your default plan, independent of any single game. Use “Copy from
+          general lineup” on a game below to start its variation from this.
+        </p>
+        <LineupEditor
+          initialFormationKey={
+            (generalLineup?.formation_key as FormationKey) ??
+            DEFAULT_FORMATION_KEY
+          }
+          initialSlots={generalLineup?.slots ?? []}
+          initialPlan={generalLineup?.plan ?? ""}
+          players={playerList}
+          onSave={saveGeneralLineup}
+          saveLabel="Save general lineup"
+        />
+      </Card>
+
+      <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+        Event Variations
+      </h2>
 
       {events && events.length > 0 ? (
         events.map((e) => {
@@ -82,31 +112,28 @@ export default async function LineupsPage() {
                 </span>
               </div>
 
-              <form action={saveLineup} className="mt-3 space-y-3">
-                <input type="hidden" name="event_id" value={e.id} />
-                <div>
-                  <label className="label">Formation</label>
-                  <input
-                    name="formation"
-                    defaultValue={lineup?.formation ?? ""}
-                    className="input"
-                    placeholder="e.g. 4-3-3"
-                  />
-                </div>
-                <div>
-                  <label className="label">Game plan / starting lineup</label>
-                  <textarea
-                    name="plan"
-                    rows={5}
-                    defaultValue={lineup?.plan ?? ""}
-                    className="input"
-                    placeholder={
-                      "GK: …\nDefense: …\nMidfield: …\nForwards: …\nSubs & rotations: …"
-                    }
-                  />
-                </div>
-                <SubmitButton>Save plan</SubmitButton>
-              </form>
+              {!lineup ? (
+                <form action={copyGeneralLineupToEvent} className="mt-3">
+                  <input type="hidden" name="event_id" value={e.id} />
+                  <SubmitButton variant="outline">
+                    Copy from general lineup
+                  </SubmitButton>
+                </form>
+              ) : null}
+
+              <div className="mt-3">
+                <LineupEditor
+                  initialFormationKey={
+                    (lineup?.formation_key as FormationKey) ??
+                    DEFAULT_FORMATION_KEY
+                  }
+                  initialSlots={lineup?.slots ?? []}
+                  initialPlan={lineup?.plan ?? ""}
+                  players={playerList}
+                  onSave={saveEventLineup.bind(null, e.id)}
+                  saveLabel="Save event lineup"
+                />
+              </div>
             </Card>
           );
         })

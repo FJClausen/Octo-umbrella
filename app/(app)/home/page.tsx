@@ -93,10 +93,10 @@ export default async function HomePage() {
             ))}
           </ul>
           <Link
-            href="/snacks"
+            href="/calendar"
             className="mt-2 inline-block text-sm font-medium text-amber-800 underline"
           >
-            Manage snack sign-ups
+            View on the calendar
           </Link>
         </Card>
       ) : null}

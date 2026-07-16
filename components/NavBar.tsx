@@ -9,7 +9,6 @@ const PARENT_NAV: NavItem[] = [
   { href: "/home", label: "Home", icon: "🏠" },
   { href: "/calendar", label: "Calendar", icon: "📅" },
   { href: "/news", label: "News", icon: "📣" },
-  { href: "/snacks", label: "Snacks", icon: "🍊" },
   { href: "/roster", label: "Roster", icon: "⚽" },
   { href: "/gallery", label: "Gallery", icon: "📸" },
 ];
@@ -110,7 +109,7 @@ export function NavBar({
 
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white sm:hidden">
-        <div className="mx-auto grid max-w-4xl grid-cols-7">
+        <div className="mx-auto grid max-w-4xl grid-cols-6">
           {items.map((item) => (
             <Link
               key={item.href}

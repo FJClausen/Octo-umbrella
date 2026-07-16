@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { Card, EventTypeBadge } from "@/components/ui";
 import { RsvpControl } from "@/components/RsvpControl";
+import { SnackButton } from "@/components/SnackButton";
 import { formatEventWhen, formatDay } from "@/lib/format";
 import { RSVP_LABELS, type RsvpStatus } from "@/lib/site";
 
@@ -33,7 +34,7 @@ export default async function EventDetailPage({
       .order("first_name"),
     supabase
       .from("snack_slots")
-      .select("id, label, claimed_by")
+      .select("id, label, claimed_by, claimed_by_name")
       .eq("event_id", event.id),
   ]);
 
@@ -120,26 +121,34 @@ export default async function EventDetailPage({
       {snackSlots && snackSlots.length > 0 ? (
         <Card>
           <h2 className="mb-2 font-semibold text-brand-ink">🍊 Snacks</h2>
-          <ul className="space-y-1 text-sm text-slate-600">
-            {snackSlots.map((s) => (
-              <li key={s.id} className="flex items-center justify-between">
-                <span>{s.label || "Snack"}</span>
-                <span
-                  className={
-                    s.claimed_by ? "text-brand-green-dark" : "text-amber-600"
-                  }
+          <ul className="space-y-2">
+            {snackSlots.map((s) => {
+              const mine = s.claimed_by === current?.userId;
+              const open = !s.claimed_by;
+              return (
+                <li
+                  key={s.id}
+                  className="flex items-center justify-between gap-2 text-sm text-slate-600"
                 >
-                  {s.claimed_by ? "Covered ✓" : "Open"}
-                </span>
-              </li>
-            ))}
+                  <div>
+                    <p>{s.label || "Team snack"}</p>
+                    <p
+                      className={
+                        open ? "text-amber-600" : "text-brand-green-dark"
+                      }
+                    >
+                      {open
+                        ? "Open — needs a volunteer"
+                        : mine
+                          ? "You're bringing this! 🎉"
+                          : `${s.claimed_by_name || "Covered"} ✓`}
+                    </p>
+                  </div>
+                  <SnackButton slotId={s.id} mine={mine} open={open} />
+                </li>
+              );
+            })}
           </ul>
-          <Link
-            href="/snacks"
-            className="mt-2 inline-block text-sm font-medium text-brand-blue"
-          >
-            Go to snack schedule →
-          </Link>
         </Card>
       ) : null}
 

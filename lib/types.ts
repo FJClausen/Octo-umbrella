@@ -2,6 +2,8 @@
  * Database types for the Supabase schema in supabase/migrations.
  * Kept in sync by hand; regenerate with `supabase gen types` if you prefer.
  */
+import type { LineupSlot } from "@/lib/site";
+
 export type Role = "coach" | "parent";
 export type ProfileStatus = "pending" | "approved" | "denied";
 
@@ -156,21 +158,44 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["snack_slots"]["Insert"]>;
         Relationships: [];
       };
-      coach_notes: {
+      practice_plans: {
+        Row: {
+          id: string;
+          event_id: string | null;
+          session_date: string;
+          warmup: string | null;
+          exercises: string | null;
+          scrimmages: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id?: string | null;
+          session_date: string;
+          warmup?: string | null;
+          exercises?: string | null;
+          scrimmages?: string | null;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["practice_plans"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      exercise_templates: {
         Row: {
           id: string;
           title: string;
-          body: string;
-          author_id: string | null;
+          description: string;
           created_at: string;
         };
         Insert: {
           id?: string;
           title: string;
-          body: string;
-          author_id?: string | null;
+          description?: string;
         };
-        Update: Partial<Database["public"]["Tables"]["coach_notes"]["Insert"]>;
+        Update: Partial<
+          Database["public"]["Tables"]["exercise_templates"]["Insert"]
+        >;
         Relationships: [];
       };
       documents: {
@@ -193,15 +218,17 @@ export interface Database {
       lineups: {
         Row: {
           id: string;
-          event_id: string;
-          formation: string | null;
+          event_id: string | null;
+          formation_key: string | null;
+          slots: LineupSlot[];
           plan: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
-          event_id: string;
-          formation?: string | null;
+          event_id?: string | null;
+          formation_key?: string | null;
+          slots?: LineupSlot[];
           plan?: string | null;
         };
         Update: Partial<Database["public"]["Tables"]["lineups"]["Insert"]>;
@@ -262,7 +289,10 @@ export type EventRow = Database["public"]["Tables"]["events"]["Row"];
 export type Rsvp = Database["public"]["Tables"]["rsvps"]["Row"];
 export type News = Database["public"]["Tables"]["news"]["Row"];
 export type SnackSlot = Database["public"]["Tables"]["snack_slots"]["Row"];
-export type CoachNote = Database["public"]["Tables"]["coach_notes"]["Row"];
+export type PracticePlan =
+  Database["public"]["Tables"]["practice_plans"]["Row"];
+export type ExerciseTemplate =
+  Database["public"]["Tables"]["exercise_templates"]["Row"];
 export type DocumentRow = Database["public"]["Tables"]["documents"]["Row"];
 export type Lineup = Database["public"]["Tables"]["lineups"]["Row"];
 export type GalleryPhoto =

@@ -2,7 +2,7 @@
 
 import { useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { claimSnackAction, releaseSnackAction } from "@/app/(app)/snacks/actions";
+import { claimSnackAction, releaseSnackAction } from "@/app/(app)/calendar/actions";
 
 export function SnackButton({
   slotId,

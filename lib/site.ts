@@ -36,3 +36,82 @@ export const RSVP_LABELS: Record<RsvpStatus, string> = {
   maybe: "Maybe",
   not_going: "Can't make it",
 };
+
+/** One assignable spot in a lineup formation. */
+export type LineupSlot = {
+  slot: string;
+  position: string;
+  playerId: string | null;
+  note: string | null;
+};
+
+export type FormationKey = "2-3-1" | "3-2-1" | "2-2-2" | "3-1-2";
+
+/**
+ * Preset 7-a-side formations. Selecting one populates the lineup editor
+ * with blank slots (GK + 6 outfield players) for a coach to assign.
+ */
+export const FORMATIONS: Record<
+  FormationKey,
+  { label: string; slots: { slot: string; position: string }[] }
+> = {
+  "2-3-1": {
+    label: "2-3-1 (Standard)",
+    slots: [
+      { slot: "Goalkeeper", position: "Goalkeeper" },
+      { slot: "Defender 1", position: "Defender" },
+      { slot: "Defender 2", position: "Defender" },
+      { slot: "Midfielder 1", position: "Midfielder" },
+      { slot: "Midfielder 2", position: "Midfielder" },
+      { slot: "Midfielder 3", position: "Midfielder" },
+      { slot: "Forward", position: "Forward" },
+    ],
+  },
+  "3-2-1": {
+    label: "3-2-1",
+    slots: [
+      { slot: "Goalkeeper", position: "Goalkeeper" },
+      { slot: "Defender 1", position: "Defender" },
+      { slot: "Defender 2", position: "Defender" },
+      { slot: "Defender 3", position: "Defender" },
+      { slot: "Midfielder 1", position: "Midfielder" },
+      { slot: "Midfielder 2", position: "Midfielder" },
+      { slot: "Forward", position: "Forward" },
+    ],
+  },
+  "2-2-2": {
+    label: "2-2-2",
+    slots: [
+      { slot: "Goalkeeper", position: "Goalkeeper" },
+      { slot: "Defender 1", position: "Defender" },
+      { slot: "Defender 2", position: "Defender" },
+      { slot: "Midfielder 1", position: "Midfielder" },
+      { slot: "Midfielder 2", position: "Midfielder" },
+      { slot: "Forward 1", position: "Forward" },
+      { slot: "Forward 2", position: "Forward" },
+    ],
+  },
+  "3-1-2": {
+    label: "3-1-2",
+    slots: [
+      { slot: "Goalkeeper", position: "Goalkeeper" },
+      { slot: "Defender 1", position: "Defender" },
+      { slot: "Defender 2", position: "Defender" },
+      { slot: "Defender 3", position: "Defender" },
+      { slot: "Midfielder", position: "Midfielder" },
+      { slot: "Forward 1", position: "Forward" },
+      { slot: "Forward 2", position: "Forward" },
+    ],
+  },
+};
+
+export const DEFAULT_FORMATION_KEY: FormationKey = "2-3-1";
+
+export function blankSlotsFor(key: FormationKey): LineupSlot[] {
+  return FORMATIONS[key].slots.map((s) => ({
+    slot: s.slot,
+    position: s.position,
+    playerId: null,
+    note: null,
+  }));
+}

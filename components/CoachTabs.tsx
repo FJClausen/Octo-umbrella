@@ -9,9 +9,8 @@ const TABS = [
   { href: "/coaches/roster", label: "Roster" },
   { href: "/coaches/events", label: "Events" },
   { href: "/coaches/news", label: "News" },
-  { href: "/coaches/snacks", label: "Snacks" },
   { href: "/coaches/lineups", label: "Lineups" },
-  { href: "/coaches/notes", label: "Notes" },
+  { href: "/coaches/practice", label: "Practice Planner" },
   { href: "/coaches/documents", label: "Docs" },
 ];
 

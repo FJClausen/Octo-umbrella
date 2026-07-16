@@ -54,7 +54,7 @@ export default async function CoachesOverview() {
     { href: "/coaches/events", label: "Upcoming events", value: upcoming },
     { href: "/coaches/roster", label: "Active players", value: players },
     {
-      href: "/coaches/snacks",
+      href: "/coaches/events",
       label: "Open snack slots",
       value: openSnacks,
       accent: openSnacks > 0 ? "text-amber-600" : "text-slate-400",
@@ -84,9 +84,6 @@ export default async function CoachesOverview() {
           </Link>
           <Link href="/coaches/news" className="btn-outline text-sm">
             + Post news
-          </Link>
-          <Link href="/coaches/snacks" className="btn-outline text-sm">
-            + Snack slot
           </Link>
           <Link href="/coaches/roster" className="btn-outline text-sm">
             + Add player

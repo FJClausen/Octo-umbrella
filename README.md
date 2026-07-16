@@ -1,10 +1,11 @@
 # ⚽ Girls Soccer Team Site
 
 A mobile-first team hub for a youth soccer team, built with **Next.js** and
-**Supabase**. Parents get a calendar with RSVPs, team news, a snack sign-up
-schedule, a roster, and a shared photo gallery. Coaches get a private
-**Coaches Corner** with approvals, roster management with private coaching
-notes, lineups & game plans, private notes, and shared documents.
+**Supabase**. Parents get a calendar with RSVPs (with snack sign-ups built
+into each event), team news, a roster, and a shared photo gallery. Coaches
+get a private **Coaches Corner** with approvals, roster management with
+private coaching notes, a general + per-game lineup planner, a practice
+planner, and shared documents.
 
 - **Framework:** Next.js 14 (App Router, TypeScript, Tailwind CSS)
 - **Backend:** Supabase (Postgres + Auth + Storage) with Row Level Security
@@ -16,22 +17,29 @@ notes, lineups & game plans, private notes, and shared documents.
 
 ### For parents (login required, approved by a coach)
 - **Home dashboard** — next event, your snack duties, latest news
-- **Calendar** — games, practices, and events; RSVP per child
+- **Calendar** — games, practices, and events; RSVP per child, and claim/give
+  up that event's snack slot right on the event's page (no separate tab)
 - **Team news** — announcements from coaches (with photos)
-- **Snack schedule** — claim open snack slots
 - **Roster** — first name + position(s) only (kid-safe)
 - **Team Gallery** — any approved parent can upload game-day photos; you can delete your own, coaches can delete any
 - **Account** — edit your name/phone and see your linked players
 
 ### Coaches Corner (coaches only — invisible to parents)
 - **Approvals** — approve/deny new families, promote an assistant coach
-- **Events** — full create/edit/delete, with the option to create a linked
-  snack slot at the same time as the event
-- **News / Snacks** — full create/edit/delete
+- **Events** — full create/edit/delete, with the option to create (or later
+  remove) a linked snack slot right from the event form — there's no
+  separate snack-management tab
+- **News** — full create/edit/delete
 - **Roster** — add players (with multiple positions each), link them to a
   parent account, upload photos, and keep private per-player coaching notes
-- **Lineups & game plans** — formation + plan per game, with live RSVP headcount
-- **Private notes** and **shared documents/links**
+- **Lineups** — a **general lineup** (independent of any game) plus
+  **per-game variations** you can start by copying the general one. Each
+  uses a preset 7-a-side formation (dropdown), with a player and a short
+  note assignable to every slot, plus live RSVP headcount per game
+- **Practice Planner** — log each session's Warmup / Exercises / Scrimmages,
+  optionally linked to a practice on the calendar, and save any exercise as
+  a reusable template to insert into future sessions
+- **Shared documents/links**
 
 ### How access works
 - The **first person to sign up automatically becomes the head coach** (approved).
@@ -62,7 +70,12 @@ notes, lineups & game plans, private notes, and shared documents.
    and **Run**. This moves player position to a multi-select list, drops
    jersey numbers, and replaces emergency contact/medical notes with a
    private coaching notes field.
-5. (Optional) To start with sample events/news/snacks, run
+5. Paste the contents of [`supabase/migrations/0004_lineups_and_practice.sql`](supabase/migrations/0004_lineups_and_practice.sql)
+   and **Run**. This reworks lineups (general lineup + per-game variations,
+   formation presets, per-player notes) and adds the Practice Planner
+   tables. It does **not** delete the old `coach_notes` table/data — see the
+   note at the top of that file if you want to drop it yourself later.
+6. (Optional) To start with sample events/news/snacks, run
    [`supabase/seed.sql`](supabase/seed.sql) the same way.
 
 ### 3. Configure email auth
@@ -118,17 +131,24 @@ you're first, you become the head coach automatically.
 ```
 app/
   (app)/            Protected area (requires an approved account)
-    home, calendar, news, snacks, roster, account
+    home, calendar (RSVP + snack claim/release lives on the event page),
+    news, roster, gallery, account
     coaches/        Coaches Corner (requires role = coach)
+      approvals, events, news, roster, lineups, practice, documents
   login, signup, pending, auth/signout
-components/         Nav, forms, cards, RSVP + snack controls
+components/         Nav, forms, cards, RSVP + snack controls,
+                    LineupEditor, PracticePlanEditor
 lib/
   supabase/         Browser + server + middleware Supabase clients
   auth.ts           getCurrentProfile / requireApproved / requireCoach
+  site.ts           Team config, formation presets, shared enums
   types.ts          Hand-written Database types
 supabase/
-  migrations/0001_init.sql   Schema, RLS, storage, triggers
-  seed.sql                   Optional sample data
+  migrations/0001_init.sql               Schema, RLS, storage, triggers
+  migrations/0002_gallery.sql            Team Gallery
+  migrations/0003_roster_updates.sql     Positions, coaching notes
+  migrations/0004_lineups_and_practice.sql  Lineups rework, Practice Planner
+  seed.sql                               Optional sample data
 ```
 
 ## Security notes
@@ -136,5 +156,5 @@ supabase/
   safe to expose to the browser; it can only do what the policies allow.
 - Snack claiming/releasing goes through `SECURITY DEFINER` functions so a parent
   can only claim an open slot or release their own.
-- Kid-safe by design: last names, coaching notes, and lineups are readable
-  only by coaches.
+- Kid-safe by design: last names, coaching notes, lineups, and practice plans
+  are readable only by coaches.
