@@ -211,6 +211,27 @@ export interface Database {
         Update: Partial<Database["public"]["Tables"]["lineups"]["Insert"]>;
         Relationships: [];
       };
+      gallery_photos: {
+        Row: {
+          id: string;
+          url: string;
+          storage_path: string;
+          caption: string | null;
+          uploaded_by: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          url: string;
+          storage_path: string;
+          caption?: string | null;
+          uploaded_by?: string | null;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["gallery_photos"]["Insert"]
+        >;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -248,6 +269,8 @@ export type SnackSlot = Database["public"]["Tables"]["snack_slots"]["Row"];
 export type CoachNote = Database["public"]["Tables"]["coach_notes"]["Row"];
 export type DocumentRow = Database["public"]["Tables"]["documents"]["Row"];
 export type Lineup = Database["public"]["Tables"]["lineups"]["Row"];
+export type GalleryPhoto =
+  Database["public"]["Tables"]["gallery_photos"]["Row"];
 
 // Update payload aliases for building partial patches in server actions.
 export type ProfileUpdate =

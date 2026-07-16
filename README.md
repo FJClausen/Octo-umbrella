@@ -19,6 +19,7 @@ a full contact list, lineups & game plans, private notes, and shared documents.
 - **Team news** — announcements from coaches (with photos)
 - **Snack schedule** — claim open snack slots
 - **Roster** — first name + number + position only (kid-safe)
+- **Team Gallery** — any approved parent can upload game-day photos; you can delete your own, coaches can delete any
 - **Account** — edit your name/phone and see your linked players
 
 ### Coaches Corner (coaches only — invisible to parents)
@@ -52,7 +53,9 @@ a full contact list, lineups & game plans, private notes, and shared documents.
 2. Paste the contents of [`supabase/migrations/0001_init.sql`](supabase/migrations/0001_init.sql) and **Run**.
    This creates all tables, security policies, the storage bucket, and the
    sign-up/approval logic.
-3. (Optional) To start with sample events/news/snacks, run
+3. Paste the contents of [`supabase/migrations/0002_gallery.sql`](supabase/migrations/0002_gallery.sql)
+   and **Run**. This adds the Team Gallery table and storage policies.
+4. (Optional) To start with sample events/news/snacks, run
    [`supabase/seed.sql`](supabase/seed.sql) the same way.
 
 ### 3. Configure email auth
