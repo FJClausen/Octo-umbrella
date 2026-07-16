@@ -27,7 +27,7 @@ export default async function LineupsPage() {
             .select("event_id, player_id, status")
             .in("event_id", eventIds)
             .eq("status", "going"),
-          supabase.from("players").select("id, first_name, jersey_number"),
+          supabase.from("players").select("id, first_name"),
         ])
       : [{ data: [] }, { data: [] }, { data: [] }];
 
@@ -35,10 +35,7 @@ export default async function LineupsPage() {
     (lineups ?? []).map((l) => [l.event_id, l])
   );
   const playerName = new Map(
-    (players ?? []).map((p) => [
-      p.id,
-      `${p.first_name}${p.jersey_number != null ? ` #${p.jersey_number}` : ""}`,
-    ])
+    (players ?? []).map((p) => [p.id, p.first_name])
   );
   const goingByEvent = new Map<string, string[]>();
   for (const r of goingRsvps ?? []) {

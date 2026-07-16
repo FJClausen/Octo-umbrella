@@ -10,9 +10,9 @@ export default async function RosterPage() {
   // coaches-only table).
   const { data: players } = await supabase
     .from("players")
-    .select("id, first_name, jersey_number, position, photo_url")
+    .select("id, first_name, positions, photo_url")
     .eq("active", true)
-    .order("jersey_number", { ascending: true, nullsFirst: false });
+    .order("first_name", { ascending: true });
 
   return (
     <div className="space-y-5">
@@ -43,14 +43,11 @@ export default async function RosterPage() {
                   </span>
                 )}
               </div>
-              <p className="font-semibold text-brand-ink">
-                {p.first_name}
-                {p.jersey_number != null ? (
-                  <span className="text-slate-400"> #{p.jersey_number}</span>
-                ) : null}
-              </p>
-              {p.position ? (
-                <p className="text-xs text-slate-500">{p.position}</p>
+              <p className="font-semibold text-brand-ink">{p.first_name}</p>
+              {p.positions && p.positions.length > 0 ? (
+                <p className="text-xs text-slate-500">
+                  {p.positions.join(", ")}
+                </p>
               ) : null}
             </div>
           ))}

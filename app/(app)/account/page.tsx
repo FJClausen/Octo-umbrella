@@ -12,7 +12,7 @@ export default async function AccountPage() {
 
   const { data: myPlayers } = await supabase
     .from("players")
-    .select("id, first_name, jersey_number, position")
+    .select("id, first_name, positions")
     .eq("parent_id", current?.userId ?? "")
     .order("first_name");
 
@@ -62,11 +62,10 @@ export default async function AccountPage() {
                 <span className="font-medium text-brand-ink">
                   {p.first_name}
                 </span>
-                {p.jersey_number != null ? (
-                  <span className="text-slate-400">#{p.jersey_number}</span>
-                ) : null}
-                {p.position ? (
-                  <span className="text-slate-500">· {p.position}</span>
+                {p.positions && p.positions.length > 0 ? (
+                  <span className="text-slate-500">
+                    · {p.positions.join(", ")}
+                  </span>
                 ) : null}
               </li>
             ))}

@@ -11,17 +11,17 @@ function clean(v: FormDataEntryValue | null): string | null {
   return s === "" ? null : s;
 }
 
-function num(v: FormDataEntryValue | null): number | null {
-  const s = String(v ?? "").trim();
-  if (s === "") return null;
-  const n = Number(s);
-  return Number.isFinite(n) ? n : null;
+function getPositions(formData: FormData): string[] {
+  return formData
+    .getAll("positions")
+    .map((v) => String(v))
+    .filter(Boolean);
 }
 
 function revalidate() {
   revalidatePath("/coaches/roster");
-  revalidatePath("/coaches/contacts");
   revalidatePath("/roster");
+  revalidatePath("/account");
 }
 
 export async function createPlayer(formData: FormData) {
@@ -37,8 +37,7 @@ export async function createPlayer(formData: FormData) {
     .from("players")
     .insert({
       first_name,
-      jersey_number: num(formData.get("jersey_number")),
-      position: clean(formData.get("position")),
+      positions: getPositions(formData),
       parent_id: clean(formData.get("parent_id")),
       photo_url,
     })
@@ -49,8 +48,7 @@ export async function createPlayer(formData: FormData) {
     await supabase.from("player_private").insert({
       player_id: inserted.id,
       last_name: clean(formData.get("last_name")),
-      medical_notes: clean(formData.get("medical_notes")),
-      emergency_contact: clean(formData.get("emergency_contact")),
+      coaching_notes: clean(formData.get("coaching_notes")),
     });
   }
   revalidate();
@@ -64,8 +62,7 @@ export async function updatePlayer(formData: FormData) {
 
   const patch: PlayerUpdate = {
     first_name: String(formData.get("first_name") || "").trim(),
-    jersey_number: num(formData.get("jersey_number")),
-    position: clean(formData.get("position")),
+    positions: getPositions(formData),
     parent_id: clean(formData.get("parent_id")),
     active: formData.get("active") === "on",
   };
@@ -78,8 +75,7 @@ export async function updatePlayer(formData: FormData) {
   await supabase.from("player_private").upsert({
     player_id: id,
     last_name: clean(formData.get("last_name")),
-    medical_notes: clean(formData.get("medical_notes")),
-    emergency_contact: clean(formData.get("emergency_contact")),
+    coaching_notes: clean(formData.get("coaching_notes")),
   });
   revalidate();
 }

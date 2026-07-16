@@ -102,6 +102,20 @@ export default async function ManageEventsPage() {
         </summary>
         <form action={createEvent} className="mt-4 space-y-4">
           <EventFields />
+          <div className="rounded-lg border border-slate-200 p-3">
+            <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+              <input type="checkbox" name="add_snack_slot" />
+              Also create a snack slot for this event
+            </label>
+            <div className="mt-2">
+              <label className="label">Snack slot label (optional)</label>
+              <input
+                name="snack_label"
+                className="input"
+                placeholder="e.g. Half-time snack + water"
+              />
+            </div>
+          </div>
           <SubmitButton>Add event</SubmitButton>
         </form>
       </details>

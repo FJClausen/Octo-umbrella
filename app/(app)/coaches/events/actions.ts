@@ -11,7 +11,9 @@ function clean(value: FormDataEntryValue | null): string | null {
 
 function revalidate() {
   revalidatePath("/coaches/events");
+  revalidatePath("/coaches/snacks");
   revalidatePath("/calendar");
+  revalidatePath("/snacks");
   revalidatePath("/home");
 }
 
@@ -21,15 +23,28 @@ export async function createEvent(formData: FormData) {
   const starts_at = clean(formData.get("starts_at"));
   if (!starts_at) return;
 
-  await supabase.from("events").insert({
-    type: String(formData.get("type") || "game"),
-    title: String(formData.get("title") || "Event").trim() || "Event",
-    opponent: clean(formData.get("opponent")),
-    location: clean(formData.get("location")),
-    starts_at,
-    ends_at: clean(formData.get("ends_at")),
-    notes: clean(formData.get("notes")),
-  });
+  const { data: inserted } = await supabase
+    .from("events")
+    .insert({
+      type: String(formData.get("type") || "game"),
+      title: String(formData.get("title") || "Event").trim() || "Event",
+      opponent: clean(formData.get("opponent")),
+      location: clean(formData.get("location")),
+      starts_at,
+      ends_at: clean(formData.get("ends_at")),
+      notes: clean(formData.get("notes")),
+    })
+    .select("id")
+    .single();
+
+  if (inserted && formData.get("add_snack_slot") === "on") {
+    await supabase.from("snack_slots").insert({
+      event_id: inserted.id,
+      slot_date: starts_at.slice(0, 10),
+      label: clean(formData.get("snack_label")),
+    });
+  }
+
   revalidate();
 }
 

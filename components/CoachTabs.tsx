@@ -7,7 +7,6 @@ const TABS = [
   { href: "/coaches", label: "Overview" },
   { href: "/coaches/approvals", label: "Approvals" },
   { href: "/coaches/roster", label: "Roster" },
-  { href: "/coaches/contacts", label: "Contacts" },
   { href: "/coaches/events", label: "Events" },
   { href: "/coaches/news", label: "News" },
   { href: "/coaches/snacks", label: "Snacks" },

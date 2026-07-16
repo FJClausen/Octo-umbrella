@@ -35,8 +35,7 @@ export interface Database {
         Row: {
           id: string;
           first_name: string;
-          jersey_number: number | null;
-          position: string | null;
+          positions: string[];
           photo_url: string | null;
           parent_id: string | null;
           active: boolean;
@@ -45,8 +44,7 @@ export interface Database {
         Insert: {
           id?: string;
           first_name: string;
-          jersey_number?: number | null;
-          position?: string | null;
+          positions?: string[];
           photo_url?: string | null;
           parent_id?: string | null;
           active?: boolean;
@@ -58,14 +56,12 @@ export interface Database {
         Row: {
           player_id: string;
           last_name: string | null;
-          medical_notes: string | null;
-          emergency_contact: string | null;
+          coaching_notes: string | null;
         };
         Insert: {
           player_id: string;
           last_name?: string | null;
-          medical_notes?: string | null;
-          emergency_contact?: string | null;
+          coaching_notes?: string | null;
         };
         Update: Partial<
           Database["public"]["Tables"]["player_private"]["Insert"]

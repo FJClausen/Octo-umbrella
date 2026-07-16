@@ -5,15 +5,15 @@
 -- =============================================================================
 
 -- Sample roster (first names only shown publicly; last names are coach-only) --
-insert into public.players (first_name, jersey_number, position) values
-  ('Ava', 7, 'Forward'),
-  ('Mia', 10, 'Midfielder'),
-  ('Sofia', 4, 'Defender'),
-  ('Zoe', 1, 'Goalkeeper'),
-  ('Lily', 9, 'Forward'),
-  ('Emma', 5, 'Midfielder'),
-  ('Olivia', 3, 'Defender'),
-  ('Harper', 8, 'Midfielder')
+insert into public.players (first_name, positions) values
+  ('Ava', array['Forward']),
+  ('Mia', array['Midfielder']),
+  ('Sofia', array['Defender']),
+  ('Zoe', array['Goalkeeper']),
+  ('Lily', array['Forward']),
+  ('Emma', array['Midfielder', 'Defender']),
+  ('Olivia', array['Defender']),
+  ('Harper', array['Midfielder'])
 on conflict do nothing;
 
 -- Sample calendar --------------------------------------------------------------

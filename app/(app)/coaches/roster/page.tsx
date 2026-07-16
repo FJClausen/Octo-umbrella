@@ -25,16 +25,25 @@ function ParentSelect({
   );
 }
 
-function PositionSelect({ value }: { value?: string | null }) {
+function PositionCheckboxes({ selected = [] }: { selected?: string[] }) {
   return (
-    <select name="position" defaultValue={value ?? ""} className="input">
-      <option value="">— position —</option>
+    <div className="flex flex-wrap gap-3">
       {PLAYER_POSITIONS.map((p) => (
-        <option key={p} value={p}>
+        <label
+          key={p}
+          className="flex items-center gap-1.5 text-sm text-slate-700"
+        >
+          <input
+            type="checkbox"
+            name="positions"
+            value={p}
+            defaultChecked={selected.includes(p)}
+            className="rounded border-slate-300 text-brand-blue focus:ring-brand-blue"
+          />
           {p}
-        </option>
+        </label>
       ))}
-    </select>
+    </div>
   );
 }
 
@@ -72,13 +81,9 @@ export default async function ManageRosterPage() {
             <label className="label">Last name (coaches only)</label>
             <input name="last_name" className="input" />
           </div>
-          <div>
-            <label className="label">Jersey #</label>
-            <input type="number" name="jersey_number" className="input" />
-          </div>
-          <div>
-            <label className="label">Position</label>
-            <PositionSelect />
+          <div className="sm:col-span-2">
+            <label className="label">Positions</label>
+            <PositionCheckboxes />
           </div>
           <div>
             <label className="label">Parent account</label>
@@ -88,13 +93,14 @@ export default async function ManageRosterPage() {
             <label className="label">Photo</label>
             <input type="file" name="photo" accept="image/*" className="text-sm" />
           </div>
-          <div>
-            <label className="label">Emergency contact (coaches only)</label>
-            <input name="emergency_contact" className="input" />
-          </div>
-          <div>
-            <label className="label">Medical notes (coaches only)</label>
-            <input name="medical_notes" className="input" />
+          <div className="sm:col-span-2">
+            <label className="label">Coaching notes (coaches only)</label>
+            <textarea
+              name="coaching_notes"
+              rows={3}
+              className="input"
+              placeholder="Development notes, strategy, things to work on…"
+            />
           </div>
           <div className="sm:col-span-2">
             <SubmitButton>Add player</SubmitButton>
@@ -112,17 +118,24 @@ export default async function ManageRosterPage() {
                   <p className="font-semibold text-brand-ink">
                     {pl.first_name}
                     {pv?.last_name ? ` ${pv.last_name}` : ""}
-                    {pl.jersey_number != null ? (
-                      <span className="text-slate-400"> #{pl.jersey_number}</span>
-                    ) : null}
                     {!pl.active ? (
                       <span className="ml-2 badge bg-slate-100 text-slate-500">
                         Inactive
                       </span>
                     ) : null}
                   </p>
-                  <span className="text-sm text-slate-400">{pl.position}</span>
+                  <span className="text-sm text-slate-400">
+                    {pl.positions && pl.positions.length > 0
+                      ? pl.positions.join(", ")
+                      : "—"}
+                  </span>
                 </div>
+
+                {pv?.coaching_notes ? (
+                  <p className="mt-2 whitespace-pre-wrap rounded-lg bg-slate-50 p-2 text-sm text-slate-600">
+                    {pv.coaching_notes}
+                  </p>
+                ) : null}
 
                 <details className="mt-2">
                   <summary className="cursor-pointer text-sm text-brand-blue">
@@ -150,18 +163,9 @@ export default async function ManageRosterPage() {
                         className="input"
                       />
                     </div>
-                    <div>
-                      <label className="label">Jersey #</label>
-                      <input
-                        type="number"
-                        name="jersey_number"
-                        defaultValue={pl.jersey_number ?? ""}
-                        className="input"
-                      />
-                    </div>
-                    <div>
-                      <label className="label">Position</label>
-                      <PositionSelect value={pl.position} />
+                    <div className="sm:col-span-2">
+                      <label className="label">Positions</label>
+                      <PositionCheckboxes selected={pl.positions ?? []} />
                     </div>
                     <div>
                       <label className="label">Parent account</label>
@@ -176,20 +180,14 @@ export default async function ManageRosterPage() {
                         className="text-sm"
                       />
                     </div>
-                    <div>
-                      <label className="label">Emergency contact</label>
-                      <input
-                        name="emergency_contact"
-                        defaultValue={pv?.emergency_contact ?? ""}
+                    <div className="sm:col-span-2">
+                      <label className="label">Coaching notes</label>
+                      <textarea
+                        name="coaching_notes"
+                        rows={3}
+                        defaultValue={pv?.coaching_notes ?? ""}
                         className="input"
-                      />
-                    </div>
-                    <div>
-                      <label className="label">Medical notes</label>
-                      <input
-                        name="medical_notes"
-                        defaultValue={pv?.medical_notes ?? ""}
-                        className="input"
+                        placeholder="Development notes, strategy, things to work on…"
                       />
                     </div>
                     <label className="flex items-center gap-2 text-sm text-slate-600 sm:col-span-2">

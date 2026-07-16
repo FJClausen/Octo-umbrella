@@ -2,8 +2,9 @@
 
 A mobile-first team hub for a youth soccer team, built with **Next.js** and
 **Supabase**. Parents get a calendar with RSVPs, team news, a snack sign-up
-schedule, and a roster. Coaches get a private **Coaches Corner** with approvals,
-a full contact list, lineups & game plans, private notes, and shared documents.
+schedule, a roster, and a shared photo gallery. Coaches get a private
+**Coaches Corner** with approvals, roster management with private coaching
+notes, lineups & game plans, private notes, and shared documents.
 
 - **Framework:** Next.js 14 (App Router, TypeScript, Tailwind CSS)
 - **Backend:** Supabase (Postgres + Auth + Storage) with Row Level Security
@@ -18,15 +19,17 @@ a full contact list, lineups & game plans, private notes, and shared documents.
 - **Calendar** — games, practices, and events; RSVP per child
 - **Team news** — announcements from coaches (with photos)
 - **Snack schedule** — claim open snack slots
-- **Roster** — first name + number + position only (kid-safe)
+- **Roster** — first name + position(s) only (kid-safe)
 - **Team Gallery** — any approved parent can upload game-day photos; you can delete your own, coaches can delete any
 - **Account** — edit your name/phone and see your linked players
 
 ### Coaches Corner (coaches only — invisible to parents)
 - **Approvals** — approve/deny new families, promote an assistant coach
-- **Contacts** — full names, parent email/phone, emergency & medical info
-- **Events / News / Snacks** — full create/edit/delete
-- **Roster** — add players, link them to a parent account, upload photos
+- **Events** — full create/edit/delete, with the option to create a linked
+  snack slot at the same time as the event
+- **News / Snacks** — full create/edit/delete
+- **Roster** — add players (with multiple positions each), link them to a
+  parent account, upload photos, and keep private per-player coaching notes
 - **Lineups & game plans** — formation + plan per game, with live RSVP headcount
 - **Private notes** and **shared documents/links**
 
@@ -36,7 +39,7 @@ a full contact list, lineups & game plans, private notes, and shared documents.
   coach in **Coaches Corner → Approvals**.
 - A coach can promote an approved parent to **assistant coach** at any time.
 - Privacy is enforced in the database (Row Level Security), not just the UI:
-  parents can never read last names, contact info, coach notes, or lineups.
+  parents can never read last names, coaching notes, or lineups.
 
 ---
 
@@ -55,7 +58,11 @@ a full contact list, lineups & game plans, private notes, and shared documents.
    sign-up/approval logic.
 3. Paste the contents of [`supabase/migrations/0002_gallery.sql`](supabase/migrations/0002_gallery.sql)
    and **Run**. This adds the Team Gallery table and storage policies.
-4. (Optional) To start with sample events/news/snacks, run
+4. Paste the contents of [`supabase/migrations/0003_roster_updates.sql`](supabase/migrations/0003_roster_updates.sql)
+   and **Run**. This moves player position to a multi-select list, drops
+   jersey numbers, and replaces emergency contact/medical notes with a
+   private coaching notes field.
+5. (Optional) To start with sample events/news/snacks, run
    [`supabase/seed.sql`](supabase/seed.sql) the same way.
 
 ### 3. Configure email auth
@@ -129,5 +136,5 @@ supabase/
   safe to expose to the browser; it can only do what the policies allow.
 - Snack claiming/releasing goes through `SECURITY DEFINER` functions so a parent
   can only claim an open slot or release their own.
-- Kid-safe by design: last names, contact info, medical/emergency details, coach
-  notes, and lineups are readable only by coaches.
+- Kid-safe by design: last names, coaching notes, and lineups are readable
+  only by coaches.
