@@ -32,24 +32,52 @@ export function LineupEditor({
   const [formationKey, setFormationKey] = useState<FormationKey>(
     initialFormationKey
   );
-  const [slots, setSlots] = useState<LineupSlot[]>(
-    initialSlots.length ? initialSlots : blankSlotsFor(initialFormationKey)
-  );
+  // Slot assignments are kept per formation, so switching formations (to
+  // compare, or by accident) never wipes work — switching back restores it.
+  const [slotsByFormation, setSlotsByFormation] = useState<
+    Partial<Record<FormationKey, LineupSlot[]>>
+  >({
+    [initialFormationKey]: initialSlots.length
+      ? initialSlots
+      : blankSlotsFor(initialFormationKey),
+  });
   const [plan, setPlan] = useState(initialPlan);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const slots = slotsByFormation[formationKey] ?? blankSlotsFor(formationKey);
+
   function handleFormationChange(key: FormationKey) {
     setFormationKey(key);
-    setSlots(blankSlotsFor(key));
+    setSlotsByFormation((prev) => {
+      if (prev[key]) return prev; // already visited: restore as-is
+      // First visit: seed the new formation by carrying over players/notes
+      // from same-named slots in the current formation (e.g. "Goalkeeper",
+      // "Defender 1" exist in most presets).
+      const current = prev[formationKey] ?? [];
+      const bySlotName = new Map(current.map((s) => [s.slot, s]));
+      const seeded = blankSlotsFor(key).map((s) => {
+        const match = bySlotName.get(s.slot);
+        return match
+          ? { ...s, playerId: match.playerId, note: match.note }
+          : s;
+      });
+      return { ...prev, [key]: seeded };
+    });
     setSaved(false);
   }
 
   function updateSlot(index: number, patch: Partial<LineupSlot>) {
-    setSlots((prev) =>
-      prev.map((s, i) => (i === index ? { ...s, ...patch } : s))
-    );
+    setSlotsByFormation((prev) => {
+      const current = prev[formationKey] ?? blankSlotsFor(formationKey);
+      return {
+        ...prev,
+        [formationKey]: current.map((s, i) =>
+          i === index ? { ...s, ...patch } : s
+        ),
+      };
+    });
     setSaved(false);
   }
 
@@ -80,6 +108,10 @@ export function LineupEditor({
             </option>
           ))}
         </select>
+        <p className="mt-1 text-xs text-slate-400">
+          You can switch formations to compare without losing your work —
+          hitting Save stores the formation currently shown.
+        </p>
       </div>
 
       <div className="space-y-2">
