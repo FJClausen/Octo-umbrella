@@ -26,7 +26,7 @@ export function LineupEditor({
     formationKey: string,
     slots: LineupSlot[],
     plan: string
-  ) => Promise<void>;
+  ) => Promise<{ error?: string } | void>;
   saveLabel?: string;
 }) {
   const [formationKey, setFormationKey] = useState<FormationKey>(
@@ -38,6 +38,7 @@ export function LineupEditor({
   const [plan, setPlan] = useState(initialPlan);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleFormationChange(key: FormationKey) {
     setFormationKey(key);
@@ -53,9 +54,14 @@ export function LineupEditor({
   }
 
   function handleSave() {
+    setError(null);
     startTransition(async () => {
-      await onSave(formationKey, slots, plan);
-      setSaved(true);
+      const result = await onSave(formationKey, slots, plan);
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        setSaved(true);
+      }
     });
   }
 
@@ -136,6 +142,11 @@ export function LineupEditor({
           <span className="text-sm text-brand-green-dark">Saved ✓</span>
         ) : null}
       </div>
+      {error ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          Couldn’t save: {error}
+        </p>
+      ) : null}
     </div>
   );
 }

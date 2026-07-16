@@ -7,7 +7,11 @@ import { uploadGalleryPhoto, deleteGalleryPhoto } from "./actions";
 
 export const metadata = { title: "Team Gallery" };
 
-export default async function GalleryPage() {
+export default async function GalleryPage({
+  searchParams,
+}: {
+  searchParams: { error?: string };
+}) {
   const supabase = createClient();
   const current = await getCurrentProfile();
   const isCoach = current?.profile?.role === "coach";
@@ -28,6 +32,12 @@ export default async function GalleryPage() {
         title="Team Gallery"
         subtitle="Share your favorite game-day and practice photos with the team."
       />
+
+      {searchParams.error ? (
+        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {searchParams.error}
+        </p>
+      ) : null}
 
       <details className="card p-4">
         <summary className="cursor-pointer font-semibold text-brand-ink">

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireCoach } from "@/lib/auth";
 
@@ -15,9 +16,9 @@ export async function savePracticePlan(
   warmup: string,
   exercises: string,
   scrimmages: string
-) {
+): Promise<{ error?: string }> {
   await requireCoach();
-  if (!sessionDate) return;
+  if (!sessionDate) return { error: "Please pick a session date." };
   const supabase = createClient();
 
   const payload = {
@@ -28,12 +29,13 @@ export async function savePracticePlan(
     scrimmages: scrimmages.trim() || null,
   };
 
-  if (planId) {
-    await supabase.from("practice_plans").update(payload).eq("id", planId);
-  } else {
-    await supabase.from("practice_plans").insert(payload);
-  }
+  const { error } = planId
+    ? await supabase.from("practice_plans").update(payload).eq("id", planId)
+    : await supabase.from("practice_plans").insert(payload);
+
+  if (error) return { error: error.message };
   revalidate();
+  return {};
 }
 
 export async function deletePracticePlan(formData: FormData) {
@@ -51,10 +53,13 @@ export async function createExerciseTemplate(formData: FormData) {
   const title = String(formData.get("title") || "").trim();
   if (!title) return;
   const supabase = createClient();
-  await supabase.from("exercise_templates").insert({
+  const { error } = await supabase.from("exercise_templates").insert({
     title,
     description: String(formData.get("description") || "").trim(),
   });
+  if (error) {
+    redirect(`/coaches/practice?error=${encodeURIComponent(error.message)}`);
+  }
   revalidate();
 }
 

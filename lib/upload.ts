@@ -2,16 +2,21 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/types";
 
+export type UploadResult =
+  | { ok: true; url: string; path: string }
+  | { ok: false; error: string }
+  | null; // null = no file was provided (not an error)
+
 /**
- * Uploads an image File to the public "photos" bucket and returns both its
- * public URL and its storage path (needed later to delete the object).
- * Returns null if there was no file / the upload failed.
+ * Uploads an image File to the public "photos" bucket. Returns the public
+ * URL + storage path on success, an error message on failure, or null when
+ * no file was attached to the form.
  */
 export async function uploadPhotoDetailed(
   supabase: SupabaseClient<Database>,
   file: FormDataEntryValue | null,
   folder: string
-): Promise<{ url: string; path: string } | null> {
+): Promise<UploadResult> {
   if (!file || typeof file === "string") return null;
   const blob = file as File;
   if (!blob.size) return null;
@@ -24,16 +29,18 @@ export async function uploadPhotoDetailed(
     .from("photos")
     .upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: false });
 
-  if (error) return null;
+  if (error) {
+    console.error(`Photo upload failed (${path}):`, error.message);
+    return { ok: false, error: error.message };
+  }
 
   const { data } = supabase.storage.from("photos").getPublicUrl(path);
-  return { url: data.publicUrl, path };
+  return { ok: true, url: data.publicUrl, path };
 }
 
 /**
- * Convenience wrapper over uploadPhotoDetailed for callers that only need
- * the public URL (news images, player headshots — coach-only uploads,
- * enforced by storage RLS).
+ * Convenience wrapper for callers that only need the public URL (news
+ * images, player headshots). Returns null on no-file or failure.
  */
 export async function uploadPhoto(
   supabase: SupabaseClient<Database>,
@@ -41,5 +48,5 @@ export async function uploadPhoto(
   folder: string
 ): Promise<string | null> {
   const result = await uploadPhotoDetailed(supabase, file, folder);
-  return result?.url ?? null;
+  return result?.ok ? result.url : null;
 }

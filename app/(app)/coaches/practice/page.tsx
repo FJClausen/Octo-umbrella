@@ -11,7 +11,11 @@ import {
 
 export const metadata = { title: "Practice Planner" };
 
-export default async function PracticePlannerPage() {
+export default async function PracticePlannerPage({
+  searchParams,
+}: {
+  searchParams: { error?: string };
+}) {
   const supabase = createClient();
   const today = new Date().toISOString().slice(0, 10);
 
@@ -35,6 +39,12 @@ export default async function PracticePlannerPage() {
 
   return (
     <div className="space-y-6">
+      {searchParams.error ? (
+        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+          {searchParams.error}
+        </p>
+      ) : null}
+
       <details className="card p-4">
         <summary className="cursor-pointer font-semibold text-brand-ink">
           Exercise Templates ({templateList.length})

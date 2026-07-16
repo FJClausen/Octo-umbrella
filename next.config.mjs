@@ -15,6 +15,13 @@ const nextConfig = {
       ? [{ protocol: "https", hostname: supabaseHost }]
       : [],
   },
+  experimental: {
+    serverActions: {
+      // Default is 1 MB, which rejects phone photos before the upload
+      // handler even runs. Allow room for full-size camera images.
+      bodySizeLimit: "25mb",
+    },
+  },
 };
 
 export default nextConfig;

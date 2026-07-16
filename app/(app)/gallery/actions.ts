@@ -1,13 +1,18 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { uploadPhotoDetailed } from "@/lib/upload";
 
+function fail(message: string): never {
+  redirect(`/gallery?error=${encodeURIComponent(message)}`);
+}
+
 export async function uploadGalleryPhoto(formData: FormData) {
   const current = await getCurrentProfile();
-  if (!current) return;
+  if (!current) fail("You must be signed in to upload.");
 
   const supabase = createClient();
   const uploaded = await uploadPhotoDetailed(
@@ -15,7 +20,8 @@ export async function uploadGalleryPhoto(formData: FormData) {
     formData.get("photo"),
     "gallery"
   );
-  if (!uploaded) return;
+  if (!uploaded) fail("No photo was selected.");
+  if (!uploaded.ok) fail(`Upload failed: ${uploaded.error}`);
 
   const caption = String(formData.get("caption") || "").trim() || null;
 
@@ -29,10 +35,11 @@ export async function uploadGalleryPhoto(formData: FormData) {
   if (error) {
     // Avoid an orphaned file in storage if the metadata row failed to save.
     await supabase.storage.from("photos").remove([uploaded.path]);
-    return;
+    fail(`Could not save photo: ${error.message}`);
   }
 
   revalidatePath("/gallery");
+  redirect("/gallery");
 }
 
 export async function deleteGalleryPhoto(formData: FormData) {

@@ -77,7 +77,7 @@ export function PracticePlanEditor({
     warmup: string,
     exercises: string,
     scrimmages: string
-  ) => Promise<void>;
+  ) => Promise<{ error?: string } | void>;
   saveLabel?: string;
 }) {
   const [eventId, setEventId] = useState(initialEventId ?? "");
@@ -87,11 +87,23 @@ export function PracticePlanEditor({
   const [scrimmages, setScrimmages] = useState(initialScrimmages);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   function handleSave() {
+    setError(null);
     startTransition(async () => {
-      await onSave(eventId || null, sessionDate, warmup, exercises, scrimmages);
-      setSaved(true);
+      const result = await onSave(
+        eventId || null,
+        sessionDate,
+        warmup,
+        exercises,
+        scrimmages
+      );
+      if (result?.error) {
+        setError(result.error);
+      } else {
+        setSaved(true);
+      }
     });
   }
 
@@ -172,6 +184,11 @@ export function PracticePlanEditor({
           <span className="text-sm text-brand-green-dark">Saved ✓</span>
         ) : null}
       </div>
+      {error ? (
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          Couldn’t save: {error}
+        </p>
+      ) : null}
     </div>
   );
 }

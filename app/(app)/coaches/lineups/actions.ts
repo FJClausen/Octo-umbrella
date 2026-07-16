@@ -14,7 +14,7 @@ export async function saveGeneralLineup(
   formationKey: string,
   slots: LineupSlot[],
   plan: string
-) {
+): Promise<{ error?: string }> {
   await requireCoach();
   const supabase = createClient();
 
@@ -24,20 +24,21 @@ export async function saveGeneralLineup(
     .is("event_id", null)
     .maybeSingle();
 
-  if (existing) {
-    await supabase
-      .from("lineups")
-      .update({ formation_key: formationKey, slots, plan })
-      .eq("id", existing.id);
-  } else {
-    await supabase.from("lineups").insert({
-      event_id: null,
-      formation_key: formationKey,
-      slots,
-      plan,
-    });
-  }
+  const { error } = existing
+    ? await supabase
+        .from("lineups")
+        .update({ formation_key: formationKey, slots, plan })
+        .eq("id", existing.id)
+    : await supabase.from("lineups").insert({
+        event_id: null,
+        formation_key: formationKey,
+        slots,
+        plan,
+      });
+
+  if (error) return { error: error.message };
   revalidate();
+  return {};
 }
 
 /** An event-specific lineup variation. */
@@ -46,16 +47,18 @@ export async function saveEventLineup(
   formationKey: string,
   slots: LineupSlot[],
   plan: string
-) {
+): Promise<{ error?: string }> {
   await requireCoach();
   const supabase = createClient();
-  await supabase
+  const { error } = await supabase
     .from("lineups")
     .upsert(
       { event_id: eventId, formation_key: formationKey, slots, plan },
       { onConflict: "event_id" }
     );
+  if (error) return { error: error.message };
   revalidate();
+  return {};
 }
 
 /** Start an event's lineup from a copy of the current general lineup. */
