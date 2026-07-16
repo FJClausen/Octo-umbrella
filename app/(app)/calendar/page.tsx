@@ -5,8 +5,11 @@ import { formatEventWhen } from "@/lib/format";
 
 export const metadata = { title: "Calendar" };
 
+type SnackInfo = { claimed_by: string | null; claimed_by_name: string | null };
+
 function EventRow({
   event,
+  snack,
 }: {
   event: {
     id: string;
@@ -17,6 +20,7 @@ function EventRow({
     starts_at: string;
     ends_at: string | null;
   };
+  snack?: SnackInfo;
 }) {
   return (
     <Link href={`/calendar/${event.id}`}>
@@ -41,6 +45,20 @@ function EventRow({
             {event.location ? (
               <p className="text-sm text-slate-400">📍 {event.location}</p>
             ) : null}
+            {snack ? (
+              <p className="mt-0.5 text-sm">
+                🍊{" "}
+                {snack.claimed_by ? (
+                  <span className="text-slate-500">
+                    Snacks: {snack.claimed_by_name || "covered"}
+                  </span>
+                ) : (
+                  <span className="font-medium text-amber-600">
+                    Snacks: not assigned yet — tap to sign up
+                  </span>
+                )}
+              </p>
+            ) : null}
           </div>
           <span className="text-slate-300">→</span>
         </div>
@@ -53,19 +71,29 @@ export default async function CalendarPage() {
   const supabase = createClient();
   const dayStart = `${new Date().toISOString().slice(0, 10)}T00:00:00`;
 
-  const [{ data: upcoming }, { data: past }] = await Promise.all([
-    supabase
-      .from("events")
-      .select("*")
-      .gte("starts_at", dayStart)
-      .order("starts_at", { ascending: true }),
-    supabase
-      .from("events")
-      .select("*")
-      .lt("starts_at", dayStart)
-      .order("starts_at", { ascending: false })
-      .limit(10),
-  ]);
+  const [{ data: upcoming }, { data: past }, { data: snackSlots }] =
+    await Promise.all([
+      supabase
+        .from("events")
+        .select("*")
+        .gte("starts_at", dayStart)
+        .order("starts_at", { ascending: true }),
+      supabase
+        .from("events")
+        .select("*")
+        .lt("starts_at", dayStart)
+        .order("starts_at", { ascending: false })
+        .limit(10),
+      supabase
+        .from("snack_slots")
+        .select("event_id, claimed_by, claimed_by_name"),
+    ]);
+
+  const snackByEvent = new Map(
+    (snackSlots ?? [])
+      .filter((s) => s.event_id)
+      .map((s) => [s.event_id as string, s])
+  );
 
   return (
     <div className="space-y-6">
@@ -79,7 +107,9 @@ export default async function CalendarPage() {
           Upcoming
         </h2>
         {upcoming && upcoming.length > 0 ? (
-          upcoming.map((e) => <EventRow key={e.id} event={e} />)
+          upcoming.map((e) => (
+            <EventRow key={e.id} event={e} snack={snackByEvent.get(e.id)} />
+          ))
         ) : (
           <EmptyState
             title="No upcoming events"

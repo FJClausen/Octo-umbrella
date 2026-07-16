@@ -2,7 +2,6 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { Card, EventTypeBadge, LinkButton } from "@/components/ui";
-import { CleatsIcon } from "@/components/CleatsIcon";
 import { formatEventWhen, formatDay, formatDate } from "@/lib/format";
 import { site } from "@/lib/site";
 
@@ -43,10 +42,7 @@ export default async function HomePage() {
     <div className="space-y-6">
       <div>
         <p className="text-sm text-slate-500">Welcome back,</p>
-        <h1 className="flex items-center gap-3 text-2xl font-bold text-brand-ink">
-          {firstName}
-          <CleatsIcon className="h-8 w-auto" />
-        </h1>
+        <h1 className="text-2xl font-bold text-brand-ink">{firstName}</h1>
       </div>
 
       {/* Next event highlight */}
