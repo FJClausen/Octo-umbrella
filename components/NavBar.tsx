@@ -43,7 +43,7 @@ export function NavBar({
               <img
                 src={logoUrl}
                 alt={teamName}
-                className="h-9 w-9 rounded-full object-cover"
+                className="h-10 w-10 rounded-full object-cover"
               />
             ) : (
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-blue-dark text-white">
