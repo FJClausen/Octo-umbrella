@@ -6,10 +6,10 @@ import { usePathname } from "next/navigation";
 type NavItem = { href: string; label: string; icon: string };
 
 const PARENT_NAV: NavItem[] = [
-  { href: "/home", label: "Home", icon: "🏠" },
-  { href: "/calendar", label: "Calendar", icon: "📅" },
+  { href: "/home", label: "Home", icon: "🥅" },
+  { href: "/calendar", label: "Calendar", icon: "🏟️" },
   { href: "/news", label: "News", icon: "📣" },
-  { href: "/roster", label: "Roster", icon: "⚽" },
+  { href: "/roster", label: "Roster", icon: "👕" },
   { href: "/gallery", label: "Gallery", icon: "📸" },
 ];
 

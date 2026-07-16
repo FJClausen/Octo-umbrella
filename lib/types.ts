@@ -255,6 +255,27 @@ export interface Database {
         >;
         Relationships: [];
       };
+      photo_comments: {
+        Row: {
+          id: string;
+          photo_id: string;
+          author_id: string | null;
+          author_name: string | null;
+          body: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          photo_id: string;
+          author_id?: string | null;
+          author_name?: string | null;
+          body: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["photo_comments"]["Insert"]
+        >;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -297,6 +318,8 @@ export type DocumentRow = Database["public"]["Tables"]["documents"]["Row"];
 export type Lineup = Database["public"]["Tables"]["lineups"]["Row"];
 export type GalleryPhoto =
   Database["public"]["Tables"]["gallery_photos"]["Row"];
+export type PhotoComment =
+  Database["public"]["Tables"]["photo_comments"]["Row"];
 
 // Update payload aliases for building partial patches in server actions.
 export type ProfileUpdate =

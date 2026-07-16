@@ -55,4 +55,42 @@ export async function deleteGalleryPhoto(formData: FormData) {
   await supabase.from("gallery_photos").delete().eq("id", id);
 
   revalidatePath("/gallery");
+  // If deleted from the photo's own page, go back to the gallery.
+  if (formData.get("redirect_to_gallery") === "1") {
+    redirect("/gallery");
+  }
+}
+
+export async function addPhotoComment(formData: FormData) {
+  const current = await getCurrentProfile();
+  if (!current) return;
+
+  const photoId = String(formData.get("photo_id") || "");
+  const body = String(formData.get("body") || "").trim();
+  if (!photoId || !body) return;
+
+  const supabase = createClient();
+  const { error } = await supabase.from("photo_comments").insert({
+    photo_id: photoId,
+    author_id: current.userId,
+    author_name: current.profile?.full_name || "A parent",
+    body,
+  });
+
+  if (error) {
+    redirect(
+      `/gallery/${photoId}?error=${encodeURIComponent(error.message)}`
+    );
+  }
+  revalidatePath(`/gallery/${photoId}`);
+}
+
+export async function deletePhotoComment(formData: FormData) {
+  const supabase = createClient();
+  const id = String(formData.get("id") || "");
+  const photoId = String(formData.get("photo_id") || "");
+  if (!id) return;
+
+  await supabase.from("photo_comments").delete().eq("id", id);
+  if (photoId) revalidatePath(`/gallery/${photoId}`);
 }

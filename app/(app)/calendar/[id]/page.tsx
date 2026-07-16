@@ -101,7 +101,7 @@ export default async function EventDetailPage({
           ) : null}
         </h1>
         <dl className="mt-3 space-y-1 text-sm text-slate-600">
-          <div>🕒 {formatEventWhen(event.starts_at, event.ends_at)}</div>
+          <div>⏱️ {formatEventWhen(event.starts_at, event.ends_at)}</div>
           {event.location ? <div>📍 {event.location}</div> : null}
         </dl>
         {event.notes ? (

@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { PageHeader, EmptyState, SubmitButton } from "@/components/ui";
@@ -72,20 +73,24 @@ export default async function GalleryPage({
             const mine = p.uploaded_by === current?.userId;
             return (
               <div key={p.id} className="card overflow-hidden p-0">
-                <div className="relative aspect-square w-full bg-slate-100">
-                  <Image
-                    src={p.url}
-                    alt={p.caption ?? "Team photo"}
-                    fill
-                    sizes="(max-width: 640px) 50vw, 33vw"
-                    className="object-cover"
-                  />
-                </div>
+                <Link href={`/gallery/${p.id}`} className="block">
+                  <div className="relative aspect-square w-full bg-slate-100">
+                    <Image
+                      src={p.url}
+                      alt={p.caption ?? "Team photo"}
+                      fill
+                      sizes="(max-width: 640px) 50vw, 33vw"
+                      className="object-cover transition hover:opacity-90"
+                    />
+                  </div>
+                </Link>
                 <div className="p-2">
                   {p.caption ? (
-                    <p className="line-clamp-2 text-xs text-slate-600">
-                      {p.caption}
-                    </p>
+                    <Link href={`/gallery/${p.id}`}>
+                      <p className="line-clamp-2 text-xs text-slate-600">
+                        {p.caption}
+                      </p>
+                    </Link>
                   ) : null}
                   <p className="mt-0.5 text-[11px] text-slate-400">
                     {nameById.get(p.uploaded_by ?? "") || "A parent"} ·{" "}
