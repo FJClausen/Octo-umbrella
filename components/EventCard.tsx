@@ -8,9 +8,15 @@ export type SnackInfo = {
   claimed_by_name: string | null;
 };
 
-const JERSEY_LABEL: Record<string, string> = {
-  blue: "🔵 Blue jerseys",
-  red: "🔴 Red jerseys",
+const JERSEY_CHIP: Record<string, { label: string; cls: string }> = {
+  blue: {
+    label: "👕 Blue (home)",
+    cls: "bg-brand-blue text-white",
+  },
+  red: {
+    label: "👕 Red (away)",
+    cls: "bg-red-600 text-white",
+  },
 };
 
 /** W/D/L result badge for a played game with a recorded score. */
@@ -42,11 +48,15 @@ export function EventCard({
   snack?: SnackInfo | null;
   currentUserId?: string | null;
 }) {
+  const jersey = event.jersey_color
+    ? JERSEY_CHIP[event.jersey_color]
+    : undefined;
+
   return (
     <Link href={`/calendar/${event.id}`}>
       <Card className="hover:border-brand-green/40">
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <EventTypeBadge type={event.type} />
               <span className="truncate font-semibold text-brand-ink">
@@ -63,34 +73,37 @@ export function EventCard({
             <p className="mt-1 text-sm text-slate-600">
               {formatEventWhen(event.starts_at, event.ends_at)}
             </p>
-            {event.location ? (
-              <p className="text-sm text-slate-400">📍 {event.location}</p>
-            ) : null}
-            {event.jersey_color && JERSEY_LABEL[event.jersey_color] ? (
-              <p className="text-sm text-slate-500">
-                {JERSEY_LABEL[event.jersey_color]}
-              </p>
-            ) : null}
-            {snack ? (
-              <p className="mt-0.5 text-sm">
-                🍊{" "}
-                {snack.claimed_by ? (
-                  <span className="text-slate-500">
-                    Snacks:{" "}
-                    {currentUserId && snack.claimed_by === currentUserId
-                      ? "you"
-                      : snack.claimed_by_name || "covered"}
+
+            {event.location || jersey ? (
+              <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                {event.location ? (
+                  <span className="badge bg-slate-100 text-slate-600">
+                    📍 {event.location}
                   </span>
-                ) : (
-                  <span className="font-medium text-amber-600">
-                    Snacks: not assigned yet — tap to sign up
-                  </span>
-                )}
-              </p>
+                ) : null}
+                {jersey ? (
+                  <span className={`badge ${jersey.cls}`}>{jersey.label}</span>
+                ) : null}
+              </div>
             ) : null}
           </div>
           <span className="text-slate-300">→</span>
         </div>
+
+        {snack ? (
+          snack.claimed_by ? (
+            <div className="mt-3 rounded-lg bg-brand-green-light px-3 py-2 text-sm font-medium text-brand-green-dark">
+              🍊 Snacks:{" "}
+              {currentUserId && snack.claimed_by === currentUserId
+                ? "you're bringing them! 🎉"
+                : `${snack.claimed_by_name || "covered"} ✓`}
+            </div>
+          ) : (
+            <div className="mt-3 rounded-lg bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-800">
+              🍊 Snack duty open — tap to sign up!
+            </div>
+          )
+        ) : null}
       </Card>
     </Link>
   );
