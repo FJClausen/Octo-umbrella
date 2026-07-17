@@ -61,28 +61,46 @@ export function EventCardBody({
     rsvpCounts != null &&
     rsvpCounts.going + rsvpCounts.maybe + rsvpCounts.not_going > 0;
 
+  // The type badge already says Game / Practice / Team Event — don't repeat
+  // it as the title (e.g. a practice titled "Practice" or "Team Practice").
+  const normalizedTitle = event.title.trim().toLowerCase();
+  const redundantTitle = [
+    "game",
+    "practice",
+    "team practice",
+    "event",
+    "team event",
+  ].includes(normalizedTitle);
+
   return (
     <>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <EventTypeBadge type={event.type} />
-            <span className="truncate font-semibold text-brand-ink">
-              {event.title}
-              {event.opponent ? (
-                <span className="font-normal text-slate-500">
-                  {" "}
-                  vs {event.opponent}
-                </span>
-              ) : null}
-            </span>
+            {!redundantTitle || event.opponent ? (
+              <span className="truncate font-semibold text-brand-ink">
+                {!redundantTitle ? event.title : null}
+                {event.opponent ? (
+                  <span
+                    className={
+                      redundantTitle
+                        ? "font-semibold text-brand-ink"
+                        : "font-normal text-slate-500"
+                    }
+                  >
+                    {!redundantTitle ? " " : ""}vs {event.opponent}
+                  </span>
+                ) : null}
+              </span>
+            ) : null}
             <ScoreBadge event={event} />
           </div>
           <p className="mt-1 text-sm text-slate-600">
             {formatEventWhen(event.starts_at, event.ends_at)}
           </p>
 
-          {event.location || jersey || showRsvps ? (
+          {event.location || jersey || showRsvps || snack ? (
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               {event.location ? (
                 <span className="badge bg-slate-100 text-slate-600">
@@ -101,26 +119,25 @@ export function EventCardBody({
                     : ""}
                 </span>
               ) : null}
+              {snack ? (
+                snack.claimed_by ? (
+                  <span className="badge bg-brand-green-light text-brand-green-dark">
+                    🍊{" "}
+                    {currentUserId && snack.claimed_by === currentUserId
+                      ? "You 🎉"
+                      : `${snack.claimed_by_name || "Covered"} ✓`}
+                  </span>
+                ) : (
+                  <span className="badge bg-amber-100 font-semibold text-amber-800">
+                    🍊 Open — sign up!
+                  </span>
+                )
+              ) : null}
             </div>
           ) : null}
         </div>
         {showArrow ? <span className="text-slate-300">→</span> : null}
       </div>
-
-      {snack ? (
-        snack.claimed_by ? (
-          <div className="mt-3 rounded-lg bg-brand-green-light px-3 py-2 text-sm font-medium text-brand-green-dark">
-            🍊 Snacks:{" "}
-            {currentUserId && snack.claimed_by === currentUserId
-              ? "you're bringing them! 🎉"
-              : `${snack.claimed_by_name || "covered"} ✓`}
-          </div>
-        ) : (
-          <div className="mt-3 rounded-lg bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-800">
-            🍊 Snack duty open — tap to sign up!
-          </div>
-        )
-      ) : null}
     </>
   );
 }
