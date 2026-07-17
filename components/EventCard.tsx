@@ -36,6 +36,81 @@ export function ScoreBadge({ event }: { event: EventRowType }) {
 }
 
 /**
+ * The inner content of an event card (title row, time, location/jersey
+ * chips, snack banner) — reusable outside the link wrapper, e.g. in the
+ * Coaches Corner event manager.
+ */
+export function EventCardBody({
+  event,
+  snack,
+  currentUserId,
+  showArrow = false,
+}: {
+  event: EventRowType;
+  snack?: SnackInfo | null;
+  currentUserId?: string | null;
+  showArrow?: boolean;
+}) {
+  const jersey = event.jersey_color
+    ? JERSEY_CHIP[event.jersey_color]
+    : undefined;
+
+  return (
+    <>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <EventTypeBadge type={event.type} />
+            <span className="truncate font-semibold text-brand-ink">
+              {event.title}
+              {event.opponent ? (
+                <span className="font-normal text-slate-500">
+                  {" "}
+                  vs {event.opponent}
+                </span>
+              ) : null}
+            </span>
+            <ScoreBadge event={event} />
+          </div>
+          <p className="mt-1 text-sm text-slate-600">
+            {formatEventWhen(event.starts_at, event.ends_at)}
+          </p>
+
+          {event.location || jersey ? (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {event.location ? (
+                <span className="badge bg-slate-100 text-slate-600">
+                  📍 {event.location}
+                </span>
+              ) : null}
+              {jersey ? (
+                <span className={`badge ${jersey.cls}`}>{jersey.label}</span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+        {showArrow ? <span className="text-slate-300">→</span> : null}
+      </div>
+
+      {snack ? (
+        snack.claimed_by ? (
+          <div className="mt-3 rounded-lg bg-brand-green-light px-3 py-2 text-sm font-medium text-brand-green-dark">
+            🍊 Snacks:{" "}
+            {currentUserId && snack.claimed_by === currentUserId
+              ? "you're bringing them! 🎉"
+              : `${snack.claimed_by_name || "covered"} ✓`}
+          </div>
+        ) : (
+          <div className="mt-3 rounded-lg bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-800">
+            🍊 Snack duty open — tap to sign up!
+          </div>
+        )
+      ) : null}
+    </>
+  );
+}
+
+/**
  * The shared event card used on the home page and calendar: title, time,
  * location, jersey color, snack duty, and (for played games) the score.
  */
@@ -48,62 +123,15 @@ export function EventCard({
   snack?: SnackInfo | null;
   currentUserId?: string | null;
 }) {
-  const jersey = event.jersey_color
-    ? JERSEY_CHIP[event.jersey_color]
-    : undefined;
-
   return (
     <Link href={`/calendar/${event.id}`}>
       <Card className="hover:border-brand-green/40">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <EventTypeBadge type={event.type} />
-              <span className="truncate font-semibold text-brand-ink">
-                {event.title}
-                {event.opponent ? (
-                  <span className="font-normal text-slate-500">
-                    {" "}
-                    vs {event.opponent}
-                  </span>
-                ) : null}
-              </span>
-              <ScoreBadge event={event} />
-            </div>
-            <p className="mt-1 text-sm text-slate-600">
-              {formatEventWhen(event.starts_at, event.ends_at)}
-            </p>
-
-            {event.location || jersey ? (
-              <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                {event.location ? (
-                  <span className="badge bg-slate-100 text-slate-600">
-                    📍 {event.location}
-                  </span>
-                ) : null}
-                {jersey ? (
-                  <span className={`badge ${jersey.cls}`}>{jersey.label}</span>
-                ) : null}
-              </div>
-            ) : null}
-          </div>
-          <span className="text-slate-300">→</span>
-        </div>
-
-        {snack ? (
-          snack.claimed_by ? (
-            <div className="mt-3 rounded-lg bg-brand-green-light px-3 py-2 text-sm font-medium text-brand-green-dark">
-              🍊 Snacks:{" "}
-              {currentUserId && snack.claimed_by === currentUserId
-                ? "you're bringing them! 🎉"
-                : `${snack.claimed_by_name || "covered"} ✓`}
-            </div>
-          ) : (
-            <div className="mt-3 rounded-lg bg-amber-100 px-3 py-2 text-sm font-semibold text-amber-800">
-              🍊 Snack duty open — tap to sign up!
-            </div>
-          )
-        ) : null}
+        <EventCardBody
+          event={event}
+          snack={snack}
+          currentUserId={currentUserId}
+          showArrow
+        />
       </Card>
     </Link>
   );

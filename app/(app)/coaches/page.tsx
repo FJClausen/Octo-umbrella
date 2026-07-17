@@ -21,50 +21,49 @@ export default async function CoachesOverview() {
   const dayStart = `${today}T00:00:00`;
   const reminderEnd = `${addDays(new Date(), 2).toISOString().slice(0, 10)}T23:59:59`;
 
-  const [pending, upcoming, players, openSnacks] = await Promise.all([
-    count(
-      supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending")
-    ),
-    count(
+  const [pending, players, { data: upcomingEvents }, { data: allSnacks }] =
+    await Promise.all([
+      count(
+        supabase
+          .from("profiles")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "pending")
+      ),
+      count(
+        supabase
+          .from("players")
+          .select("*", { count: "exact", head: true })
+          .eq("active", true)
+      ),
       supabase
         .from("events")
-        .select("*", { count: "exact", head: true })
+        .select("*")
         .gte("starts_at", dayStart)
-    ),
-    count(
-      supabase
-        .from("players")
-        .select("*", { count: "exact", head: true })
-        .eq("active", true)
-    ),
-    count(
+        .order("starts_at"),
       supabase
         .from("snack_slots")
-        .select("*", { count: "exact", head: true })
-        .is("claimed_by", null)
-        .gte("slot_date", today)
-    ),
-  ]);
+        .select("event_id, claimed_by, claimed_by_name"),
+    ]);
 
-  // Events within the next ~2 days, for one-tap WhatsApp reminders.
-  const [{ data: soonEvents }, { data: soonSnacks }] = await Promise.all([
-    supabase
-      .from("events")
-      .select("*")
-      .gte("starts_at", dayStart)
-      .lte("starts_at", reminderEnd)
-      .order("starts_at"),
-    supabase
-      .from("snack_slots")
-      .select("event_id, claimed_by, claimed_by_name"),
-  ]);
   const snackByEvent = new Map(
-    (soonSnacks ?? [])
+    (allSnacks ?? [])
       .filter((s) => s.event_id)
       .map((s) => [s.event_id as string, s])
+  );
+
+  const upcoming = (upcomingEvents ?? []).length;
+
+  // "Open snack slots" = upcoming GAMES whose snack duty nobody has claimed.
+  // Practices don't need snack duty, and games already covered don't count.
+  const openSnacks = (upcomingEvents ?? []).filter((e) => {
+    if (e.type !== "game") return false;
+    const slot = snackByEvent.get(e.id);
+    return slot != null && !slot.claimed_by;
+  }).length;
+
+  // Events within the next ~2 days, for one-tap WhatsApp reminders.
+  const soonEvents = (upcomingEvents ?? []).filter(
+    (e) => e.starts_at <= reminderEnd
   );
 
   const tiles = [

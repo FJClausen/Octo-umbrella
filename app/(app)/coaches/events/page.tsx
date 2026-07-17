@@ -1,9 +1,9 @@
 import { format } from "date-fns";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Card, EventTypeBadge, SubmitButton } from "@/components/ui";
+import { Card, SubmitButton } from "@/components/ui";
+import { EventCardBody } from "@/components/EventCard";
 import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/site";
-import { formatEventWhen } from "@/lib/format";
 import { newEventMessage } from "@/lib/whatsapp";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import type { EventRow, SnackSlot } from "@/lib/types";
@@ -210,24 +210,9 @@ export default async function ManageEventsPage({
           const slot = snackSlotByEvent.get(e.id);
           return (
           <Card key={e.id}>
-            <div className="flex items-center justify-between gap-2">
-              <div>
-                <div className="flex items-center gap-2">
-                  <EventTypeBadge type={e.type} />
-                  <span className="font-semibold text-brand-ink">
-                    {e.title}
-                    {e.opponent ? (
-                      <span className="font-normal text-slate-500">
-                        {" "}
-                        vs {e.opponent}
-                      </span>
-                    ) : null}
-                  </span>
-                </div>
-                <p className="mt-0.5 text-sm text-slate-500">
-                  {formatEventWhen(e.starts_at, e.ends_at)}
-                </p>
-              </div>
+            <EventCardBody event={e} snack={slot ?? null} />
+
+            <div className="mt-3">
               <WhatsAppButton
                 text={newEventMessage(e, slot ?? null)}
                 label="Share"

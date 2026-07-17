@@ -9,12 +9,14 @@ import {
 } from "@/lib/site";
 
 type PlayerOption = { id: string; first_name: string };
+type AvailablePlayer = { id: string; positions: string[] };
 
 export function LineupEditor({
   initialFormationKey,
   initialSlots,
   initialPlan,
   players,
+  availablePlayers,
   onSave,
   saveLabel = "Save lineup",
 }: {
@@ -22,6 +24,8 @@ export function LineupEditor({
   initialSlots: LineupSlot[];
   initialPlan: string;
   players: PlayerOption[];
+  /** Players who RSVP'd "going" (with their positions) — enables auto-suggest. */
+  availablePlayers?: AvailablePlayer[];
   onSave: (
     formationKey: string,
     slots: LineupSlot[],
@@ -81,6 +85,40 @@ export function LineupEditor({
     setSaved(false);
   }
 
+  /**
+   * Fill the current formation from the players who RSVP'd "going":
+   * first pass matches players to slots by position, second pass places
+   * any remaining available players into still-empty slots.
+   */
+  function suggestLineup() {
+    const pool = availablePlayers ?? [];
+    if (!pool.length) return;
+
+    const used = new Set<string>();
+    const next = slots.map((s) => ({ ...s, playerId: null as string | null }));
+
+    for (const slot of next) {
+      const match = pool.find(
+        (p) => !used.has(p.id) && p.positions.includes(slot.position)
+      );
+      if (match) {
+        slot.playerId = match.id;
+        used.add(match.id);
+      }
+    }
+    for (const slot of next) {
+      if (slot.playerId) continue;
+      const anyone = pool.find((p) => !used.has(p.id));
+      if (anyone) {
+        slot.playerId = anyone.id;
+        used.add(anyone.id);
+      }
+    }
+
+    setSlotsByFormation((prev) => ({ ...prev, [formationKey]: next }));
+    setSaved(false);
+  }
+
   function handleSave() {
     setError(null);
     startTransition(async () => {
@@ -113,6 +151,16 @@ export function LineupEditor({
           hitting Save stores the formation currently shown.
         </p>
       </div>
+
+      {availablePlayers && availablePlayers.length > 0 ? (
+        <button
+          type="button"
+          onClick={suggestLineup}
+          className="btn-outline text-sm"
+        >
+          ✨ Suggest lineup from RSVPs ({availablePlayers.length} going)
+        </button>
+      ) : null}
 
       <div className="space-y-2">
         {slots.map((slot, i) => (

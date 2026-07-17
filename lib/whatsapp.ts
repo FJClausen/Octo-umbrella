@@ -10,6 +10,7 @@ type EventLike = {
   location: string | null;
   starts_at: string;
   ends_at: string | null;
+  jersey_color?: string | null;
 };
 
 type SnackLike = {
@@ -30,7 +31,13 @@ function typeLabel(event: EventLike): string {
 function eventLine(event: EventLike): string {
   const vs = event.opponent ? ` vs ${event.opponent}` : "";
   const loc = event.location ? `\n📍 ${event.location}` : "";
-  return `${event.title}${vs}\n🗓 ${formatEventWhen(event.starts_at, event.ends_at)}${loc}`;
+  const jersey =
+    event.jersey_color === "blue"
+      ? `\n👕 Wear BLUE jerseys (home)`
+      : event.jersey_color === "red"
+        ? `\n👕 Wear RED jerseys (away)`
+        : "";
+  return `${event.title}${vs}\n🗓 ${formatEventWhen(event.starts_at, event.ends_at)}${loc}${jersey}`;
 }
 
 function snackLine(snack: SnackLike): string {
