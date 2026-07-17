@@ -9,6 +9,26 @@ import type { Database } from "@/lib/types";
 
 function revalidate() {
   revalidatePath("/coaches/practice");
+  revalidatePath("/coaches/practice/exercises");
+}
+
+const VALID_TAGS = [
+  "Passing",
+  "Dribbling",
+  "Defending",
+  "Attacking",
+  "Shooting",
+];
+
+function parseTags(formData: FormData): string[] {
+  return formData
+    .getAll("tags")
+    .map((t) => String(t))
+    .filter((t) => VALID_TAGS.includes(t));
+}
+
+function exercisesError(message: string): never {
+  redirect(`/coaches/practice/exercises?error=${encodeURIComponent(message)}`);
 }
 
 export async function savePracticePlan(
@@ -70,30 +90,49 @@ export async function createExerciseTemplate(formData: FormData) {
     "practice"
   );
   if (uploaded && !uploaded.ok) {
-    redirect(
-      `/coaches/practice?error=${encodeURIComponent(
-        `Photo upload failed: ${uploaded.error}`
-      )}`
-    );
+    exercisesError(`Photo upload failed: ${uploaded.error}`);
   }
-
-  const tags = formData
-    .getAll("tags")
-    .map((t) => String(t))
-    .filter((t) =>
-      ["Passing", "Dribbling", "Defending", "Attacking", "Shooting"].includes(t)
-    );
 
   const { error } = await supabase.from("exercise_templates").insert({
     title,
     setup: String(formData.get("setup") || "").trim() || null,
     run_of_play: String(formData.get("run_of_play") || "").trim() || null,
-    tags,
+    tags: parseTags(formData),
     image_url: uploaded?.ok ? uploaded.url : null,
   });
-  if (error) {
-    redirect(`/coaches/practice?error=${encodeURIComponent(error.message)}`);
+  if (error) exercisesError(error.message);
+  revalidate();
+}
+
+export async function updateExerciseTemplate(formData: FormData) {
+  await requireCoach();
+  const id = String(formData.get("id") || "");
+  const title = String(formData.get("title") || "").trim();
+  if (!id || !title) return;
+  const supabase = createClient();
+
+  const patch: Database["public"]["Tables"]["exercise_templates"]["Update"] = {
+    title,
+    setup: String(formData.get("setup") || "").trim() || null,
+    run_of_play: String(formData.get("run_of_play") || "").trim() || null,
+    tags: parseTags(formData),
+  };
+
+  const uploaded = await uploadPhotoDetailed(
+    supabase,
+    formData.get("image"),
+    "practice"
+  );
+  if (uploaded && !uploaded.ok) {
+    exercisesError(`Photo upload failed: ${uploaded.error}`);
   }
+  if (uploaded?.ok) patch.image_url = uploaded.url;
+
+  const { error } = await supabase
+    .from("exercise_templates")
+    .update(patch)
+    .eq("id", id);
+  if (error) exercisesError(error.message);
   revalidate();
 }
 
