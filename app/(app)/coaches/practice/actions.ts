@@ -18,6 +18,7 @@ const VALID_TAGS = [
   "Defending",
   "Attacking",
   "Shooting",
+  "Scrimmage Variations",
 ];
 
 function parseTags(formData: FormData): string[] {

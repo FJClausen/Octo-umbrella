@@ -116,6 +116,7 @@ export const EXERCISE_TAGS = [
   "Defending",
   "Attacking",
   "Shooting",
+  "Scrimmage Variations",
 ] as const;
 export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
 
@@ -125,6 +126,7 @@ export const EXERCISE_TAG_STYLES: Record<ExerciseTag, string> = {
   Defending: "bg-brand-green-light text-brand-green-dark",
   Attacking: "bg-red-100 text-red-700",
   Shooting: "bg-purple-100 text-purple-700",
+  "Scrimmage Variations": "bg-cyan-100 text-cyan-800",
 };
 
 export function blankSlotsFor(key: FormationKey): LineupSlot[] {
