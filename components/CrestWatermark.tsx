@@ -4,7 +4,7 @@ import { site } from "@/lib/site";
  * A large, faded team crest fixed behind the page content. Renders nothing
  * until NEXT_PUBLIC_LOGO_URL is configured, so the site works fine without it.
  */
-export function CrestWatermark({ opacity = 0.05 }: { opacity?: number }) {
+export function CrestWatermark({ opacity = 0.16 }: { opacity?: number }) {
   if (!site.logoUrl) return null;
   return (
     <div
@@ -16,7 +16,7 @@ export function CrestWatermark({ opacity = 0.05 }: { opacity?: number }) {
         src={site.logoUrl}
         alt=""
         style={{ opacity }}
-        className="h-[75vmin] w-[75vmin] max-w-none select-none object-contain"
+        className="h-[92vmin] w-[92vmin] max-w-none select-none object-contain"
       />
     </div>
   );

@@ -4,6 +4,7 @@ import { getCurrentProfile } from "@/lib/auth";
 import { Card } from "@/components/ui";
 import { EventCard } from "@/components/EventCard";
 import { formatDay } from "@/lib/format";
+import { countRsvpsByEvent } from "@/lib/rsvp";
 import { site } from "@/lib/site";
 
 export const metadata = { title: "Home" };
@@ -14,30 +15,36 @@ export default async function HomePage() {
   const today = new Date().toISOString().slice(0, 10);
   const dayStart = `${today}T00:00:00`;
 
-  const [{ data: upcoming }, { data: latestNews }, { data: snackSlots }] =
-    await Promise.all([
-      supabase
-        .from("events")
-        .select("*")
-        .gte("starts_at", dayStart)
-        .order("starts_at", { ascending: true })
-        .limit(2),
-      supabase
-        .from("news")
-        .select("*")
-        .eq("published", true)
-        .order("created_at", { ascending: false })
-        .limit(3),
-      supabase
-        .from("snack_slots")
-        .select("event_id, claimed_by, claimed_by_name"),
-    ]);
+  const [
+    { data: upcoming },
+    { data: latestNews },
+    { data: snackSlots },
+    { data: rsvps },
+  ] = await Promise.all([
+    supabase
+      .from("events")
+      .select("*")
+      .gte("starts_at", dayStart)
+      .order("starts_at", { ascending: true })
+      .limit(2),
+    supabase
+      .from("news")
+      .select("*")
+      .eq("published", true)
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("snack_slots")
+      .select("event_id, claimed_by, claimed_by_name"),
+    supabase.from("rsvps").select("event_id, status"),
+  ]);
 
   const snackByEvent = new Map(
     (snackSlots ?? [])
       .filter((s) => s.event_id)
       .map((s) => [s.event_id as string, s])
   );
+  const rsvpCounts = countRsvpsByEvent(rsvps);
 
   const firstName = current?.profile?.full_name?.split(" ")[0] || "there";
 
@@ -64,6 +71,9 @@ export default async function HomePage() {
                 event={e}
                 snack={snackByEvent.get(e.id)}
                 currentUserId={current?.userId}
+                rsvpCounts={
+                  e.type === "game" ? rsvpCounts.get(e.id) : undefined
+                }
               />
             ))
           ) : (

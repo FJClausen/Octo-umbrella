@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, SubmitButton } from "@/components/ui";
 import { EventCardBody } from "@/components/EventCard";
 import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/site";
+import { countRsvpsByEvent } from "@/lib/rsvp";
 import { newEventMessage } from "@/lib/whatsapp";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import type { EventRow, SnackSlot } from "@/lib/types";
@@ -153,16 +154,22 @@ export default async function ManageEventsPage({
   searchParams: { share?: string };
 }) {
   const supabase = createClient();
-  const [{ data: events }, { data: snackSlots }] = await Promise.all([
-    supabase.from("events").select("*").order("starts_at", { ascending: false }),
-    supabase.from("snack_slots").select("*"),
-  ]);
+  const [{ data: events }, { data: snackSlots }, { data: rsvps }] =
+    await Promise.all([
+      supabase
+        .from("events")
+        .select("*")
+        .order("starts_at", { ascending: false }),
+      supabase.from("snack_slots").select("*"),
+      supabase.from("rsvps").select("event_id, status"),
+    ]);
 
   const snackSlotByEvent = new Map<string, SnackSlot>(
     (snackSlots ?? [])
       .filter((s) => s.event_id)
       .map((s) => [s.event_id as string, s])
   );
+  const rsvpCounts = countRsvpsByEvent(rsvps);
 
   const shareEvent = searchParams.share
     ? (events ?? []).find((e) => e.id === searchParams.share)
@@ -210,7 +217,11 @@ export default async function ManageEventsPage({
           const slot = snackSlotByEvent.get(e.id);
           return (
           <Card key={e.id}>
-            <EventCardBody event={e} snack={slot ?? null} />
+            <EventCardBody
+              event={e}
+              snack={slot ?? null}
+              rsvpCounts={e.type === "game" ? rsvpCounts.get(e.id) : undefined}
+            />
 
             <div className="mt-3">
               <WhatsAppButton

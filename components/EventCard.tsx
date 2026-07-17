@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Card, EventTypeBadge } from "@/components/ui";
 import { formatEventWhen } from "@/lib/format";
+import type { RsvpCounts } from "@/lib/rsvp";
 import type { EventRow as EventRowType } from "@/lib/types";
 
 export type SnackInfo = {
@@ -44,16 +45,21 @@ export function EventCardBody({
   event,
   snack,
   currentUserId,
+  rsvpCounts,
   showArrow = false,
 }: {
   event: EventRowType;
   snack?: SnackInfo | null;
   currentUserId?: string | null;
+  rsvpCounts?: RsvpCounts | null;
   showArrow?: boolean;
 }) {
   const jersey = event.jersey_color
     ? JERSEY_CHIP[event.jersey_color]
     : undefined;
+  const showRsvps =
+    rsvpCounts != null &&
+    rsvpCounts.going + rsvpCounts.maybe + rsvpCounts.not_going > 0;
 
   return (
     <>
@@ -76,7 +82,7 @@ export function EventCardBody({
             {formatEventWhen(event.starts_at, event.ends_at)}
           </p>
 
-          {event.location || jersey ? (
+          {event.location || jersey || showRsvps ? (
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               {event.location ? (
                 <span className="badge bg-slate-100 text-slate-600">
@@ -85,6 +91,15 @@ export function EventCardBody({
               ) : null}
               {jersey ? (
                 <span className={`badge ${jersey.cls}`}>{jersey.label}</span>
+              ) : null}
+              {showRsvps ? (
+                <span className="badge bg-brand-green-light text-brand-green-dark">
+                  ✅ {rsvpCounts.going} going
+                  {rsvpCounts.maybe > 0 ? ` · ${rsvpCounts.maybe} maybe` : ""}
+                  {rsvpCounts.not_going > 0
+                    ? ` · ${rsvpCounts.not_going} out`
+                    : ""}
+                </span>
               ) : null}
             </div>
           ) : null}
@@ -118,10 +133,12 @@ export function EventCard({
   event,
   snack,
   currentUserId,
+  rsvpCounts,
 }: {
   event: EventRowType;
   snack?: SnackInfo | null;
   currentUserId?: string | null;
+  rsvpCounts?: RsvpCounts | null;
 }) {
   return (
     <Link href={`/calendar/${event.id}`}>
@@ -130,6 +147,7 @@ export function EventCard({
           event={event}
           snack={snack}
           currentUserId={currentUserId}
+          rsvpCounts={rsvpCounts}
           showArrow
         />
       </Card>

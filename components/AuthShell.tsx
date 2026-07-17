@@ -11,7 +11,7 @@ export function AuthShell({
 }) {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-brand-blue-light to-brand-green-light px-4 py-10">
-      <CrestWatermark opacity={0.08} />
+      <CrestWatermark opacity={0.2} />
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-6 text-center">
           <div className="rainbow-bar mx-auto mb-3 h-1.5 w-24 rounded-full" />

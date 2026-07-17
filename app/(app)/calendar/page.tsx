@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { PageHeader, EmptyState } from "@/components/ui";
 import { EventCard } from "@/components/EventCard";
+import { countRsvpsByEvent } from "@/lib/rsvp";
 
 export const metadata = { title: "Calendar" };
 
@@ -10,29 +11,37 @@ export default async function CalendarPage() {
   const current = await getCurrentProfile();
   const dayStart = `${new Date().toISOString().slice(0, 10)}T00:00:00`;
 
-  const [{ data: upcoming }, { data: past }, { data: snackSlots }] =
-    await Promise.all([
-      supabase
-        .from("events")
-        .select("*")
-        .gte("starts_at", dayStart)
-        .order("starts_at", { ascending: true }),
-      supabase
-        .from("events")
-        .select("*")
-        .lt("starts_at", dayStart)
-        .order("starts_at", { ascending: false })
-        .limit(20),
-      supabase
-        .from("snack_slots")
-        .select("event_id, claimed_by, claimed_by_name"),
-    ]);
+  const [
+    { data: upcoming },
+    { data: past },
+    { data: snackSlots },
+    { data: rsvps },
+  ] = await Promise.all([
+    supabase
+      .from("events")
+      .select("*")
+      .gte("starts_at", dayStart)
+      .order("starts_at", { ascending: true }),
+    supabase
+      .from("events")
+      .select("*")
+      .lt("starts_at", dayStart)
+      .order("starts_at", { ascending: false })
+      .limit(20),
+    supabase
+      .from("snack_slots")
+      .select("event_id, claimed_by, claimed_by_name"),
+    supabase.from("rsvps").select("event_id, status"),
+  ]);
 
   const snackByEvent = new Map(
     (snackSlots ?? [])
       .filter((s) => s.event_id)
       .map((s) => [s.event_id as string, s])
   );
+  const rsvpCounts = countRsvpsByEvent(rsvps);
+  const countsFor = (e: { id: string; type: string }) =>
+    e.type === "game" ? rsvpCounts.get(e.id) : undefined;
 
   const playedGames = (past ?? []).filter((e) => e.type === "game");
   const otherPast = (past ?? []).filter((e) => e.type !== "game");
@@ -55,6 +64,7 @@ export default async function CalendarPage() {
               event={e}
               snack={snackByEvent.get(e.id)}
               currentUserId={current?.userId}
+              rsvpCounts={countsFor(e)}
             />
           ))
         ) : (
@@ -72,7 +82,7 @@ export default async function CalendarPage() {
           </h2>
           <div className="space-y-2">
             {playedGames.map((e) => (
-              <EventCard key={e.id} event={e} />
+              <EventCard key={e.id} event={e} rsvpCounts={countsFor(e)} />
             ))}
           </div>
         </section>
