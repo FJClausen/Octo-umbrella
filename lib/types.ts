@@ -193,14 +193,18 @@ export interface Database {
         Row: {
           id: string;
           title: string;
-          description: string;
+          setup: string | null;
+          run_of_play: string | null;
+          tags: string[];
           image_url: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           title: string;
-          description?: string;
+          setup?: string | null;
+          run_of_play?: string | null;
+          tags?: string[];
           image_url?: string | null;
         };
         Update: Partial<

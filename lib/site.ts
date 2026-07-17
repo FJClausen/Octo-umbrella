@@ -109,6 +109,24 @@ export const FORMATIONS: Record<
 
 export const DEFAULT_FORMATION_KEY: FormationKey = "2-3-1";
 
+/** Tags coaches can apply to saved exercises (multiple per exercise). */
+export const EXERCISE_TAGS = [
+  "Passing",
+  "Dribbling",
+  "Defending",
+  "Attacking",
+  "Shooting",
+] as const;
+export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
+
+export const EXERCISE_TAG_STYLES: Record<ExerciseTag, string> = {
+  Passing: "bg-brand-blue-light text-brand-blue-dark",
+  Dribbling: "bg-amber-100 text-amber-800",
+  Defending: "bg-brand-green-light text-brand-green-dark",
+  Attacking: "bg-red-100 text-red-700",
+  Shooting: "bg-purple-100 text-purple-700",
+};
+
 export function blankSlotsFor(key: FormationKey): LineupSlot[] {
   return FORMATIONS[key].slots.map((s) => ({
     slot: s.slot,

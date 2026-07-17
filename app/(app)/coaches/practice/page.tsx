@@ -1,6 +1,9 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, SubmitButton, EmptyState } from "@/components/ui";
 import { formatDate } from "@/lib/format";
+import { EXERCISE_TAGS, EXERCISE_TAG_STYLES, type ExerciseTag } from "@/lib/site";
+import type { ExerciseTemplate } from "@/lib/types";
 import { PracticePlanEditor } from "@/components/PracticePlanEditor";
 import {
   savePracticePlan,
@@ -11,10 +14,37 @@ import {
 
 export const metadata = { title: "Practice Planner" };
 
+/** Text inserted into a plan field when a coach picks a saved exercise. */
+function exerciseInsertText(t: ExerciseTemplate): string {
+  const parts = [t.title];
+  if (t.setup) parts.push(`Setup: ${t.setup}`);
+  if (t.run_of_play) parts.push(`Run of play: ${t.run_of_play}`);
+  return parts.join("\n");
+}
+
+function TagChips({ tags }: { tags: string[] }) {
+  if (!tags.length) return null;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {tags.map((tag) => (
+        <span
+          key={tag}
+          className={`badge ${
+            EXERCISE_TAG_STYLES[tag as ExerciseTag] ??
+            "bg-slate-100 text-slate-600"
+          }`}
+        >
+          {tag}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 export default async function PracticePlannerPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: { error?: string; tag?: string };
 }) {
   const supabase = createClient();
   const today = new Date().toISOString().slice(0, 10);
@@ -34,6 +64,17 @@ export default async function PracticePlannerPage({
     ]);
 
   const templateList = templates ?? [];
+  const editorTemplates = templateList.map((t) => ({
+    id: t.id,
+    title: t.title,
+    insertText: exerciseInsertText(t),
+  }));
+  const activeTag = EXERCISE_TAGS.includes(searchParams.tag as ExerciseTag)
+    ? (searchParams.tag as ExerciseTag)
+    : null;
+  const visibleTemplates = activeTag
+    ? templateList.filter((t) => (t.tags ?? []).includes(activeTag))
+    : templateList;
   const eventOptions = practiceEvents ?? [];
   const eventTitleById = new Map(eventOptions.map((e) => [e.id, e.title]));
 
@@ -45,15 +86,18 @@ export default async function PracticePlannerPage({
         </p>
       ) : null}
 
-      <details className="card p-4">
-        <summary className="cursor-pointer font-semibold text-brand-ink">
-          Exercise Templates ({templateList.length})
-        </summary>
-        <div className="mt-4 space-y-3">
-          <form
-            action={createExerciseTemplate}
-            className="space-y-2 rounded-lg border border-slate-200 p-3"
-          >
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-semibold text-brand-ink">
+            Saved Exercises ({templateList.length})
+          </h2>
+        </div>
+
+        <details className="card p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-brand-blue">
+            + Save a new exercise
+          </summary>
+          <form action={createExerciseTemplate} className="mt-4 space-y-3">
             <div>
               <label className="label">Title</label>
               <input
@@ -64,17 +108,40 @@ export default async function PracticePlannerPage({
               />
             </div>
             <div>
-              <label className="label">Description</label>
+              <label className="label">Setup</label>
               <textarea
-                name="description"
+                name="setup"
                 rows={2}
                 className="input"
-                placeholder="How to run the drill…"
+                placeholder="Field markings, cones, groups, equipment…"
               />
             </div>
             <div>
+              <label className="label">Run of play</label>
+              <textarea
+                name="run_of_play"
+                rows={3}
+                className="input"
+                placeholder="How the exercise runs, progressions, coaching points…"
+              />
+            </div>
+            <div>
+              <label className="label">Tags</label>
+              <div className="flex flex-wrap gap-3">
+                {EXERCISE_TAGS.map((tag) => (
+                  <label
+                    key={tag}
+                    className="flex items-center gap-1.5 text-sm text-slate-700"
+                  >
+                    <input type="checkbox" name="tags" value={tag} />
+                    {tag}
+                  </label>
+                ))}
+              </div>
+            </div>
+            <div>
               <label className="label">
-                Photo / note (optional — e.g. drill diagram)
+                Photo / diagram (optional)
               </label>
               <input
                 type="file"
@@ -83,58 +150,103 @@ export default async function PracticePlannerPage({
                 className="text-sm"
               />
             </div>
-            <SubmitButton>Save template</SubmitButton>
+            <SubmitButton>Save exercise</SubmitButton>
           </form>
+        </details>
 
-          {templateList.length > 0 ? (
-            <ul className="space-y-2">
-              {templateList.map((t) => (
-                <li
-                  key={t.id}
-                  className="flex items-start justify-between gap-2 rounded-lg bg-slate-50 p-2 text-sm"
+        {templateList.length > 0 ? (
+          <>
+            {/* Tag filter */}
+            <div className="flex flex-wrap gap-1.5">
+              <Link
+                href="/coaches/practice"
+                className={`badge ${
+                  !activeTag
+                    ? "bg-brand-ink text-white"
+                    : "bg-white text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                All
+              </Link>
+              {EXERCISE_TAGS.map((tag) => (
+                <Link
+                  key={tag}
+                  href={`/coaches/practice?tag=${tag}`}
+                  className={`badge ${
+                    activeTag === tag
+                      ? "bg-brand-ink text-white"
+                      : `${EXERCISE_TAG_STYLES[tag]} hover:opacity-80`
+                  }`}
                 >
-                  <div className="flex items-start gap-2">
+                  {tag}
+                </Link>
+              ))}
+            </div>
+
+            {visibleTemplates.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2">
+                {visibleTemplates.map((t) => (
+                  <Card key={t.id} className="flex flex-col gap-2">
                     {t.image_url ? (
                       <a
                         href={t.image_url}
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="block"
                       >
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={t.image_url}
-                          alt=""
-                          className="h-12 w-12 rounded object-cover"
+                          alt={t.title}
+                          className="h-32 w-full rounded-lg object-cover"
                         />
                       </a>
                     ) : null}
-                    <div>
-                      <p className="font-medium text-brand-ink">{t.title}</p>
-                      {t.description ? (
-                        <p className="text-slate-500">{t.description}</p>
-                      ) : null}
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-semibold text-brand-ink">{t.title}</p>
+                      <form action={deleteExerciseTemplate}>
+                        <input type="hidden" name="id" value={t.id} />
+                        <button
+                          type="submit"
+                          className="text-xs font-medium text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </form>
                     </div>
-                  </div>
-                  <form action={deleteExerciseTemplate}>
-                    <input type="hidden" name="id" value={t.id} />
-                    <button
-                      type="submit"
-                      className="text-xs font-medium text-red-600 hover:underline"
-                    >
-                      Delete
-                    </button>
-                  </form>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-sm text-slate-500">
-              No saved exercises yet — add one above to reuse it in future
-              practice plans.
-            </p>
-          )}
-        </div>
-      </details>
+                    <TagChips tags={t.tags ?? []} />
+                    {t.setup ? (
+                      <p className="text-sm text-slate-600">
+                        <span className="font-medium text-slate-500">
+                          Setup:
+                        </span>{" "}
+                        {t.setup}
+                      </p>
+                    ) : null}
+                    {t.run_of_play ? (
+                      <p className="text-sm text-slate-600">
+                        <span className="font-medium text-slate-500">
+                          Run of play:
+                        </span>{" "}
+                        {t.run_of_play}
+                      </p>
+                    ) : null}
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">
+                No exercises tagged “{activeTag}” yet.
+              </p>
+            )}
+          </>
+        ) : (
+          <p className="text-sm text-slate-500">
+            No saved exercises yet — save one above to reuse it in future
+            practice plans.
+          </p>
+        )}
+      </section>
 
       <Card>
         <h2 className="mb-3 font-semibold text-brand-ink">
@@ -143,7 +255,7 @@ export default async function PracticePlannerPage({
         <PracticePlanEditor
           initialSessionDate={today}
           events={eventOptions}
-          templates={templateList}
+          templates={editorTemplates}
           onSave={savePracticePlan.bind(null, null)}
           saveLabel="Save practice plan"
         />
@@ -184,7 +296,7 @@ export default async function PracticePlannerPage({
                     initialScrimmages={p.scrimmages ?? ""}
                     initialImageUrl={p.image_url}
                     events={eventOptions}
-                    templates={templateList}
+                    templates={editorTemplates}
                     onSave={savePracticePlan.bind(null, p.id)}
                     saveLabel="Save changes"
                   />

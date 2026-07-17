@@ -77,9 +77,18 @@ export async function createExerciseTemplate(formData: FormData) {
     );
   }
 
+  const tags = formData
+    .getAll("tags")
+    .map((t) => String(t))
+    .filter((t) =>
+      ["Passing", "Dribbling", "Defending", "Attacking", "Shooting"].includes(t)
+    );
+
   const { error } = await supabase.from("exercise_templates").insert({
     title,
-    description: String(formData.get("description") || "").trim(),
+    setup: String(formData.get("setup") || "").trim() || null,
+    run_of_play: String(formData.get("run_of_play") || "").trim() || null,
+    tags,
     image_url: uploaded?.ok ? uploaded.url : null,
   });
   if (error) {

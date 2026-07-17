@@ -4,7 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { formatDate } from "@/lib/format";
 
 type EventOption = { id: string; title: string; starts_at: string };
-type Template = { id: string; title: string; description: string };
+type Template = { id: string; title: string; insertText: string };
 
 function FieldWithTemplates({
   label,
@@ -29,12 +29,12 @@ function FieldWithTemplates({
               const templateId = e.target.value;
               const t = templates.find((tpl) => tpl.id === templateId);
               if (t) {
-                setValue(value ? `${value}\n${t.description}` : t.description);
+                setValue(value ? `${value}\n${t.insertText}` : t.insertText);
               }
               e.target.value = "";
             }}
           >
-            <option value="">+ Insert saved exercise…</option>
+            <option value="">+ Insert a saved exercise…</option>
             {templates.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.title}
