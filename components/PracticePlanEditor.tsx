@@ -2,7 +2,12 @@
 
 import { useEffect, useRef, useState, useTransition } from "react";
 import { formatDate } from "@/lib/format";
-import { EXERCISE_TAG_STYLES, type ExerciseTag } from "@/lib/site";
+import {
+  DIFFICULTY_STYLES,
+  EXERCISE_TAG_STYLES,
+  type Difficulty,
+  type ExerciseTag,
+} from "@/lib/site";
 
 type EventOption = { id: string; title: string; starts_at: string };
 type Template = {
@@ -11,6 +16,7 @@ type Template = {
   setup: string | null;
   run_of_play: string | null;
   tags: string[] | null;
+  difficulty: string | null;
   image_url: string | null;
 };
 
@@ -55,8 +61,18 @@ function ExerciseModal({
             ×
           </button>
         </div>
-        {(exercise.tags ?? []).length > 0 ? (
+        {(exercise.tags ?? []).length > 0 || exercise.difficulty ? (
           <div className="mt-1.5 flex flex-wrap gap-1">
+            {exercise.difficulty ? (
+              <span
+                className={`badge ${
+                  DIFFICULTY_STYLES[exercise.difficulty as Difficulty] ??
+                  "bg-slate-100 text-slate-600"
+                }`}
+              >
+                {exercise.difficulty}
+              </span>
+            ) : null}
             {(exercise.tags ?? []).map((tag) => (
               <span
                 key={tag}

@@ -125,6 +125,12 @@ export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
 export const DIFFICULTY_LEVELS = ["Easy", "Standard", "Challenge"] as const;
 export type Difficulty = (typeof DIFFICULTY_LEVELS)[number];
 
+export const DIFFICULTY_STYLES: Record<Difficulty, string> = {
+  Easy: "bg-brand-green-light text-brand-green-dark",
+  Standard: "bg-brand-blue-light text-brand-blue-dark",
+  Challenge: "bg-amber-100 text-amber-800",
+};
+
 export const EXERCISE_TAG_STYLES: Record<ExerciseTag, string> = {
   Passing: "bg-brand-blue-light text-brand-blue-dark",
   Dribbling: "bg-amber-100 text-amber-800",

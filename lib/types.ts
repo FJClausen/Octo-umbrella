@@ -196,6 +196,7 @@ export interface Database {
           setup: string | null;
           run_of_play: string | null;
           tags: string[];
+          difficulty: string | null;
           image_url: string | null;
           created_at: string;
         };
@@ -205,10 +206,30 @@ export interface Database {
           setup?: string | null;
           run_of_play?: string | null;
           tags?: string[];
+          difficulty?: string | null;
           image_url?: string | null;
         };
         Update: Partial<
           Database["public"]["Tables"]["exercise_templates"]["Insert"]
+        >;
+        Relationships: [];
+      };
+      exercise_notes: {
+        Row: {
+          id: string;
+          exercise_id: string;
+          author_id: string | null;
+          note: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          exercise_id: string;
+          author_id?: string | null;
+          note: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["exercise_notes"]["Insert"]
         >;
         Relationships: [];
       };
@@ -328,6 +349,8 @@ export type PracticePlan =
   Database["public"]["Tables"]["practice_plans"]["Row"];
 export type ExerciseTemplate =
   Database["public"]["Tables"]["exercise_templates"]["Row"];
+export type ExerciseNote =
+  Database["public"]["Tables"]["exercise_notes"]["Row"];
 export type DocumentRow = Database["public"]["Tables"]["documents"]["Row"];
 export type Lineup = Database["public"]["Tables"]["lineups"]["Row"];
 export type GalleryPhoto =

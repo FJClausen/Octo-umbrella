@@ -171,6 +171,20 @@ export function ExerciseGenerator() {
               />
             </div>
             <div>
+              <label className="label">Difficulty</label>
+              <select
+                name="difficulty"
+                defaultValue={difficulty}
+                className="input"
+              >
+                {DIFFICULTY_LEVELS.map((level) => (
+                  <option key={level} value={level}>
+                    {level}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
               <label className="label">Tags</label>
               <div className="flex flex-wrap gap-3">
                 {EXERCISE_TAGS.map((tag) => (

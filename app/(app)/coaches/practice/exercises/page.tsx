@@ -3,17 +3,23 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, SubmitButton } from "@/components/ui";
 import { PracticeSubTabs } from "@/components/PracticeSubTabs";
 import {
+  DIFFICULTY_LEVELS,
+  DIFFICULTY_STYLES,
   EXERCISE_TAGS,
   EXERCISE_TAG_STYLES,
+  type Difficulty,
   type ExerciseTag,
 } from "@/lib/site";
-import type { ExerciseTemplate } from "@/lib/types";
+import type { ExerciseNote, ExerciseTemplate } from "@/lib/types";
+import { formatDate } from "@/lib/format";
 import { FieldSketch } from "@/components/FieldSketch";
 import { ExerciseGenerator } from "@/components/ExerciseGenerator";
 import {
   createExerciseTemplate,
   updateExerciseTemplate,
   deleteExerciseTemplate,
+  addExerciseNote,
+  deleteExerciseNote,
 } from "../actions";
 
 export const metadata = { title: "Exercise Catalogue" };
@@ -71,6 +77,21 @@ function ExerciseFields({ exercise }: { exercise?: ExerciseTemplate }) {
         />
       </div>
       <div>
+        <label className="label">Difficulty</label>
+        <select
+          name="difficulty"
+          defaultValue={exercise?.difficulty ?? ""}
+          className="input"
+        >
+          <option value="">— not set —</option>
+          {DIFFICULTY_LEVELS.map((level) => (
+            <option key={level} value={level}>
+              {level}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
         <label className="label">Tags</label>
         <div className="flex flex-wrap gap-3">
           {EXERCISE_TAGS.map((tag) => (
@@ -114,12 +135,26 @@ export default async function ExerciseCataloguePage({
   searchParams: { error?: string; tag?: string };
 }) {
   const supabase = createClient();
-  const { data: templates } = await supabase
-    .from("exercise_templates")
-    .select("*")
-    .order("title");
+  const [{ data: templates }, { data: notes }, { data: coaches }] =
+    await Promise.all([
+      supabase.from("exercise_templates").select("*").order("title"),
+      supabase
+        .from("exercise_notes")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase.from("profiles").select("id, full_name").eq("role", "coach"),
+    ]);
 
   const templateList = templates ?? [];
+  const coachNameById = new Map(
+    (coaches ?? []).map((c) => [c.id, c.full_name])
+  );
+  const notesByExercise = new Map<string, ExerciseNote[]>();
+  for (const n of notes ?? []) {
+    const list = notesByExercise.get(n.exercise_id) ?? [];
+    list.push(n);
+    notesByExercise.set(n.exercise_id, list);
+  }
   const activeTag = EXERCISE_TAGS.includes(searchParams.tag as ExerciseTag)
     ? (searchParams.tag as ExerciseTag)
     : null;
@@ -197,7 +232,19 @@ export default async function ExerciseCataloguePage({
                       />
                     </a>
                   ) : null}
-                  <p className="font-semibold text-brand-ink">{t.title}</p>
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-brand-ink">{t.title}</p>
+                    {t.difficulty ? (
+                      <span
+                        className={`badge shrink-0 ${
+                          DIFFICULTY_STYLES[t.difficulty as Difficulty] ??
+                          "bg-slate-100 text-slate-600"
+                        }`}
+                      >
+                        {t.difficulty}
+                      </span>
+                    ) : null}
+                  </div>
                   <TagChips tags={t.tags ?? []} />
                   {t.setup ? (
                     <p className="text-sm text-slate-600">
@@ -213,6 +260,53 @@ export default async function ExerciseCataloguePage({
                       {t.run_of_play}
                     </p>
                   ) : null}
+
+                  <details className="mt-1">
+                    <summary className="cursor-pointer text-sm text-brand-green-dark">
+                      📝 Experience notes (
+                      {(notesByExercise.get(t.id) ?? []).length})
+                    </summary>
+                    <div className="mt-2 space-y-2">
+                      {(notesByExercise.get(t.id) ?? []).map((n) => (
+                        <div
+                          key={n.id}
+                          className="rounded-lg bg-slate-50 px-3 py-2"
+                        >
+                          <p className="whitespace-pre-wrap text-sm text-slate-700">
+                            {n.note}
+                          </p>
+                          <div className="mt-1 flex items-center justify-between">
+                            <p className="text-xs text-slate-400">
+                              {n.author_id
+                                ? coachNameById.get(n.author_id) ?? "Coach"
+                                : "Coach"}{" "}
+                              · {formatDate(n.created_at)}
+                            </p>
+                            <form action={deleteExerciseNote}>
+                              <input type="hidden" name="id" value={n.id} />
+                              <button
+                                type="submit"
+                                className="text-xs text-slate-400 hover:text-red-600"
+                              >
+                                Delete
+                              </button>
+                            </form>
+                          </div>
+                        </div>
+                      ))}
+                      <form action={addExerciseNote} className="space-y-2">
+                        <input type="hidden" name="exercise_id" value={t.id} />
+                        <textarea
+                          name="note"
+                          rows={2}
+                          required
+                          className="input"
+                          placeholder="How did it go? What would you change next time?"
+                        />
+                        <SubmitButton>Add note</SubmitButton>
+                      </form>
+                    </div>
+                  </details>
 
                   <details key={`edit-${t.id}`} className="mt-1">
                     <summary className="cursor-pointer text-sm text-brand-blue">

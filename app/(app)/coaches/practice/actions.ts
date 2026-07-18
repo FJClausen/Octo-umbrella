@@ -28,6 +28,13 @@ function parseTags(formData: FormData): string[] {
     .filter((t) => VALID_TAGS.includes(t));
 }
 
+const VALID_DIFFICULTIES = ["Easy", "Standard", "Challenge"];
+
+function parseDifficulty(formData: FormData): string | null {
+  const value = String(formData.get("difficulty") || "");
+  return VALID_DIFFICULTIES.includes(value) ? value : null;
+}
+
 function exercisesError(message: string): never {
   redirect(`/coaches/practice/exercises?error=${encodeURIComponent(message)}`);
 }
@@ -121,6 +128,7 @@ export async function createExerciseTemplate(formData: FormData) {
     setup: String(formData.get("setup") || "").trim() || null,
     run_of_play: String(formData.get("run_of_play") || "").trim() || null,
     tags: parseTags(formData),
+    difficulty: parseDifficulty(formData),
     image_url,
   });
   if (error) exercisesError(error.message);
@@ -139,6 +147,7 @@ export async function updateExerciseTemplate(formData: FormData) {
     setup: String(formData.get("setup") || "").trim() || null,
     run_of_play: String(formData.get("run_of_play") || "").trim() || null,
     tags: parseTags(formData),
+    difficulty: parseDifficulty(formData),
   };
 
   const image_url = await resolveExerciseImage(supabase, formData);
@@ -157,6 +166,32 @@ export async function deleteExerciseTemplate(formData: FormData) {
   const supabase = createClient();
   await supabase
     .from("exercise_templates")
+    .delete()
+    .eq("id", String(formData.get("id")));
+  revalidate();
+}
+
+export async function addExerciseNote(formData: FormData) {
+  const profile = await requireCoach();
+  const exerciseId = String(formData.get("exercise_id") || "");
+  const note = String(formData.get("note") || "").trim();
+  if (!exerciseId || !note) return;
+  const supabase = createClient();
+
+  const { error } = await supabase.from("exercise_notes").insert({
+    exercise_id: exerciseId,
+    author_id: profile.id,
+    note,
+  });
+  if (error) exercisesError(error.message);
+  revalidate();
+}
+
+export async function deleteExerciseNote(formData: FormData) {
+  await requireCoach();
+  const supabase = createClient();
+  await supabase
+    .from("exercise_notes")
     .delete()
     .eq("id", String(formData.get("id")));
   revalidate();

@@ -68,13 +68,13 @@ const OUTPUT_SCHEMA = {
         tokens: {
           type: "array",
           description:
-            "Players and equipment, at most 30 items. attacker = navy player circle, defender = red player circle, ball = soccer ball, cone = yellow training cone.",
+            "Players and equipment, at most 30 items. attacker = navy player circle, defender = red player circle, ball = soccer ball, cone = yellow training cone, goal = small goal frame (use for targets to shoot/score into).",
           items: {
             type: "object",
             properties: {
               kind: {
                 type: "string",
-                enum: ["attacker", "defender", "ball", "cone"],
+                enum: ["attacker", "defender", "ball", "cone", "goal"],
               },
               x: { type: "number", description: "0 to 1" },
               y: { type: "number", description: "0 to 1" },

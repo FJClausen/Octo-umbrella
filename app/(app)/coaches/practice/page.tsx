@@ -35,6 +35,7 @@ export default async function PracticePlannerPage({
     setup: t.setup,
     run_of_play: t.run_of_play,
     tags: t.tags,
+    difficulty: t.difficulty,
     image_url: t.image_url,
   }));
   const eventOptions = practiceEvents ?? [];

@@ -3,9 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 
 type Point = { x: number; y: number };
-type TokenType = "attacker" | "defender" | "ball" | "cone";
+type TokenType = "attacker" | "defender" | "ball" | "cone" | "goal";
 type LineType = "pass" | "run" | "dribble";
-type Tool = TokenType | LineType | "draw";
+type Tool = TokenType | LineType | "draw" | "erase";
 
 export type SketchElement =
   | { kind: "token"; token: TokenType; x: number; y: number; n: number }
@@ -40,7 +40,8 @@ export function diagramToElements(diagram: SketchDiagram): SketchElement[] {
   const elements: SketchElement[] = [];
 
   for (const t of (diagram.tokens ?? []).slice(0, 30)) {
-    if (!["attacker", "defender", "ball", "cone"].includes(t.kind)) continue;
+    if (!["attacker", "defender", "ball", "cone", "goal"].includes(t.kind))
+      continue;
     const numbered = t.kind === "attacker" || t.kind === "defender";
     counts[t.kind] = (counts[t.kind] ?? 0) + 1;
     elements.push({
@@ -75,10 +76,12 @@ const TOOLS: { key: Tool; label: string }[] = [
   { key: "defender", label: "🔴 Defender" },
   { key: "ball", label: "⚽ Ball" },
   { key: "cone", label: "🔶 Cone" },
+  { key: "goal", label: "🥅 Goal" },
   { key: "pass", label: "➡ Pass" },
   { key: "run", label: "⇢ Run" },
   { key: "dribble", label: "〰 Dribble" },
   { key: "draw", label: "✏️ Draw" },
+  { key: "erase", label: "🧽 Erase" },
 ];
 
 function drawField(ctx: CanvasRenderingContext2D) {
@@ -210,6 +213,35 @@ function drawToken(
     ctx.fill();
     return;
   }
+  if (token === "goal") {
+    // A mini goal seen from above: back bar + posts, opening facing down,
+    // with light net hatching.
+    const w = 64;
+    const d = 18;
+    ctx.setLineDash([]);
+    ctx.strokeStyle = "#FFFFFF";
+    ctx.lineWidth = 3.5;
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2, y + d / 2);
+    ctx.lineTo(x - w / 2, y - d / 2);
+    ctx.lineTo(x + w / 2, y - d / 2);
+    ctx.lineTo(x + w / 2, y + d / 2);
+    ctx.stroke();
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "rgba(255,255,255,0.6)";
+    for (let i = 1; i < 6; i++) {
+      const nx = x - w / 2 + (w / 6) * i;
+      ctx.beginPath();
+      ctx.moveTo(nx, y - d / 2);
+      ctx.lineTo(nx, y + d / 2 - 4);
+      ctx.stroke();
+    }
+    ctx.beginPath();
+    ctx.moveTo(x - w / 2 + 2, y);
+    ctx.lineTo(x + w / 2 - 2, y);
+    ctx.stroke();
+    return;
+  }
   if (token === "cone") {
     // A little training cone: yellow triangle with a base bar.
     const s = 11;
@@ -322,17 +354,72 @@ export function FieldSketch({
     );
   }
 
+  /** Distance from point p to the segment a→b. */
+  function distToSegment(p: Point, a: Point, b: Point): number {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const lenSq = dx * dx + dy * dy;
+    const t = lenSq
+      ? Math.max(0, Math.min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / lenSq))
+      : 0;
+    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+  }
+
+  /** Re-number attacker/defender tokens 1..n after a deletion. */
+  function renumber(els: Element[]): Element[] {
+    const counts: Record<string, number> = {};
+    return els.map((el) => {
+      if (
+        el.kind === "token" &&
+        (el.token === "attacker" || el.token === "defender")
+      ) {
+        counts[el.token] = (counts[el.token] ?? 0) + 1;
+        return { ...el, n: counts[el.token] };
+      }
+      return el;
+    });
+  }
+
+  /** Delete the topmost element under the tap, if any. */
+  function eraseAt(p: Point) {
+    for (let i = elements.length - 1; i >= 0; i--) {
+      const el = elements[i];
+      let hit = false;
+      if (el.kind === "token") {
+        hit =
+          el.token === "goal"
+            ? Math.abs(p.x - el.x) <= 36 && Math.abs(p.y - el.y) <= 14
+            : Math.hypot(p.x - el.x, p.y - el.y) <= 18;
+      } else if (el.kind === "line") {
+        hit = distToSegment(p, el.from, el.to) <= 10;
+      } else {
+        hit = el.points.some((q) => Math.hypot(p.x - q.x, p.y - q.y) <= 10);
+      }
+      if (hit) {
+        const next = renumber(elements.filter((_, idx) => idx !== i));
+        setElements(next);
+        exportPng(next);
+        return;
+      }
+    }
+  }
+
   function onPointerDown(e: React.PointerEvent) {
     e.preventDefault();
     (e.target as Element & EventTarget & HTMLElement).setPointerCapture?.(
       e.pointerId
     );
     const p = canvasPoint(e);
+    if (tool === "erase") {
+      eraseAt(p);
+      return;
+    }
     if (
       tool === "attacker" ||
       tool === "defender" ||
       tool === "ball" ||
-      tool === "cone"
+      tool === "cone" ||
+      tool === "goal"
     ) {
       draftRef.current = {
         kind: "token",
@@ -446,7 +533,7 @@ export function FieldSketch({
 
       <p className="text-xs text-slate-400">
         Tap to place tokens (drag to position) · drag to draw lines — Pass ➡
-        solid · Run ⇢ dashed · Dribble 〰 wavy
+        solid · Run ⇢ dashed · Dribble 〰 wavy · 🧽 tap an element to erase it
         {elements.length > 0 ? (
           <span className="ml-2 font-medium text-brand-green-dark">
             ✓ Sketch will be saved with the exercise
