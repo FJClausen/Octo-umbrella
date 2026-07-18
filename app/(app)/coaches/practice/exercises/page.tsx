@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Card, SubmitButton } from "@/components/ui";
+import { SubmitButton } from "@/components/ui";
 import { PracticeSubTabs } from "@/components/PracticeSubTabs";
 import {
   DIFFICULTY_LEVELS,
@@ -215,26 +215,17 @@ export default async function ExerciseCataloguePage({
           </div>
 
           {visibleTemplates.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
               {visibleTemplates.map((t) => (
-                <Card key={t.id} className="flex flex-col gap-2">
-                  {t.image_url ? (
-                    <a
-                      href={t.image_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="block"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={t.image_url}
-                        alt={t.title}
-                        className="h-32 w-full rounded-lg object-cover"
-                      />
-                    </a>
-                  ) : null}
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-brand-ink">{t.title}</p>
+                <details key={t.id} className="card group">
+                  {/* Collapsed row: title + focus areas (and rating if set) */}
+                  <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 p-4 [&::-webkit-details-marker]:hidden sm:px-5">
+                    <span className="text-xs text-slate-400 transition-transform group-open:rotate-90">
+                      ▶
+                    </span>
+                    <span className="font-semibold text-brand-ink">
+                      {t.title}
+                    </span>
                     {t.difficulty ? (
                       <span
                         className={`badge shrink-0 ${
@@ -245,32 +236,62 @@ export default async function ExerciseCataloguePage({
                         {t.difficulty}
                       </span>
                     ) : null}
-                    <form
-                      action={rateExercise}
-                      className="ml-auto flex shrink-0 items-center"
-                      title="Coaches' rating — tap a star to grade"
-                    >
-                      <input type="hidden" name="id" value={t.id} />
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button
-                          key={star}
-                          type="submit"
-                          name="rating"
-                          value={star}
-                          aria-label={`Rate ${star} out of 5`}
-                          className={`px-0.5 text-lg leading-none transition ${
-                            (t.rating ?? 0) >= star
-                              ? "text-amber-400 hover:text-amber-500"
-                              : "text-slate-300 hover:text-amber-300"
-                          }`}
-                        >
-                          ★
-                        </button>
-                      ))}
-                    </form>
-                  </div>
-                  <TagChips tags={t.tags ?? []} />
-                  {t.setup ? (
+                    <TagChips tags={t.tags ?? []} />
+                    {t.rating ? (
+                      <span className="ml-auto shrink-0 text-sm leading-none text-amber-400">
+                        {"★".repeat(t.rating)}
+                        <span className="text-slate-300">
+                          {"★".repeat(5 - t.rating)}
+                        </span>
+                      </span>
+                    ) : null}
+                  </summary>
+
+                  <div className="flex flex-col gap-2 px-4 pb-4 sm:px-5 sm:pb-5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs text-slate-500">
+                        Coaches’ rating:
+                      </span>
+                      <form
+                        action={rateExercise}
+                        className="flex items-center"
+                        title="Tap a star to grade this exercise"
+                      >
+                        <input type="hidden" name="id" value={t.id} />
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button
+                            key={star}
+                            type="submit"
+                            name="rating"
+                            value={star}
+                            aria-label={`Rate ${star} out of 5`}
+                            className={`px-0.5 text-lg leading-none transition ${
+                              (t.rating ?? 0) >= star
+                                ? "text-amber-400 hover:text-amber-500"
+                                : "text-slate-300 hover:text-amber-300"
+                            }`}
+                          >
+                            ★
+                          </button>
+                        ))}
+                      </form>
+                    </div>
+                    {t.image_url ? (
+                      <a
+                        href={t.image_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={t.image_url}
+                          alt={t.title}
+                          className="h-40 w-full rounded-lg object-cover"
+                        />
+                      </a>
+                    ) : null}
+                    {t.setup ? (
                     <p className="text-sm text-slate-600">
                       <span className="font-medium text-slate-500">Setup:</span>{" "}
                       {t.setup}
@@ -355,7 +376,8 @@ export default async function ExerciseCataloguePage({
                       </SubmitButton>
                     </form>
                   </details>
-                </Card>
+                  </div>
+                </details>
               ))}
             </div>
           ) : (
