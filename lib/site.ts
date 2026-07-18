@@ -111,6 +111,8 @@ export const DEFAULT_FORMATION_KEY: FormationKey = "2-3-1";
 
 /** Tags coaches can apply to saved exercises (multiple per exercise). */
 export const EXERCISE_TAGS = [
+  "Warmup",
+  "Technique",
   "Passing",
   "Dribbling",
   "Defending",
@@ -132,6 +134,8 @@ export const DIFFICULTY_STYLES: Record<Difficulty, string> = {
 };
 
 export const EXERCISE_TAG_STYLES: Record<ExerciseTag, string> = {
+  Warmup: "bg-orange-100 text-orange-800",
+  Technique: "bg-pink-100 text-pink-800",
   Passing: "bg-brand-blue-light text-brand-blue-dark",
   Dribbling: "bg-amber-100 text-amber-800",
   Defending: "bg-brand-green-light text-brand-green-dark",

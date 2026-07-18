@@ -13,6 +13,8 @@ function revalidate() {
 }
 
 const VALID_TAGS = [
+  "Warmup",
+  "Technique",
   "Passing",
   "Dribbling",
   "Defending",
