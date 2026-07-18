@@ -3,24 +3,42 @@
 import { useEffect, useRef, useState } from "react";
 
 type Point = { x: number; y: number };
-type Stroke = { color: string; points: Point[] };
+type TokenType = "attacker" | "defender" | "ball";
+type LineType = "pass" | "run" | "dribble";
+type Tool = TokenType | LineType | "draw";
+
+type Element =
+  | { kind: "token"; token: TokenType; x: number; y: number; n: number }
+  | { kind: "line"; line: LineType; from: Point; to: Point }
+  | { kind: "free"; points: Point[] };
 
 const CANVAS_W = 800;
 const CANVAS_H = 520;
 
-const COLORS = [
-  { name: "White", value: "#FFFFFF" },
-  { name: "Yellow", value: "#FDE047" },
-  { name: "Red", value: "#DC2626" },
-  { name: "Navy", value: "#0F2E4D" },
+const ATTACKER_COLOR = "#0F2E4D"; // navy
+const DEFENDER_COLOR = "#DC2626"; // red
+const LINE_COLORS: Record<LineType, string> = {
+  pass: "#FFFFFF",
+  run: "#FDE047",
+  dribble: "#7DD3FC",
+};
+const FREE_COLOR = "#FFFFFF";
+
+const TOOLS: { key: Tool; label: string }[] = [
+  { key: "attacker", label: "🔵 Attacker" },
+  { key: "defender", label: "🔴 Defender" },
+  { key: "ball", label: "⚽ Ball" },
+  { key: "pass", label: "➡ Pass" },
+  { key: "run", label: "⇢ Run" },
+  { key: "dribble", label: "〰 Dribble" },
+  { key: "draw", label: "✏️ Draw" },
 ];
 
 function drawField(ctx: CanvasRenderingContext2D) {
   const w = CANVAS_W;
   const h = CANVAS_H;
-  const m = 24; // margin
+  const m = 24;
 
-  // Grass with subtle mowing stripes
   ctx.fillStyle = "#4C8C3F";
   ctx.fillRect(0, 0, w, h);
   ctx.fillStyle = "rgba(255,255,255,0.045)";
@@ -30,25 +48,20 @@ function drawField(ctx: CanvasRenderingContext2D) {
 
   ctx.strokeStyle = "rgba(255,255,255,0.9)";
   ctx.lineWidth = 3;
-  ctx.lineJoin = "round";
-
-  // Touchlines
+  ctx.setLineDash([]);
   ctx.strokeRect(m, m, w - 2 * m, h - 2 * m);
-  // Halfway line
   ctx.beginPath();
   ctx.moveTo(w / 2, m);
   ctx.lineTo(w / 2, h - m);
   ctx.stroke();
-  // Center circle + spot
   ctx.beginPath();
   ctx.arc(w / 2, h / 2, 60, 0, Math.PI * 2);
   ctx.stroke();
+  ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.beginPath();
   ctx.arc(w / 2, h / 2, 4, 0, Math.PI * 2);
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.fill();
 
-  // Penalty + goal boxes, both ends
   const penW = 110;
   const penH = 220;
   const goalW = 45;
@@ -56,98 +69,162 @@ function drawField(ctx: CanvasRenderingContext2D) {
   for (const left of [true, false]) {
     const x = left ? m : w - m;
     const dir = left ? 1 : -1;
-    ctx.strokeRect(
-      left ? x : x - penW,
-      h / 2 - penH / 2,
-      penW,
-      penH
-    );
-    ctx.strokeRect(
-      left ? x : x - goalW,
-      h / 2 - goalH / 2,
-      goalW,
-      goalH
-    );
-    // Penalty spot
+    ctx.strokeRect(left ? x : x - penW, h / 2 - penH / 2, penW, penH);
+    ctx.strokeRect(left ? x : x - goalW, h / 2 - goalH / 2, goalW, goalH);
     ctx.beginPath();
     ctx.arc(x + dir * 80, h / 2, 4, 0, Math.PI * 2);
     ctx.fill();
   }
 }
 
+function drawArrowHead(ctx: CanvasRenderingContext2D, from: Point, to: Point) {
+  const angle = Math.atan2(to.y - from.y, to.x - from.x);
+  const size = 13;
+  ctx.setLineDash([]);
+  ctx.beginPath();
+  ctx.moveTo(to.x, to.y);
+  ctx.lineTo(
+    to.x - size * Math.cos(angle - 0.45),
+    to.y - size * Math.sin(angle - 0.45)
+  );
+  ctx.moveTo(to.x, to.y);
+  ctx.lineTo(
+    to.x - size * Math.cos(angle + 0.45),
+    to.y - size * Math.sin(angle + 0.45)
+  );
+  ctx.stroke();
+}
+
+function drawLineElement(
+  ctx: CanvasRenderingContext2D,
+  line: LineType,
+  from: Point,
+  to: Point
+) {
+  ctx.strokeStyle = LINE_COLORS[line];
+  ctx.lineWidth = 4;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const len = Math.hypot(dx, dy);
+  if (len < 8) return;
+
+  if (line === "dribble") {
+    // Wavy line: zigzag along the direction of travel.
+    const ux = dx / len;
+    const uy = dy / len;
+    const px = -uy;
+    const py = ux;
+    const half = 9; // half-wavelength
+    const amp = 6;
+    const usable = len - 16; // leave room for the arrowhead
+    const steps = Math.max(2, Math.floor(usable / half));
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    for (let i = 1; i <= steps; i++) {
+      const d = i * half;
+      const side = i % 2 === 1 ? amp : -amp;
+      ctx.lineTo(from.x + ux * d + px * side, from.y + uy * d + py * side);
+    }
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+  } else {
+    ctx.setLineDash(line === "run" ? [12, 9] : []);
+    ctx.beginPath();
+    ctx.moveTo(from.x, from.y);
+    ctx.lineTo(to.x, to.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  drawArrowHead(ctx, from, to);
+}
+
+function drawToken(
+  ctx: CanvasRenderingContext2D,
+  token: TokenType,
+  x: number,
+  y: number,
+  n: number
+) {
+  if (token === "ball") {
+    ctx.beginPath();
+    ctx.arc(x, y, 9, 0, Math.PI * 2);
+    ctx.fillStyle = "#FFFFFF";
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#0F172A";
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fillStyle = "#0F172A";
+    ctx.fill();
+    return;
+  }
+  ctx.beginPath();
+  ctx.arc(x, y, 14, 0, Math.PI * 2);
+  ctx.fillStyle = token === "attacker" ? ATTACKER_COLOR : DEFENDER_COLOR;
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = "#FFFFFF";
+  ctx.stroke();
+  ctx.fillStyle = "#FFFFFF";
+  ctx.font = "bold 13px sans-serif";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(String(n), x, y + 0.5);
+}
+
+function drawElement(ctx: CanvasRenderingContext2D, el: Element) {
+  if (el.kind === "token") {
+    drawToken(ctx, el.token, el.x, el.y, el.n);
+  } else if (el.kind === "line") {
+    drawLineElement(ctx, el.line, el.from, el.to);
+  } else {
+    if (el.points.length < 2) return;
+    ctx.strokeStyle = FREE_COLOR;
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(el.points[0].x, el.points[0].y);
+    for (const p of el.points.slice(1)) ctx.lineTo(p.x, p.y);
+    ctx.stroke();
+  }
+}
+
 /**
- * A lightweight sketch pad over a soccer pitch. Strokes are exported as a
- * PNG data URL into a hidden form input so the surrounding server-action
- * form can upload the drawing like any other image.
+ * A tactics-board sketch pad over a soccer pitch: numbered attacker and
+ * defender tokens, balls, pass/run/dribble arrows (solid / dashed / wavy),
+ * and freehand drawing. Exports a PNG data URL into a hidden form input so
+ * the surrounding server-action form uploads it like any other image.
  */
-export function FieldSketch({ inputName = "sketch_data" }: { inputName?: string }) {
+export function FieldSketch({
+  inputName = "sketch_data",
+}: {
+  inputName?: string;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [strokes, setStrokes] = useState<Stroke[]>([]);
-  const [color, setColor] = useState(COLORS[0].value);
+  const [elements, setElements] = useState<Element[]>([]);
+  const [tool, setTool] = useState<Tool>("attacker");
   const [dataUrl, setDataUrl] = useState("");
-  const drawingRef = useRef<Stroke | null>(null);
+  const draftRef = useRef<Element | null>(null);
 
   function redraw() {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    const ctx = canvasRef.current?.getContext("2d");
+    if (!ctx) return;
     drawField(ctx);
-    for (const stroke of [...strokes, drawingRef.current].filter(
-      Boolean
-    ) as Stroke[]) {
-      if (stroke.points.length < 2) continue;
-      ctx.strokeStyle = stroke.color;
-      ctx.lineWidth = 5;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
-      ctx.beginPath();
-      ctx.moveTo(stroke.points[0].x, stroke.points[0].y);
-      for (const p of stroke.points.slice(1)) ctx.lineTo(p.x, p.y);
-      ctx.stroke();
-    }
+    for (const el of elements) drawElement(ctx, el);
+    if (draftRef.current) drawElement(ctx, draftRef.current);
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(redraw, [strokes]);
+  useEffect(redraw, [elements]);
 
-  function canvasPoint(e: React.PointerEvent): Point {
-    const canvas = canvasRef.current!;
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: ((e.clientX - rect.left) / rect.width) * CANVAS_W,
-      y: ((e.clientY - rect.top) / rect.height) * CANVAS_H,
-    };
-  }
-
-  function onPointerDown(e: React.PointerEvent) {
-    e.preventDefault();
-    (e.target as Element).setPointerCapture(e.pointerId);
-    drawingRef.current = { color, points: [canvasPoint(e)] };
-  }
-
-  function onPointerMove(e: React.PointerEvent) {
-    if (!drawingRef.current) return;
-    drawingRef.current.points.push(canvasPoint(e));
-    redraw();
-  }
-
-  function onPointerUp() {
-    const stroke = drawingRef.current;
-    drawingRef.current = null;
-    if (stroke && stroke.points.length > 1) {
-      const next = [...strokes, stroke];
-      setStrokes(next);
-      // Export after the state settles (redraw happens via effect).
-      requestAnimationFrame(() => {
-        const url = canvasRef.current?.toDataURL("image/png") ?? "";
-        setDataUrl(next.length ? url : "");
-      });
-    }
-  }
-
-  function undo() {
-    const next = strokes.slice(0, -1);
-    setStrokes(next);
+  function exportPng(next: Element[]) {
     requestAnimationFrame(() => {
       setDataUrl(
         next.length ? canvasRef.current?.toDataURL("image/png") ?? "" : ""
@@ -155,31 +232,112 @@ export function FieldSketch({ inputName = "sketch_data" }: { inputName?: string 
     });
   }
 
+  function canvasPoint(e: React.PointerEvent): Point {
+    const rect = canvasRef.current!.getBoundingClientRect();
+    return {
+      x: ((e.clientX - rect.left) / rect.width) * CANVAS_W,
+      y: ((e.clientY - rect.top) / rect.height) * CANVAS_H,
+    };
+  }
+
+  function nextNumber(token: TokenType): number {
+    return (
+      elements.filter((el) => el.kind === "token" && el.token === token)
+        .length + 1
+    );
+  }
+
+  function onPointerDown(e: React.PointerEvent) {
+    e.preventDefault();
+    (e.target as Element & EventTarget & HTMLElement).setPointerCapture?.(
+      e.pointerId
+    );
+    const p = canvasPoint(e);
+    if (tool === "attacker" || tool === "defender" || tool === "ball") {
+      draftRef.current = {
+        kind: "token",
+        token: tool,
+        x: p.x,
+        y: p.y,
+        n: tool === "ball" ? 0 : nextNumber(tool),
+      };
+    } else if (tool === "draw") {
+      draftRef.current = { kind: "free", points: [p] };
+    } else {
+      draftRef.current = { kind: "line", line: tool, from: p, to: p };
+    }
+    redraw();
+  }
+
+  function onPointerMove(e: React.PointerEvent) {
+    const draft = draftRef.current;
+    if (!draft) return;
+    const p = canvasPoint(e);
+    if (draft.kind === "token") {
+      draft.x = p.x;
+      draft.y = p.y;
+    } else if (draft.kind === "free") {
+      draft.points.push(p);
+    } else {
+      draft.to = p;
+    }
+    redraw();
+  }
+
+  function onPointerUp() {
+    const draft = draftRef.current;
+    draftRef.current = null;
+    if (!draft) return;
+    // Discard zero-length lines (accidental taps with a line tool).
+    if (
+      draft.kind === "line" &&
+      Math.hypot(draft.to.x - draft.from.x, draft.to.y - draft.from.y) < 12
+    ) {
+      redraw();
+      return;
+    }
+    if (draft.kind === "free" && draft.points.length < 2) {
+      redraw();
+      return;
+    }
+    const next = [...elements, draft];
+    setElements(next);
+    exportPng(next);
+  }
+
+  function undo() {
+    const next = elements.slice(0, -1);
+    setElements(next);
+    exportPng(next);
+  }
+
   function clear() {
-    setStrokes([]);
+    setElements([]);
     setDataUrl("");
   }
 
   return (
     <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-2">
-        {COLORS.map((c) => (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {TOOLS.map((t) => (
           <button
-            key={c.value}
+            key={t.key}
             type="button"
-            title={c.name}
-            onClick={() => setColor(c.value)}
-            className={`h-7 w-7 rounded-full border-2 ${
-              color === c.value ? "border-brand-ink" : "border-slate-300"
+            onClick={() => setTool(t.key)}
+            className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold transition ${
+              tool === t.key
+                ? "bg-brand-ink text-white"
+                : "border border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
             }`}
-            style={{ backgroundColor: c.value }}
-          />
+          >
+            {t.label}
+          </button>
         ))}
         <span className="mx-1 h-5 w-px bg-slate-200" />
         <button
           type="button"
           onClick={undo}
-          disabled={!strokes.length}
+          disabled={!elements.length}
           className="btn-outline px-3 py-1 text-xs"
         >
           ↩ Undo
@@ -187,17 +345,13 @@ export function FieldSketch({ inputName = "sketch_data" }: { inputName?: string 
         <button
           type="button"
           onClick={clear}
-          disabled={!strokes.length}
+          disabled={!elements.length}
           className="btn-outline px-3 py-1 text-xs"
         >
           Clear
         </button>
-        {strokes.length > 0 ? (
-          <span className="text-xs text-brand-green-dark">
-            ✓ Sketch will be saved with the exercise
-          </span>
-        ) : null}
       </div>
+
       <canvas
         ref={canvasRef}
         width={CANVAS_W}
@@ -209,6 +363,16 @@ export function FieldSketch({ inputName = "sketch_data" }: { inputName?: string 
         className="w-full cursor-crosshair rounded-lg border border-slate-200"
         style={{ touchAction: "none" }}
       />
+
+      <p className="text-xs text-slate-400">
+        Tap to place tokens (drag to position) · drag to draw lines — Pass ➡
+        solid · Run ⇢ dashed · Dribble 〰 wavy
+        {elements.length > 0 ? (
+          <span className="ml-2 font-medium text-brand-green-dark">
+            ✓ Sketch will be saved with the exercise
+          </span>
+        ) : null}
+      </p>
       <input type="hidden" name={inputName} value={dataUrl} />
     </div>
   );
