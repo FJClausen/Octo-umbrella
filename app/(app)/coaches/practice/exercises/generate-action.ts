@@ -2,7 +2,13 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { requireCoach } from "@/lib/auth";
-import { EXERCISE_TAGS, site, type ExerciseTag } from "@/lib/site";
+import {
+  DIFFICULTY_LEVELS,
+  EXERCISE_TAGS,
+  site,
+  type Difficulty,
+  type ExerciseTag,
+} from "@/lib/site";
 
 export type GeneratedExercise = {
   title: string;
@@ -14,7 +20,18 @@ export type GeneratedExercise = {
 export type GenerateInput = {
   players: number;
   focus: string[];
+  difficulty: Difficulty;
   instructions: string;
+};
+
+// Calibrated to what a typical 9-year-old rec player can actually do.
+const DIFFICULTY_GUIDANCE: Record<Difficulty, string> = {
+  Easy:
+    "Difficulty: EASY. Assume beginners — some players are still working on basic ball control and confidence. No pressure from defenders (or shadow/passive pressure at most), big spaces, unlimited touches, lots of guaranteed success. Every player should succeed most of the time.",
+  Standard:
+    "Difficulty: STANDARD. Assume a typical 9-year-old rec player — can dribble at moderate speed, pass over short distances with some accuracy, but decision-making under pressure is still developing. Light-to-moderate pressure, moderate space, simple rules. Success roughly 60-70% of attempts.",
+  Challenge:
+    "Difficulty: CHALLENGE. For the stronger players on a 9-year-old rec team — still NOT club/travel level. Add real (but fair) defensive pressure, tighter space, or quicker decisions. Keep rules simple enough to explain in under a minute, and include an easier regression so weaker players can still join in.",
 };
 
 // Structured-output schema: the model must return exactly the shape our
@@ -46,7 +63,7 @@ const OUTPUT_SCHEMA = {
   additionalProperties: false,
 } as const;
 
-const SYSTEM_PROMPT = `You are an experienced youth soccer coach designing practice exercises for ${site.teamName}, a girls' youth team that plays 7-a-side. Design age-appropriate, fun, high-repetition exercises with minimal standing in line. Keep equipment simple (cones, pinnies, balls, small goals). Setup should be quick to lay out. Write concisely and practically — the coach reads this on the field.`;
+const SYSTEM_PROMPT = `You are an experienced youth soccer coach designing practice exercises for ${site.teamName}, a recreational team of 9-year-old girls that plays 7-a-side. Design age-appropriate, fun, high-repetition exercises with minimal standing in line. Keep equipment simple (cones, pinnies, balls, small goals). Setup should be quick to lay out. Write concisely and practically — the coach reads this on the field.`;
 
 export async function generateExerciseAction(
   input: GenerateInput
@@ -64,6 +81,9 @@ export async function generateExerciseAction(
   const focus = input.focus.filter((t) =>
     EXERCISE_TAGS.includes(t as ExerciseTag)
   );
+  const difficulty: Difficulty = DIFFICULTY_LEVELS.includes(input.difficulty)
+    ? input.difficulty
+    : "Standard";
   const instructions = input.instructions.trim().slice(0, 2000);
 
   const prompt = [
@@ -72,6 +92,7 @@ export async function generateExerciseAction(
     focus.length
       ? `Focus area(s): ${focus.join(", ")}`
       : `Focus area: coach's choice — pick what suits the group.`,
+    DIFFICULTY_GUIDANCE[difficulty],
     instructions ? `Additional instructions from the coach: ${instructions}` : null,
   ]
     .filter(Boolean)

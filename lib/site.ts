@@ -120,6 +120,11 @@ export const EXERCISE_TAGS = [
 ] as const;
 export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
 
+/** Difficulty levels for the AI exercise generator, calibrated to
+ *  9-year-old rec players. */
+export const DIFFICULTY_LEVELS = ["Easy", "Standard", "Challenge"] as const;
+export type Difficulty = (typeof DIFFICULTY_LEVELS)[number];
+
 export const EXERCISE_TAG_STYLES: Record<ExerciseTag, string> = {
   Passing: "bg-brand-blue-light text-brand-blue-dark",
   Dribbling: "bg-amber-100 text-amber-800",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { EXERCISE_TAGS } from "@/lib/site";
+import { DIFFICULTY_LEVELS, EXERCISE_TAGS, type Difficulty } from "@/lib/site";
 import {
   generateExerciseAction,
   type GeneratedExercise,
@@ -11,6 +11,7 @@ import { createExerciseTemplate } from "@/app/(app)/coaches/practice/actions";
 export function ExerciseGenerator() {
   const [players, setPlayers] = useState(8);
   const [focus, setFocus] = useState<string[]>([]);
+  const [difficulty, setDifficulty] = useState<Difficulty>("Standard");
   const [instructions, setInstructions] = useState("");
   const [draft, setDraft] = useState<GeneratedExercise | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -28,6 +29,7 @@ export function ExerciseGenerator() {
       const res = await generateExerciseAction({
         players,
         focus,
+        difficulty,
         instructions,
       });
       if (res.error) {
@@ -76,6 +78,32 @@ export function ExerciseGenerator() {
               ))}
             </div>
           </div>
+        </div>
+        <div>
+          <label className="label">Difficulty (for 9-year-old rec players)</label>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {DIFFICULTY_LEVELS.map((level) => (
+              <button
+                key={level}
+                type="button"
+                onClick={() => setDifficulty(level)}
+                className={`badge transition ${
+                  difficulty === level
+                    ? "bg-brand-green text-white"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {level}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1 text-xs text-slate-500">
+            {difficulty === "Easy"
+              ? "Big spaces, no pressure, lots of guaranteed success — great for building confidence."
+              : difficulty === "Standard"
+                ? "A typical rec-level session: light pressure, simple rules, success most of the time."
+                : "Tighter space and real (but fair) pressure for the stronger players — with an easier option built in."}
+          </p>
         </div>
         <div>
           <label className="label">Additional instructions (optional)</label>

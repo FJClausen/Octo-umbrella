@@ -214,11 +214,15 @@ export default async function ExerciseCataloguePage({
                     </p>
                   ) : null}
 
-                  <details className="mt-1">
+                  <details key={`edit-${t.id}`} className="mt-1">
                     <summary className="cursor-pointer text-sm text-brand-blue">
                       Edit
                     </summary>
+                    {/* Keyed to the exercise's content so the form always
+                        remounts with fresh defaults — prevents stale text
+                        from a reused form after the list re-sorts. */}
                     <form
+                      key={`${t.id}:${t.title}:${(t.setup ?? "").length}:${(t.run_of_play ?? "").length}:${(t.tags ?? []).join(",")}`}
                       action={updateExerciseTemplate}
                       className="mt-3 space-y-3"
                     >
