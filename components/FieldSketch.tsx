@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 type Point = { x: number; y: number };
-type TokenType = "attacker" | "defender" | "ball";
+type TokenType = "attacker" | "defender" | "ball" | "cone";
 type LineType = "pass" | "run" | "dribble";
 type Tool = TokenType | LineType | "draw";
 
@@ -28,6 +28,7 @@ const TOOLS: { key: Tool; label: string }[] = [
   { key: "attacker", label: "🔵 Attacker" },
   { key: "defender", label: "🔴 Defender" },
   { key: "ball", label: "⚽ Ball" },
+  { key: "cone", label: "🔶 Cone" },
   { key: "pass", label: "➡ Pass" },
   { key: "run", label: "⇢ Run" },
   { key: "dribble", label: "〰 Dribble" },
@@ -163,6 +164,25 @@ function drawToken(
     ctx.fill();
     return;
   }
+  if (token === "cone") {
+    // A little training cone: yellow triangle with a base bar.
+    const s = 11;
+    ctx.beginPath();
+    ctx.moveTo(x, y - s);
+    ctx.lineTo(x - s * 0.8, y + s * 0.7);
+    ctx.lineTo(x + s * 0.8, y + s * 0.7);
+    ctx.closePath();
+    ctx.fillStyle = "#FDE047";
+    ctx.fill();
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = "#B45309";
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x - s, y + s * 0.7);
+    ctx.lineTo(x + s, y + s * 0.7);
+    ctx.stroke();
+    return;
+  }
   ctx.beginPath();
   ctx.arc(x, y, 14, 0, Math.PI * 2);
   ctx.fillStyle = token === "attacker" ? ATTACKER_COLOR : DEFENDER_COLOR;
@@ -253,13 +273,18 @@ export function FieldSketch({
       e.pointerId
     );
     const p = canvasPoint(e);
-    if (tool === "attacker" || tool === "defender" || tool === "ball") {
+    if (
+      tool === "attacker" ||
+      tool === "defender" ||
+      tool === "ball" ||
+      tool === "cone"
+    ) {
       draftRef.current = {
         kind: "token",
         token: tool,
         x: p.x,
         y: p.y,
-        n: tool === "ball" ? 0 : nextNumber(tool),
+        n: tool === "attacker" || tool === "defender" ? nextNumber(tool) : 0,
       };
     } else if (tool === "draw") {
       draftRef.current = { kind: "free", points: [p] };
