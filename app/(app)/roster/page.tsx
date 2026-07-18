@@ -10,16 +10,13 @@ export default async function RosterPage() {
   // coaches-only table).
   const { data: players } = await supabase
     .from("players")
-    .select("id, first_name, positions, photo_url")
+    .select("id, first_name, photo_url")
     .eq("active", true)
     .order("first_name", { ascending: true });
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title="Team Roster"
-        subtitle="Our players. First names only for the girls’ privacy."
-      />
+      <PageHeader title="Team Roster" />
 
       {players && players.length > 0 ? (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
@@ -44,11 +41,6 @@ export default async function RosterPage() {
                 )}
               </div>
               <p className="font-semibold text-brand-ink">{p.first_name}</p>
-              {p.positions && p.positions.length > 0 ? (
-                <p className="text-xs text-slate-500">
-                  {p.positions.join(", ")}
-                </p>
-              ) : null}
             </div>
           ))}
         </div>
