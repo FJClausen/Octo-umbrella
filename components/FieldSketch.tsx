@@ -7,13 +7,59 @@ type TokenType = "attacker" | "defender" | "ball" | "cone";
 type LineType = "pass" | "run" | "dribble";
 type Tool = TokenType | LineType | "draw";
 
-type Element =
+export type SketchElement =
   | { kind: "token"; token: TokenType; x: number; y: number; n: number }
   | { kind: "line"; line: LineType; from: Point; to: Point }
   | { kind: "free"; points: Point[] };
 
+type Element = SketchElement;
+
 const CANVAS_W = 800;
 const CANVAS_H = 520;
+
+/** AI-friendly diagram spec: fractional coordinates (0–1) across the pitch. */
+export type SketchDiagram = {
+  tokens: { kind: TokenType; x: number; y: number }[];
+  arrows: {
+    kind: LineType;
+    from_x: number;
+    from_y: number;
+    to_x: number;
+    to_y: number;
+  }[];
+};
+
+/** Convert a fractional-coordinate diagram into canvas elements, clamping
+ *  everything onto the pitch and numbering attackers/defenders in order. */
+export function diagramToElements(diagram: SketchDiagram): SketchElement[] {
+  const m = 30; // keep tokens inside the touchlines
+  const px = (x: number) => m + Math.min(1, Math.max(0, x)) * (CANVAS_W - 2 * m);
+  const py = (y: number) => m + Math.min(1, Math.max(0, y)) * (CANVAS_H - 2 * m);
+
+  const counts: Record<string, number> = {};
+  const elements: SketchElement[] = [];
+
+  for (const t of diagram.tokens ?? []) {
+    if (!["attacker", "defender", "ball", "cone"].includes(t.kind)) continue;
+    const numbered = t.kind === "attacker" || t.kind === "defender";
+    counts[t.kind] = (counts[t.kind] ?? 0) + 1;
+    elements.push({
+      kind: "token",
+      token: t.kind,
+      x: px(t.x),
+      y: py(t.y),
+      n: numbered ? counts[t.kind] : 0,
+    });
+  }
+  for (const a of diagram.arrows ?? []) {
+    if (!["pass", "run", "dribble"].includes(a.kind)) continue;
+    const from = { x: px(a.from_x), y: py(a.from_y) };
+    const to = { x: px(a.to_x), y: py(a.to_y) };
+    if (Math.hypot(to.x - from.x, to.y - from.y) < 12) continue;
+    elements.push({ kind: "line", line: a.kind, from, to });
+  }
+  return elements;
+}
 
 const ATTACKER_COLOR = "#0F2E4D"; // navy
 const DEFENDER_COLOR = "#DC2626"; // red
@@ -224,11 +270,13 @@ function drawElement(ctx: CanvasRenderingContext2D, el: Element) {
  */
 export function FieldSketch({
   inputName = "sketch_data",
+  initialElements,
 }: {
   inputName?: string;
+  initialElements?: SketchElement[];
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [elements, setElements] = useState<Element[]>([]);
+  const [elements, setElements] = useState<Element[]>(initialElements ?? []);
   const [tool, setTool] = useState<Tool>("attacker");
   const [dataUrl, setDataUrl] = useState("");
   const draftRef = useRef<Element | null>(null);
@@ -243,6 +291,13 @@ export function FieldSketch({
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(redraw, [elements]);
+
+  // A pre-filled sketch (e.g. AI-generated) should be exported for saving
+  // even if the coach never touches it.
+  useEffect(() => {
+    if (elements.length) exportPng(elements);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function exportPng(next: Element[]) {
     requestAnimationFrame(() => {

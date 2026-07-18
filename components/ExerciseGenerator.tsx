@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { DIFFICULTY_LEVELS, EXERCISE_TAGS, type Difficulty } from "@/lib/site";
+import { FieldSketch, diagramToElements } from "@/components/FieldSketch";
 import {
   generateExerciseAction,
   type GeneratedExercise,
@@ -187,6 +188,17 @@ export function ExerciseGenerator() {
                   </label>
                 ))}
               </div>
+            </div>
+            <div>
+              <label className="label">
+                Field sketch (AI-drawn — tweak it with the tools below, or
+                Clear and draw your own)
+              </label>
+              <FieldSketch
+                initialElements={
+                  draft.diagram ? diagramToElements(draft.diagram) : []
+                }
+              />
             </div>
             <div className="flex items-center gap-2">
               <button type="submit" className="btn-primary">

@@ -1,6 +1,7 @@
 "use server";
 
 import Anthropic from "@anthropic-ai/sdk";
+import type { SketchDiagram } from "@/components/FieldSketch";
 import { requireCoach } from "@/lib/auth";
 import {
   DIFFICULTY_LEVELS,
@@ -15,6 +16,7 @@ export type GeneratedExercise = {
   setup: string;
   run_of_play: string;
   tags: string[];
+  diagram?: SketchDiagram | null;
 };
 
 export type GenerateInput = {
@@ -58,8 +60,54 @@ const OUTPUT_SCHEMA = {
       items: { type: "string", enum: [...EXERCISE_TAGS] },
       description: "Focus areas this exercise trains",
     },
+    diagram: {
+      type: "object",
+      description:
+        "Tactics-board diagram of the setup, drawn on a landscape soccer pitch. All coordinates are fractions of the pitch: x runs 0 (left goal line) to 1 (right goal line), y runs 0 (top touchline) to 1 (bottom touchline). Show only what's needed to understand the setup: cones marking the grid/channels, one token per player (matching the player counts in the exercise), the ball(s), and arrows for the key movements. Space elements out so nothing overlaps.",
+      properties: {
+        tokens: {
+          type: "array",
+          maxItems: 30,
+          description:
+            "Players and equipment. attacker = navy player circle, defender = red player circle, ball = soccer ball, cone = yellow training cone.",
+          items: {
+            type: "object",
+            properties: {
+              kind: {
+                type: "string",
+                enum: ["attacker", "defender", "ball", "cone"],
+              },
+              x: { type: "number", minimum: 0, maximum: 1 },
+              y: { type: "number", minimum: 0, maximum: 1 },
+            },
+            required: ["kind", "x", "y"],
+            additionalProperties: false,
+          },
+        },
+        arrows: {
+          type: "array",
+          maxItems: 12,
+          description:
+            "Key movements only (usually 2-6). pass = solid arrow (ball travel), run = dashed arrow (player run without ball), dribble = wavy arrow (player carrying the ball).",
+          items: {
+            type: "object",
+            properties: {
+              kind: { type: "string", enum: ["pass", "run", "dribble"] },
+              from_x: { type: "number", minimum: 0, maximum: 1 },
+              from_y: { type: "number", minimum: 0, maximum: 1 },
+              to_x: { type: "number", minimum: 0, maximum: 1 },
+              to_y: { type: "number", minimum: 0, maximum: 1 },
+            },
+            required: ["kind", "from_x", "from_y", "to_x", "to_y"],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["tokens", "arrows"],
+      additionalProperties: false,
+    },
   },
-  required: ["title", "setup", "run_of_play", "tags"],
+  required: ["title", "setup", "run_of_play", "tags", "diagram"],
   additionalProperties: false,
 } as const;
 
