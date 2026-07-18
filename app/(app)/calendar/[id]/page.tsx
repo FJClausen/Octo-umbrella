@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
-import { Card, EventTypeBadge } from "@/components/ui";
+import { Card, EventTypeBadge, eventCardTint } from "@/components/ui";
 import { ScoreBadge } from "@/components/EventCard";
 import { RsvpControl } from "@/components/RsvpControl";
 import { SnackButton } from "@/components/SnackButton";
@@ -80,7 +80,7 @@ export default async function EventDetailPage({
         ← Back to calendar
       </Link>
 
-      <Card>
+      <Card className={eventCardTint(event.type)}>
         <div className="flex items-center justify-between">
           <EventTypeBadge type={event.type} />
           {isCoach ? (

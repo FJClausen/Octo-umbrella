@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { addDays } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
-import { Card, EventTypeBadge } from "@/components/ui";
+import { Card, EventTypeBadge, eventCardTint } from "@/components/ui";
 import { formatEventWhen } from "@/lib/format";
 import { reminderMessage } from "@/lib/whatsapp";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -113,7 +113,7 @@ export default async function CoachesOverview() {
               return (
                 <li
                   key={e.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 p-3"
+                  className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 ${eventCardTint(e.type)}`}
                 >
                   <div>
                     <div className="flex items-center gap-2">

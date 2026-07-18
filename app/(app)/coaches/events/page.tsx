@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Card, SubmitButton } from "@/components/ui";
+import { Card, SubmitButton, eventCardTint } from "@/components/ui";
 import { EventCardBody } from "@/components/EventCard";
 import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/site";
 import { countRsvpsByEvent } from "@/lib/rsvp";
@@ -216,7 +216,7 @@ export default async function ManageEventsPage({
         {(events ?? []).map((e) => {
           const slot = snackSlotByEvent.get(e.id);
           return (
-          <Card key={e.id}>
+          <Card key={e.id} className={eventCardTint(e.type)}>
             <EventCardBody
               event={e}
               snack={slot ?? null}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Card, EventTypeBadge } from "@/components/ui";
+import { Card, EventTypeBadge, eventCardTint } from "@/components/ui";
 import { formatEventWhen } from "@/lib/format";
 import type { RsvpCounts } from "@/lib/rsvp";
 import type { EventRow as EventRowType } from "@/lib/types";
@@ -159,7 +159,9 @@ export function EventCard({
 }) {
   return (
     <Link href={`/calendar/${event.id}`}>
-      <Card className="hover:border-brand-green/40">
+      <Card
+        className={`${eventCardTint(event.type)} transition hover:brightness-[0.98]`}
+      >
         <EventCardBody
           event={event}
           snack={snack}

@@ -67,6 +67,20 @@ export function EventTypeBadge({ type }: { type: string }) {
   );
 }
 
+/** Light background + border tint in the event's color, so cards for games,
+ *  practices, and team events are distinguishable at a glance. */
+const EVENT_CARD_TINT: Record<EventType, string> = {
+  game: "border-brand-green/30 bg-brand-green-light/50",
+  practice: "border-brand-blue/25 bg-brand-blue-light/50",
+  event: "border-amber-200/80 bg-amber-50/80",
+};
+
+export function eventCardTint(type: string): string {
+  const t =
+    (type as EventType) in EVENT_CARD_TINT ? (type as EventType) : "event";
+  return EVENT_CARD_TINT[t];
+}
+
 export function LinkButton({
   href,
   children,
