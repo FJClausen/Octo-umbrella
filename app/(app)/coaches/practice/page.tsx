@@ -3,18 +3,9 @@ import { Card, SubmitButton, EmptyState } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import { PracticePlanEditor } from "@/components/PracticePlanEditor";
 import { PracticeSubTabs } from "@/components/PracticeSubTabs";
-import type { ExerciseTemplate } from "@/lib/types";
 import { savePracticePlan, deletePracticePlan } from "./actions";
 
 export const metadata = { title: "Practice Planner" };
-
-/** Text inserted into a plan field when a coach picks a saved exercise. */
-function exerciseInsertText(t: ExerciseTemplate): string {
-  const parts = [t.title];
-  if (t.setup) parts.push(`Setup: ${t.setup}`);
-  if (t.run_of_play) parts.push(`Run of play: ${t.run_of_play}`);
-  return parts.join("\n");
-}
 
 export default async function PracticePlannerPage({
   searchParams,
@@ -41,7 +32,10 @@ export default async function PracticePlannerPage({
   const editorTemplates = (templates ?? []).map((t) => ({
     id: t.id,
     title: t.title,
-    insertText: exerciseInsertText(t),
+    setup: t.setup,
+    run_of_play: t.run_of_play,
+    tags: t.tags,
+    image_url: t.image_url,
   }));
   const eventOptions = practiceEvents ?? [];
   const eventTitleById = new Map(eventOptions.map((e) => [e.id, e.title]));
