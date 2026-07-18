@@ -3,6 +3,7 @@ import { Card, SubmitButton, EmptyState } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import { PracticePlanEditor } from "@/components/PracticePlanEditor";
 import { PracticeSubTabs } from "@/components/PracticeSubTabs";
+import { exerciseSortRank } from "@/lib/site";
 import { savePracticePlan, deletePracticePlan } from "./actions";
 
 export const metadata = { title: "Practice Planner" };
@@ -29,7 +30,13 @@ export default async function PracticePlannerPage({
         .order("starts_at", { ascending: false }),
     ]);
 
-  const editorTemplates = (templates ?? []).map((t) => ({
+  const editorTemplates = [...(templates ?? [])]
+    .sort(
+      (a, b) =>
+        exerciseSortRank(a.tags) - exerciseSortRank(b.tags) ||
+        a.title.localeCompare(b.title)
+    )
+    .map((t) => ({
     id: t.id,
     title: t.title,
     setup: t.setup,

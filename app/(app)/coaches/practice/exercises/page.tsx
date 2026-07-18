@@ -7,6 +7,7 @@ import {
   DIFFICULTY_STYLES,
   EXERCISE_TAGS,
   EXERCISE_TAG_STYLES,
+  exerciseSortRank,
   type Difficulty,
   type ExerciseTag,
 } from "@/lib/site";
@@ -146,7 +147,11 @@ export default async function ExerciseCataloguePage({
       supabase.from("profiles").select("id, full_name").eq("role", "coach"),
     ]);
 
-  const templateList = templates ?? [];
+  const templateList = [...(templates ?? [])].sort(
+    (a, b) =>
+      exerciseSortRank(a.tags) - exerciseSortRank(b.tags) ||
+      a.title.localeCompare(b.title)
+  );
   const coachNameById = new Map(
     (coaches ?? []).map((c) => [c.id, c.full_name])
   );

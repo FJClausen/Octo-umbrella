@@ -144,6 +144,20 @@ export const EXERCISE_TAG_STYLES: Record<ExerciseTag, string> = {
   "Scrimmage Variations": "bg-cyan-100 text-cyan-800",
 };
 
+/**
+ * Sort rank for the exercise catalogue: warmups first, then technique,
+ * then the ball-skill tags, scrimmage variations last. Multi-tagged
+ * exercises sort by their highest-priority tag; untagged ones land just
+ * before the scrimmages.
+ */
+export function exerciseSortRank(tags: string[] | null | undefined): number {
+  const indices = (tags ?? [])
+    .map((t) => EXERCISE_TAGS.indexOf(t as ExerciseTag))
+    .filter((i) => i >= 0);
+  if (!indices.length) return EXERCISE_TAGS.length - 1.5;
+  return Math.min(...indices);
+}
+
 export function blankSlotsFor(key: FormationKey): LineupSlot[] {
   return FORMATIONS[key].slots.map((s) => ({
     slot: s.slot,
