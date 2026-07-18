@@ -9,6 +9,7 @@ import {
 } from "@/lib/site";
 import type { ExerciseTemplate } from "@/lib/types";
 import { FieldSketch } from "@/components/FieldSketch";
+import { ExerciseGenerator } from "@/components/ExerciseGenerator";
 import {
   createExerciseTemplate,
   updateExerciseTemplate,
@@ -135,6 +136,8 @@ export default async function ExerciseCataloguePage({
           {searchParams.error}
         </p>
       ) : null}
+
+      <ExerciseGenerator />
 
       <details className="card p-4">
         <summary className="cursor-pointer text-sm font-semibold text-brand-blue">
