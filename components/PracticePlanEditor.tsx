@@ -127,12 +127,16 @@ function FieldWithTemplates({
   value,
   setValue,
   templates,
+  options,
   onOpenExercise,
 }: {
   label: string;
   value: string;
   setValue: (value: string) => void;
+  /** Full catalogue — used to match link chips in the field text. */
   templates: Template[];
+  /** Subset offered in this field's insert dropdown. */
+  options: Template[];
   onOpenExercise: (t: Template) => void;
 }) {
   // Any saved exercise whose title appears in the field text gets a
@@ -146,13 +150,13 @@ function FieldWithTemplates({
     <div>
       <div className="mb-1 flex items-center justify-between gap-2">
         <label className="label mb-0">{label}</label>
-        {templates.length > 0 ? (
+        {options.length > 0 ? (
           <select
             className="rounded border border-slate-300 text-xs text-slate-600"
             defaultValue=""
             onChange={(e) => {
               const templateId = e.target.value;
-              const t = templates.find((tpl) => tpl.id === templateId);
+              const t = options.find((tpl) => tpl.id === templateId);
               if (t) {
                 setValue(value ? `${value}\n${t.title}` : t.title);
               }
@@ -160,7 +164,7 @@ function FieldWithTemplates({
             }}
           >
             <option value="">+ Insert a saved exercise…</option>
-            {templates.map((t) => (
+            {options.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.title}
               </option>
@@ -292,6 +296,7 @@ export function PracticePlanEditor({
           setSaved(false);
         }}
         templates={templates}
+        options={templates.filter((t) => (t.tags ?? []).includes("Warmup"))}
         onOpenExercise={setOpenExercise}
       />
       <FieldWithTemplates
@@ -302,6 +307,11 @@ export function PracticePlanEditor({
           setSaved(false);
         }}
         templates={templates}
+        options={templates.filter(
+          (t) =>
+            !(t.tags ?? []).includes("Warmup") &&
+            !(t.tags ?? []).includes("Scrimmage Variations")
+        )}
         onOpenExercise={setOpenExercise}
       />
       <FieldWithTemplates
@@ -312,6 +322,9 @@ export function PracticePlanEditor({
           setSaved(false);
         }}
         templates={templates}
+        options={templates.filter((t) =>
+          (t.tags ?? []).includes("Scrimmage Variations")
+        )}
         onOpenExercise={setOpenExercise}
       />
 
