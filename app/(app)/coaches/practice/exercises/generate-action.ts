@@ -3,6 +3,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { SketchDiagram } from "@/components/FieldSketch";
 import { requireCoach } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 import {
   DIFFICULTY_LEVELS,
   EXERCISE_TAGS,
@@ -111,6 +112,62 @@ const OUTPUT_SCHEMA = {
 
 const SYSTEM_PROMPT = `You are an experienced youth soccer coach designing practice exercises for ${site.teamName}, a recreational team of 9-year-old girls that plays 7-a-side. Design age-appropriate, fun, high-repetition exercises with minimal standing in line. Keep equipment simple (cones, pinnies, balls, small goals). Setup should be quick to lay out. Write concisely and practically — the coach reads this on the field.`;
 
+/**
+ * A compact summary of the team's exercise history — what's in the
+ * catalogue, how the coaches rated each exercise, and what they noted
+ * after running it. Injected into every generation request so the model
+ * builds on what worked, avoids what didn't, and doesn't repeat itself.
+ */
+async function buildCatalogueContext(): Promise<string | null> {
+  const supabase = createClient();
+  const [{ data: templates }, { data: notes }] = await Promise.all([
+    supabase
+      .from("exercise_templates")
+      .select("id, title, tags, difficulty, rating")
+      .order("created_at", { ascending: false })
+      .limit(40),
+    supabase
+      .from("exercise_notes")
+      .select("exercise_id, note")
+      .order("created_at", { ascending: false })
+      .limit(30),
+  ]);
+  if (!templates?.length) return null;
+
+  const notesByExercise = new Map<string, string[]>();
+  for (const n of notes ?? []) {
+    const list = notesByExercise.get(n.exercise_id) ?? [];
+    if (list.length < 3) list.push(n.note.replace(/\s+/g, " ").slice(0, 200));
+    notesByExercise.set(n.exercise_id, list);
+  }
+
+  const lines = templates.map((t) => {
+    const meta = [
+      (t.tags ?? []).join("/") || null,
+      t.difficulty,
+      t.rating ? `rated ${t.rating}/5 by the coaches` : null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    const feedback = (notesByExercise.get(t.id) ?? [])
+      .map((n) => `"${n}"`)
+      .join(" | ");
+    return `- ${t.title}${meta ? ` (${meta})` : ""}${
+      feedback ? ` — coach feedback after running it: ${feedback}` : ""
+    }`;
+  });
+
+  return [
+    `The team's existing exercise catalogue, with the coaches' ratings and their notes from actually running the exercises:`,
+    ...lines,
+    ``,
+    `Use this history when designing the new exercise:`,
+    `- Do NOT duplicate or lightly rename anything already in the catalogue — bring a genuinely fresh idea.`,
+    `- Lean into the patterns behind highly rated exercises and positive feedback.`,
+    `- Avoid whatever drew low ratings or negative feedback, and apply any lessons about this specific group (attention span, skill gaps, what they find fun).`,
+  ].join("\n");
+}
+
 export async function generateExerciseAction(
   input: GenerateInput
 ): Promise<{ exercise?: GeneratedExercise; error?: string }> {
@@ -131,6 +188,7 @@ export async function generateExerciseAction(
     ? input.difficulty
     : "Standard";
   const instructions = input.instructions.trim().slice(0, 2000);
+  const catalogueContext = await buildCatalogueContext();
 
   const prompt = [
     `Design one practice exercise.`,
@@ -140,6 +198,7 @@ export async function generateExerciseAction(
       : `Focus area: coach's choice — pick what suits the group.`,
     DIFFICULTY_GUIDANCE[difficulty],
     instructions ? `Additional instructions from the coach: ${instructions}` : null,
+    catalogueContext ? `\n${catalogueContext}` : null,
   ]
     .filter(Boolean)
     .join("\n");
