@@ -197,6 +197,7 @@ export interface Database {
           run_of_play: string | null;
           tags: string[];
           difficulty: string | null;
+          rating: number | null;
           image_url: string | null;
           created_at: string;
         };
@@ -207,6 +208,7 @@ export interface Database {
           run_of_play?: string | null;
           tags?: string[];
           difficulty?: string | null;
+          rating?: number | null;
           image_url?: string | null;
         };
         Update: Partial<

@@ -214,32 +214,24 @@ function drawToken(
     return;
   }
   if (token === "goal") {
-    // A mini goal seen from above: back bar + posts, opening facing down,
-    // with light net hatching.
-    const w = 64;
-    const d = 18;
+    // A goal drawn as a thick vertical bar — matching the vertical goal
+    // lines of the pitch — with short post stubs at each end.
+    const h = 64;
     ctx.setLineDash([]);
     ctx.strokeStyle = "#FFFFFF";
-    ctx.lineWidth = 3.5;
+    ctx.lineCap = "round";
+    ctx.lineWidth = 7;
     ctx.beginPath();
-    ctx.moveTo(x - w / 2, y + d / 2);
-    ctx.lineTo(x - w / 2, y - d / 2);
-    ctx.lineTo(x + w / 2, y - d / 2);
-    ctx.lineTo(x + w / 2, y + d / 2);
+    ctx.moveTo(x, y - h / 2);
+    ctx.lineTo(x, y + h / 2);
     ctx.stroke();
-    ctx.lineWidth = 1;
-    ctx.strokeStyle = "rgba(255,255,255,0.6)";
-    for (let i = 1; i < 6; i++) {
-      const nx = x - w / 2 + (w / 6) * i;
+    ctx.lineWidth = 3;
+    for (const sy of [y - h / 2, y + h / 2]) {
       ctx.beginPath();
-      ctx.moveTo(nx, y - d / 2);
-      ctx.lineTo(nx, y + d / 2 - 4);
+      ctx.moveTo(x - 7, sy);
+      ctx.lineTo(x + 7, sy);
       ctx.stroke();
     }
-    ctx.beginPath();
-    ctx.moveTo(x - w / 2 + 2, y);
-    ctx.lineTo(x + w / 2 - 2, y);
-    ctx.stroke();
     return;
   }
   if (token === "cone") {
@@ -388,7 +380,7 @@ export function FieldSketch({
       if (el.kind === "token") {
         hit =
           el.token === "goal"
-            ? Math.abs(p.x - el.x) <= 36 && Math.abs(p.y - el.y) <= 14
+            ? Math.abs(p.x - el.x) <= 14 && Math.abs(p.y - el.y) <= 36
             : Math.hypot(p.x - el.x, p.y - el.y) <= 18;
       } else if (el.kind === "line") {
         hit = distToSegment(p, el.from, el.to) <= 10;

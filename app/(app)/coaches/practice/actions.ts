@@ -171,6 +171,16 @@ export async function deleteExerciseTemplate(formData: FormData) {
   revalidate();
 }
 
+export async function rateExercise(formData: FormData) {
+  await requireCoach();
+  const id = String(formData.get("id") || "");
+  const rating = Math.round(Number(formData.get("rating")));
+  if (!id || !(rating >= 1 && rating <= 5)) return;
+  const supabase = createClient();
+  await supabase.from("exercise_templates").update({ rating }).eq("id", id);
+  revalidate();
+}
+
 export async function addExerciseNote(formData: FormData) {
   const profile = await requireCoach();
   const exerciseId = String(formData.get("exercise_id") || "");

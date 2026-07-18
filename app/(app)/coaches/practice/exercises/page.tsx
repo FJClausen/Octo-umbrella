@@ -18,6 +18,7 @@ import {
   createExerciseTemplate,
   updateExerciseTemplate,
   deleteExerciseTemplate,
+  rateExercise,
   addExerciseNote,
   deleteExerciseNote,
 } from "../actions";
@@ -232,7 +233,7 @@ export default async function ExerciseCataloguePage({
                       />
                     </a>
                   ) : null}
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <p className="font-semibold text-brand-ink">{t.title}</p>
                     {t.difficulty ? (
                       <span
@@ -244,6 +245,29 @@ export default async function ExerciseCataloguePage({
                         {t.difficulty}
                       </span>
                     ) : null}
+                    <form
+                      action={rateExercise}
+                      className="ml-auto flex shrink-0 items-center"
+                      title="Coaches' rating — tap a star to grade"
+                    >
+                      <input type="hidden" name="id" value={t.id} />
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="submit"
+                          name="rating"
+                          value={star}
+                          aria-label={`Rate ${star} out of 5`}
+                          className={`px-0.5 text-lg leading-none transition ${
+                            (t.rating ?? 0) >= star
+                              ? "text-amber-400 hover:text-amber-500"
+                              : "text-slate-300 hover:text-amber-300"
+                          }`}
+                        >
+                          ★
+                        </button>
+                      ))}
+                    </form>
                   </div>
                   <TagChips tags={t.tags ?? []} />
                   {t.setup ? (
