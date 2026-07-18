@@ -39,7 +39,7 @@ export function diagramToElements(diagram: SketchDiagram): SketchElement[] {
   const counts: Record<string, number> = {};
   const elements: SketchElement[] = [];
 
-  for (const t of diagram.tokens ?? []) {
+  for (const t of (diagram.tokens ?? []).slice(0, 30)) {
     if (!["attacker", "defender", "ball", "cone"].includes(t.kind)) continue;
     const numbered = t.kind === "attacker" || t.kind === "defender";
     counts[t.kind] = (counts[t.kind] ?? 0) + 1;
@@ -51,7 +51,7 @@ export function diagramToElements(diagram: SketchDiagram): SketchElement[] {
       n: numbered ? counts[t.kind] : 0,
     });
   }
-  for (const a of diagram.arrows ?? []) {
+  for (const a of (diagram.arrows ?? []).slice(0, 12)) {
     if (!["pass", "run", "dribble"].includes(a.kind)) continue;
     const from = { x: px(a.from_x), y: py(a.from_y) };
     const to = { x: px(a.to_x), y: py(a.to_y) };

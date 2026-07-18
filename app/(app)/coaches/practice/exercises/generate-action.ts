@@ -67,9 +67,8 @@ const OUTPUT_SCHEMA = {
       properties: {
         tokens: {
           type: "array",
-          maxItems: 30,
           description:
-            "Players and equipment. attacker = navy player circle, defender = red player circle, ball = soccer ball, cone = yellow training cone.",
+            "Players and equipment, at most 30 items. attacker = navy player circle, defender = red player circle, ball = soccer ball, cone = yellow training cone.",
           items: {
             type: "object",
             properties: {
@@ -77,8 +76,8 @@ const OUTPUT_SCHEMA = {
                 type: "string",
                 enum: ["attacker", "defender", "ball", "cone"],
               },
-              x: { type: "number", minimum: 0, maximum: 1 },
-              y: { type: "number", minimum: 0, maximum: 1 },
+              x: { type: "number", description: "0 to 1" },
+              y: { type: "number", description: "0 to 1" },
             },
             required: ["kind", "x", "y"],
             additionalProperties: false,
@@ -86,17 +85,16 @@ const OUTPUT_SCHEMA = {
         },
         arrows: {
           type: "array",
-          maxItems: 12,
           description:
-            "Key movements only (usually 2-6). pass = solid arrow (ball travel), run = dashed arrow (player run without ball), dribble = wavy arrow (player carrying the ball).",
+            "Key movements only (usually 2-6, at most 12). pass = solid arrow (ball travel), run = dashed arrow (player run without ball), dribble = wavy arrow (player carrying the ball).",
           items: {
             type: "object",
             properties: {
               kind: { type: "string", enum: ["pass", "run", "dribble"] },
-              from_x: { type: "number", minimum: 0, maximum: 1 },
-              from_y: { type: "number", minimum: 0, maximum: 1 },
-              to_x: { type: "number", minimum: 0, maximum: 1 },
-              to_y: { type: "number", minimum: 0, maximum: 1 },
+              from_x: { type: "number", description: "0 to 1" },
+              from_y: { type: "number", description: "0 to 1" },
+              to_x: { type: "number", description: "0 to 1" },
+              to_y: { type: "number", description: "0 to 1" },
             },
             required: ["kind", "from_x", "from_y", "to_x", "to_y"],
             additionalProperties: false,
