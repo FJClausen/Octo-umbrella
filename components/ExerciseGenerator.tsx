@@ -140,7 +140,13 @@ export function ExerciseGenerator() {
           {/* key resets the defaults when a new draft is generated */}
           <form
             key={`${draft.title}-${draft.setup.length}`}
-            action={createExerciseTemplate}
+            action={async (formData: FormData) => {
+              await createExerciseTemplate(formData);
+              // Saved — clear the draft and instructions so the next
+              // exercise can be designed from a clean slate.
+              setDraft(null);
+              setInstructions("");
+            }}
             className="space-y-3"
           >
             <div>
