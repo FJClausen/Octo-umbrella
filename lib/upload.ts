@@ -39,6 +39,40 @@ export async function uploadPhotoDetailed(
 }
 
 /**
+ * Uploads a base64 data-URL image (e.g. a canvas sketch) to the public
+ * "photos" bucket. Returns null when the value is empty / not a data URL.
+ */
+export async function uploadDataUrl(
+  supabase: SupabaseClient<Database>,
+  dataUrl: FormDataEntryValue | null,
+  folder: string
+): Promise<UploadResult> {
+  const s = String(dataUrl ?? "");
+  if (!s.startsWith("data:image/")) return null;
+
+  const commaIdx = s.indexOf(",");
+  if (commaIdx < 0) return null;
+  const meta = s.slice(5, s.indexOf(";")); // e.g. "image/png"
+  const bytes = Buffer.from(s.slice(commaIdx + 1), "base64");
+  if (!bytes.length) return null;
+
+  const ext = meta.split("/")[1] || "png";
+  const path = `${folder}/${crypto.randomUUID()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from("photos")
+    .upload(path, bytes, { contentType: meta, upsert: false });
+
+  if (error) {
+    console.error(`Sketch upload failed (${path}):`, error.message);
+    return { ok: false, error: error.message };
+  }
+
+  const { data } = supabase.storage.from("photos").getPublicUrl(path);
+  return { ok: true, url: data.publicUrl, path };
+}
+
+/**
  * Convenience wrapper for callers that only need the public URL (news
  * images, player headshots). Returns null on no-file or failure.
  */

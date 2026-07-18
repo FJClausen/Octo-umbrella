@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { requireCoach } from "@/lib/auth";
-import { uploadPhotoDetailed } from "@/lib/upload";
+import { uploadDataUrl, uploadPhotoDetailed } from "@/lib/upload";
 import type { Database } from "@/lib/types";
 
 function revalidate() {
@@ -30,6 +30,35 @@ function parseTags(formData: FormData): string[] {
 
 function exercisesError(message: string): never {
   redirect(`/coaches/practice/exercises?error=${encodeURIComponent(message)}`);
+}
+
+/**
+ * Resolve an exercise's image: a drawn field sketch wins over an attached
+ * photo file. Redirects with an error message if either upload fails.
+ */
+async function resolveExerciseImage(
+  supabase: ReturnType<typeof createClient>,
+  formData: FormData
+): Promise<string | null> {
+  const sketch = await uploadDataUrl(
+    supabase,
+    formData.get("sketch_data"),
+    "practice"
+  );
+  if (sketch && !sketch.ok) {
+    exercisesError(`Sketch upload failed: ${sketch.error}`);
+  }
+  if (sketch?.ok) return sketch.url;
+
+  const uploaded = await uploadPhotoDetailed(
+    supabase,
+    formData.get("image"),
+    "practice"
+  );
+  if (uploaded && !uploaded.ok) {
+    exercisesError(`Photo upload failed: ${uploaded.error}`);
+  }
+  return uploaded?.ok ? uploaded.url : null;
 }
 
 export async function savePracticePlan(
@@ -85,21 +114,14 @@ export async function createExerciseTemplate(formData: FormData) {
   if (!title) return;
   const supabase = createClient();
 
-  const uploaded = await uploadPhotoDetailed(
-    supabase,
-    formData.get("image"),
-    "practice"
-  );
-  if (uploaded && !uploaded.ok) {
-    exercisesError(`Photo upload failed: ${uploaded.error}`);
-  }
+  const image_url = await resolveExerciseImage(supabase, formData);
 
   const { error } = await supabase.from("exercise_templates").insert({
     title,
     setup: String(formData.get("setup") || "").trim() || null,
     run_of_play: String(formData.get("run_of_play") || "").trim() || null,
     tags: parseTags(formData),
-    image_url: uploaded?.ok ? uploaded.url : null,
+    image_url,
   });
   if (error) exercisesError(error.message);
   revalidate();
@@ -119,15 +141,8 @@ export async function updateExerciseTemplate(formData: FormData) {
     tags: parseTags(formData),
   };
 
-  const uploaded = await uploadPhotoDetailed(
-    supabase,
-    formData.get("image"),
-    "practice"
-  );
-  if (uploaded && !uploaded.ok) {
-    exercisesError(`Photo upload failed: ${uploaded.error}`);
-  }
-  if (uploaded?.ok) patch.image_url = uploaded.url;
+  const image_url = await resolveExerciseImage(supabase, formData);
+  if (image_url) patch.image_url = image_url;
 
   const { error } = await supabase
     .from("exercise_templates")

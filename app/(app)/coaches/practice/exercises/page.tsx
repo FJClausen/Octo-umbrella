@@ -8,6 +8,7 @@ import {
   type ExerciseTag,
 } from "@/lib/site";
 import type { ExerciseTemplate } from "@/lib/types";
+import { FieldSketch } from "@/components/FieldSketch";
 import {
   createExerciseTemplate,
   updateExerciseTemplate,
@@ -89,9 +90,16 @@ function ExerciseFields({ exercise }: { exercise?: ExerciseTemplate }) {
       </div>
       <div>
         <label className="label">
+          Sketch the setup (optional — draw on the field, saved as the
+          exercise diagram)
+        </label>
+        <FieldSketch />
+      </div>
+      <div>
+        <label className="label">
           {exercise?.image_url
-            ? "Replace photo / diagram (optional)"
-            : "Photo / diagram (optional)"}
+            ? "…or replace the diagram with a photo (optional)"
+            : "…or attach a photo instead (optional)"}
         </label>
         <input type="file" name="image" accept="image/*" className="text-sm" />
       </div>
