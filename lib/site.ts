@@ -145,16 +145,20 @@ export const EXERCISE_TAG_STYLES: Record<ExerciseTag, string> = {
 };
 
 /**
- * Sort rank for the exercise catalogue: warmups first, then technique,
- * then the ball-skill tags, scrimmage variations last. Multi-tagged
- * exercises sort by their highest-priority tag; untagged ones land just
+ * Sort rank for the exercise catalogue: anything tagged Warmup goes
+ * first and anything tagged Scrimmage Variations goes last, no matter
+ * what other tags they carry (Warmup wins if both are present). The
+ * rest sort by their highest-priority tag; untagged ones land just
  * before the scrimmages.
  */
 export function exerciseSortRank(tags: string[] | null | undefined): number {
-  const indices = (tags ?? [])
+  const list = tags ?? [];
+  if (list.includes("Warmup")) return 0;
+  if (list.includes("Scrimmage Variations")) return EXERCISE_TAGS.length;
+  const indices = list
     .map((t) => EXERCISE_TAGS.indexOf(t as ExerciseTag))
     .filter((i) => i >= 0);
-  if (!indices.length) return EXERCISE_TAGS.length - 1.5;
+  if (!indices.length) return EXERCISE_TAGS.length - 0.5;
   return Math.min(...indices);
 }
 
