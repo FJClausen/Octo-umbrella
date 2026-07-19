@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { PracticePlanEditor } from "@/components/PracticePlanEditor";
+import { clearPlanDraft } from "@/lib/planDraft";
 import {
   generatePracticePlanAction,
   type GeneratedPlan,
@@ -49,6 +50,9 @@ export function NewSessionPlanner({
       if (res.error) {
         setError(res.error);
       } else if (res.plan) {
+        // Replace any in-progress draft so the remounted editor picks up
+        // the freshly generated plan.
+        clearPlanDraft("new");
         setPlan(res.plan);
         setGeneration((g) => g + 1);
       }
@@ -109,10 +113,12 @@ export function NewSessionPlanner({
           the coach can edit everything before saving. */}
       <PracticePlanEditor
         key={generation}
+        draftKey="new"
         initialSessionDate={initialSessionDate}
         initialWarmup={plan?.warmup ?? ""}
         initialExercises={plan?.drills.join("\n") ?? ""}
         initialScrimmages={plan?.scrimmage ?? ""}
+        initialNotes={plan?.concept ? `💡 ${plan.concept}` : ""}
         templates={templates}
         onSave={onSave}
         saveLabel="Save practice plan"

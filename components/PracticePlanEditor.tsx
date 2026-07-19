@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
 import {
   DIFFICULTY_STYLES,
@@ -7,6 +8,13 @@ import {
   type Difficulty,
   type ExerciseTag,
 } from "@/lib/site";
+import {
+  PLAN_SECTIONS,
+  readPlanDraft,
+  writePlanDraft,
+  clearPlanDraft,
+  type PlanSection,
+} from "@/lib/planDraft";
 
 type Template = {
   id: string;
@@ -120,117 +128,90 @@ function ExerciseModal({
   );
 }
 
-function FieldWithTemplates({
-  label,
-  value,
-  setValue,
-  templates,
-  options,
-  onOpenExercise,
-}: {
-  label: string;
-  value: string;
-  setValue: (value: string) => void;
-  /** Full catalogue — used to match link chips in the field text. */
-  templates: Template[];
-  /** Subset offered in this field's insert dropdown. */
-  options: Template[];
-  onOpenExercise: (t: Template) => void;
-}) {
-  // Any saved exercise whose title appears in the field text gets a
-  // clickable chip below the field (also matches plans saved before
-  // this feature, which pasted the full text including the title).
-  const linked = templates.filter(
-    (t) => t.title && value.toLowerCase().includes(t.title.toLowerCase())
-  );
-
-  return (
-    <div>
-      <div className="mb-1 flex items-center justify-between gap-2">
-        <label className="label mb-0">{label}</label>
-        {options.length > 0 ? (
-          <select
-            className="rounded border border-slate-300 text-xs text-slate-600"
-            defaultValue=""
-            onChange={(e) => {
-              const templateId = e.target.value;
-              const t = options.find((tpl) => tpl.id === templateId);
-              if (t) {
-                setValue(value ? `${value}\n${t.title}` : t.title);
-              }
-              e.target.value = "";
-            }}
-          >
-            <option value="">+ Insert a saved exercise…</option>
-            {options.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.title}
-              </option>
-            ))}
-          </select>
-        ) : null}
-      </div>
-      <textarea
-        className="input"
-        rows={3}
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-      />
-      {linked.length > 0 ? (
-        <div className="mt-1.5 flex flex-wrap gap-1.5">
-          {linked.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              onClick={() => onOpenExercise(t)}
-              className="badge bg-brand-blue-light text-brand-blue-dark transition hover:bg-brand-blue hover:text-white"
-            >
-              🔗 {t.title}
-            </button>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
+function parseLines(text: string): string[] {
+  return text
+    .split("\n")
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 export function PracticePlanEditor({
+  draftKey,
   initialSessionDate,
   initialWarmup = "",
   initialExercises = "",
   initialScrimmages = "",
+  initialNotes = "",
   initialImageUrl = null,
   templates,
   onSave,
   saveLabel = "Save practice plan",
 }: {
+  /** Identifies this plan's in-progress draft ("new" or the plan id). */
+  draftKey: string;
   initialSessionDate: string;
   initialWarmup?: string;
   initialExercises?: string;
   initialScrimmages?: string;
+  initialNotes?: string;
   initialImageUrl?: string | null;
   templates: Template[];
   onSave: (formData: FormData) => Promise<{ error?: string } | void>;
   saveLabel?: string;
 }) {
   const [sessionDate, setSessionDate] = useState(initialSessionDate);
-  const [warmup, setWarmup] = useState(initialWarmup);
-  const [exercises, setExercises] = useState(initialExercises);
-  const [scrimmages, setScrimmages] = useState(initialScrimmages);
+  const [sections, setSections] = useState<Record<PlanSection, string[]>>({
+    warmup: parseLines(initialWarmup),
+    exercises: parseLines(initialExercises),
+    scrimmages: parseLines(initialScrimmages),
+  });
+  const [notes, setNotes] = useState(initialNotes);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [isPending, startTransition] = useTransition();
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [openExercise, setOpenExercise] = useState<Template | null>(null);
+  const loadedRef = useRef(false);
+
+  // Pick up the in-progress draft (e.g. returning from the catalogue picker).
+  useEffect(() => {
+    const draft = readPlanDraft(draftKey);
+    if (draft) {
+      if (draft.sessionDate) setSessionDate(draft.sessionDate);
+      setSections({
+        warmup: draft.warmup ?? [],
+        exercises: draft.exercises ?? [],
+        scrimmages: draft.scrimmages ?? [],
+      });
+      if (draft.notes != null) setNotes(draft.notes);
+    }
+    loadedRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep the draft in sync so nothing is lost while browsing the catalogue.
+  useEffect(() => {
+    if (!loadedRef.current) return;
+    writePlanDraft(draftKey, { sessionDate, ...sections, notes });
+  }, [draftKey, sessionDate, sections, notes]);
+
+  function removeItem(section: PlanSection, index: number) {
+    setSections((prev) => ({
+      ...prev,
+      [section]: prev[section].filter((_, i) => i !== index),
+    }));
+    setSaved(false);
+  }
 
   function handleSave() {
     setError(null);
     startTransition(async () => {
       const formData = new FormData();
       formData.set("session_date", sessionDate);
-      formData.set("warmup", warmup);
-      formData.set("exercises", exercises);
-      formData.set("scrimmages", scrimmages);
+      formData.set("warmup", sections.warmup.join("\n"));
+      formData.set("exercises", sections.exercises.join("\n"));
+      formData.set("scrimmages", sections.scrimmages.join("\n"));
+      formData.set("notes", notes);
       const file = imageInputRef.current?.files?.[0];
       if (file) formData.set("image", file);
 
@@ -239,6 +220,7 @@ export function PracticePlanEditor({
         setError(result.error);
       } else {
         setSaved(true);
+        clearPlanDraft(draftKey);
         if (imageInputRef.current) imageInputRef.current.value = "";
       }
     });
@@ -263,45 +245,73 @@ export function PracticePlanEditor({
         </p>
       </div>
 
-      <FieldWithTemplates
-        label="Warmup"
-        value={warmup}
-        setValue={(v) => {
-          setWarmup(v);
-          setSaved(false);
-        }}
-        templates={templates}
-        options={templates.filter((t) => (t.tags ?? []).includes("Warmup"))}
-        onOpenExercise={setOpenExercise}
-      />
-      <FieldWithTemplates
-        label="Exercises"
-        value={exercises}
-        setValue={(v) => {
-          setExercises(v);
-          setSaved(false);
-        }}
-        templates={templates}
-        options={templates.filter(
-          (t) =>
-            !(t.tags ?? []).includes("Warmup") &&
-            !(t.tags ?? []).includes("Scrimmage Variations")
-        )}
-        onOpenExercise={setOpenExercise}
-      />
-      <FieldWithTemplates
-        label="Scrimmages"
-        value={scrimmages}
-        setValue={(v) => {
-          setScrimmages(v);
-          setSaved(false);
-        }}
-        templates={templates}
-        options={templates.filter((t) =>
-          (t.tags ?? []).includes("Scrimmage Variations")
-        )}
-        onOpenExercise={setOpenExercise}
-      />
+      {PLAN_SECTIONS.map(({ key, label }) => (
+        <div key={key}>
+          {/* Heading links to the catalogue in pick-mode for this section */}
+          <Link
+            href={`/coaches/practice/exercises?pick=${key}&draft=${draftKey}`}
+            className="flex items-center justify-between rounded-lg border border-dashed border-brand-blue/40 bg-brand-blue-light/20 px-3 py-2 transition hover:bg-brand-blue-light/50"
+          >
+            <span className="font-semibold text-brand-ink">{label}</span>
+            <span className="text-sm text-brand-blue">
+              ＋ choose from catalogue
+            </span>
+          </Link>
+          {sections[key].length > 0 ? (
+            <ul className="mt-1.5 space-y-1.5">
+              {sections[key].map((title, i) => {
+                const t = templates.find(
+                  (tpl) => tpl.title.toLowerCase() === title.toLowerCase()
+                );
+                return (
+                  <li
+                    key={`${title}-${i}`}
+                    className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm"
+                  >
+                    {t ? (
+                      <button
+                        type="button"
+                        onClick={() => setOpenExercise(t)}
+                        className="text-left font-medium text-brand-blue hover:underline"
+                      >
+                        🔗 {t.title}
+                      </button>
+                    ) : (
+                      <span className="text-slate-600">{title}</span>
+                    )}
+                    <button
+                      type="button"
+                      aria-label={`Remove ${title}`}
+                      onClick={() => removeItem(key, i)}
+                      className="px-1 text-slate-400 hover:text-red-600"
+                    >
+                      ✕
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="mt-1 text-xs text-slate-400">
+              Nothing selected yet.
+            </p>
+          )}
+        </div>
+      ))}
+
+      <div>
+        <label className="label">Coach’s notes</label>
+        <textarea
+          rows={3}
+          value={notes}
+          onChange={(e) => {
+            setNotes(e.target.value);
+            setSaved(false);
+          }}
+          className="input"
+          placeholder="Session concept, things to emphasize, reminders…"
+        />
+      </div>
 
       <div>
         <label className="label">

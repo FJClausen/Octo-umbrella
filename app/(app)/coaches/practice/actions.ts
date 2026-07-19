@@ -96,6 +96,7 @@ export async function savePracticePlan(
     warmup: String(formData.get("warmup") || "").trim() || null,
     exercises: String(formData.get("exercises") || "").trim() || null,
     scrimmages: String(formData.get("scrimmages") || "").trim() || null,
+    notes: String(formData.get("notes") || "").trim() || null,
   };
 
   const uploaded = await uploadPhotoDetailed(

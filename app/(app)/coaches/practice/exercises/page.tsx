@@ -15,6 +15,8 @@ import type { ExerciseNote, ExerciseTemplate } from "@/lib/types";
 import { formatDate } from "@/lib/format";
 import { FieldSketch } from "@/components/FieldSketch";
 import { ExerciseGenerator } from "@/components/ExerciseGenerator";
+import { PickExerciseButton } from "@/components/PickExerciseButton";
+import { PLAN_SECTIONS, type PlanSection } from "@/lib/planDraft";
 import {
   createExerciseTemplate,
   updateExerciseTemplate,
@@ -134,7 +136,13 @@ function ExerciseFields({ exercise }: { exercise?: ExerciseTemplate }) {
 export default async function ExerciseCataloguePage({
   searchParams,
 }: {
-  searchParams: { error?: string; tag?: string; add?: string };
+  searchParams: {
+    error?: string;
+    tag?: string;
+    add?: string;
+    pick?: string;
+    draft?: string;
+  };
 }) {
   const supabase = createClient();
   const [{ data: templates }, { data: notes }, { data: coaches }] =
@@ -168,9 +176,32 @@ export default async function ExerciseCataloguePage({
     ? templateList.filter((t) => (t.tags ?? []).includes(activeTag))
     : templateList;
 
+  // Pick mode: choosing exercises for a practice-session section.
+  const pickSection = PLAN_SECTIONS.find((s) => s.key === searchParams.pick);
+  const pickDraft = searchParams.draft || "new";
+  const doneHref =
+    pickDraft === "new"
+      ? "/coaches/practice"
+      : `/coaches/practice?open=${pickDraft}#plan-${pickDraft}`;
+
   return (
     <div className="space-y-4">
       <PracticeSubTabs active="exercises" />
+
+      {pickSection ? (
+        <div className="card sticky top-16 z-20 flex items-center justify-between gap-3 border-brand-blue/40 bg-brand-blue-light/70 p-3">
+          <p className="text-sm font-medium text-brand-blue-dark">
+            Choosing <strong>{pickSection.label}</strong> exercises for your
+            session — tap “＋ Add” on any card.
+          </p>
+          <Link
+            href={doneHref}
+            className="btn-primary whitespace-nowrap text-sm"
+          >
+            ✓ Done
+          </Link>
+        </div>
+      ) : null}
 
       {searchParams.error ? (
         <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -195,7 +226,9 @@ export default async function ExerciseCataloguePage({
           {/* Tag filter */}
           <div className="flex flex-wrap gap-1.5">
             <Link
-              href="/coaches/practice/exercises"
+              href={`/coaches/practice/exercises${
+                pickSection ? `?pick=${pickSection.key}&draft=${pickDraft}` : ""
+              }`}
               className={`badge ${
                 !activeTag
                   ? "bg-brand-ink text-white"
@@ -207,7 +240,11 @@ export default async function ExerciseCataloguePage({
             {EXERCISE_TAGS.map((tag) => (
               <Link
                 key={tag}
-                href={`/coaches/practice/exercises?tag=${tag}`}
+                href={`/coaches/practice/exercises?tag=${tag}${
+                  pickSection
+                    ? `&pick=${pickSection.key}&draft=${pickDraft}`
+                    : ""
+                }`}
                 className={`badge ${
                   activeTag === tag
                     ? "bg-brand-ink text-white"
@@ -242,8 +279,17 @@ export default async function ExerciseCataloguePage({
                       </span>
                     ) : null}
                     <TagChips tags={t.tags ?? []} />
+                    {pickSection ? (
+                      <span className="ml-auto">
+                        <PickExerciseButton
+                          draftKey={pickDraft}
+                          section={pickSection.key as PlanSection}
+                          title={t.title}
+                        />
+                      </span>
+                    ) : null}
                     {t.rating ? (
-                      <span className="ml-auto shrink-0 text-sm leading-none text-amber-400">
+                      <span className={`${pickSection ? "" : "ml-auto"} shrink-0 text-sm leading-none text-amber-400`}>
                         {"★".repeat(t.rating)}
                         <span className="text-slate-300">
                           {"★".repeat(5 - t.rating)}

@@ -105,10 +105,12 @@ export default async function PracticePlannerPage({
                 </summary>
                 <div className="mt-3">
                   <PracticePlanEditor
+                    draftKey={p.id}
                     initialSessionDate={p.session_date}
                     initialWarmup={p.warmup ?? ""}
                     initialExercises={p.exercises ?? ""}
                     initialScrimmages={p.scrimmages ?? ""}
+                    initialNotes={p.notes ?? ""}
                     initialImageUrl={p.image_url}
                     templates={editorTemplates}
                     onSave={savePracticePlan.bind(null, p.id)}

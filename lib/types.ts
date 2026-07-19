@@ -172,6 +172,7 @@ export interface Database {
           warmup: string | null;
           exercises: string | null;
           scrimmages: string | null;
+          notes: string | null;
           image_url: string | null;
           created_at: string;
         };
@@ -182,6 +183,7 @@ export interface Database {
           warmup?: string | null;
           exercises?: string | null;
           scrimmages?: string | null;
+          notes?: string | null;
           image_url?: string | null;
         };
         Update: Partial<
