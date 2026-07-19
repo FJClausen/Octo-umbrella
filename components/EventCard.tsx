@@ -39,7 +39,7 @@ export function ScoreBadge({ event }: { event: EventRowType }) {
 /**
  * The inner content of an event card (title row, time, location/jersey
  * chips, snack banner) — reusable outside the link wrapper, e.g. in the
- * Coaches Corner event manager.
+ * Coaching Corner event manager.
  */
 export function EventCardBody({
   event,
@@ -151,17 +151,23 @@ export function EventCard({
   snack,
   currentUserId,
   rsvpCounts,
+  href,
+  children,
 }: {
   event: EventRowType;
   snack?: SnackInfo | null;
   currentUserId?: string | null;
   rsvpCounts?: RsvpCounts | null;
+  /** Override the card's link target (e.g. straight to edit for coaches). */
+  href?: string;
+  /** Inline actions (RSVP, snack signup) rendered below the linked body. */
+  children?: React.ReactNode;
 }) {
   return (
-    <Link href={`/calendar/${event.id}`}>
-      <Card
-        className={`${eventCardTint(event.type)} transition hover:brightness-[0.98]`}
-      >
+    <Card
+      className={`${eventCardTint(event.type)} transition hover:brightness-[0.98]`}
+    >
+      <Link href={href ?? `/calendar/${event.id}`} className="block">
         <EventCardBody
           event={event}
           snack={snack}
@@ -169,7 +175,10 @@ export function EventCard({
           rsvpCounts={rsvpCounts}
           showArrow
         />
-      </Card>
-    </Link>
+      </Link>
+      {children ? (
+        <div className="mt-3 border-t border-black/10 pt-3">{children}</div>
+      ) : null}
+    </Card>
   );
 }

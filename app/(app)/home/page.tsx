@@ -3,9 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { Card } from "@/components/ui";
 import { EventCard } from "@/components/EventCard";
+import { RsvpControl } from "@/components/RsvpControl";
+import { SnackButton } from "@/components/SnackButton";
 import { formatDay } from "@/lib/format";
 import { countRsvpsByEvent } from "@/lib/rsvp";
-import { site } from "@/lib/site";
+import { site, type RsvpStatus } from "@/lib/site";
 
 export const metadata = { title: "Home" };
 
@@ -20,6 +22,7 @@ export default async function HomePage() {
     { data: latestNews },
     { data: snackSlots },
     { data: rsvps },
+    { data: myPlayers },
   ] = await Promise.all([
     supabase
       .from("events")
@@ -35,8 +38,14 @@ export default async function HomePage() {
       .limit(3),
     supabase
       .from("snack_slots")
-      .select("event_id, claimed_by, claimed_by_name"),
-    supabase.from("rsvps").select("event_id, status"),
+      .select("id, event_id, label, claimed_by, claimed_by_name"),
+    supabase.from("rsvps").select("event_id, player_id, status"),
+    supabase
+      .from("players")
+      .select("id, first_name")
+      .eq("parent_id", current?.userId ?? "")
+      .eq("active", true)
+      .order("first_name"),
   ]);
 
   const snackByEvent = new Map(
@@ -45,6 +54,25 @@ export default async function HomePage() {
       .map((s) => [s.event_id as string, s])
   );
   const rsvpCounts = countRsvpsByEvent(rsvps);
+  const isCoach = current?.profile?.role === "coach";
+
+  // My kids' RSVP status per event, for the inline RSVP buttons.
+  const myPlayerIds = new Set((myPlayers ?? []).map((p) => p.id));
+  const myStatusByEventPlayer = new Map<string, RsvpStatus>();
+  for (const r of rsvps ?? []) {
+    if (myPlayerIds.has(r.player_id)) {
+      myStatusByEventPlayer.set(
+        `${r.event_id}:${r.player_id}`,
+        r.status as RsvpStatus
+      );
+    }
+  }
+  const rsvpPlayersFor = (eventId: string) =>
+    (myPlayers ?? []).map((p) => ({
+      playerId: p.id,
+      playerName: p.first_name,
+      status: myStatusByEventPlayer.get(`${eventId}:${p.id}`) ?? null,
+    }));
 
   const firstName = current?.profile?.full_name?.split(" ")[0] || "there";
 
@@ -65,17 +93,62 @@ export default async function HomePage() {
         </div>
         <div className="space-y-2">
           {upcoming && upcoming.length > 0 ? (
-            upcoming.map((e) => (
-              <EventCard
-                key={e.id}
-                event={e}
-                snack={snackByEvent.get(e.id)}
-                currentUserId={current?.userId}
-                rsvpCounts={
-                  e.type === "game" ? rsvpCounts.get(e.id) : undefined
-                }
-              />
-            ))
+            upcoming.map((e) => {
+              const slot = snackByEvent.get(e.id);
+              const players = rsvpPlayersFor(e.id);
+              const snackOpen = slot ? !slot.claimed_by : false;
+              const snackMine = slot
+                ? slot.claimed_by === current?.userId
+                : false;
+              const showSnack = e.type === "game" && slot;
+              return (
+                <EventCard
+                  key={e.id}
+                  event={e}
+                  snack={slot}
+                  currentUserId={current?.userId}
+                  rsvpCounts={
+                    e.type === "game" ? rsvpCounts.get(e.id) : undefined
+                  }
+                  href={
+                    isCoach
+                      ? `/coaches/events?edit=${e.id}#event-${e.id}`
+                      : undefined
+                  }
+                >
+                  {players.length > 0 || showSnack ? (
+                    <div className="space-y-3">
+                      {players.length > 0 ? (
+                        <RsvpControl eventId={e.id} players={players} />
+                      ) : null}
+                      {showSnack ? (
+                        <div className="flex items-center justify-between gap-2 text-sm">
+                          <p
+                            className={
+                              snackOpen
+                                ? "text-amber-700"
+                                : "text-brand-green-dark"
+                            }
+                          >
+                            🍊 {slot!.label || "Team snack"}:{" "}
+                            {snackOpen
+                              ? "needs a volunteer"
+                              : snackMine
+                                ? "you're bringing it 🎉"
+                                : `${slot!.claimed_by_name || "covered"} ✓`}
+                          </p>
+                          <SnackButton
+                            slotId={slot!.id}
+                            mine={snackMine}
+                            open={snackOpen}
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                  ) : null}
+                </EventCard>
+              );
+            })
           ) : (
             <Card>
               <p className="text-sm text-slate-500">

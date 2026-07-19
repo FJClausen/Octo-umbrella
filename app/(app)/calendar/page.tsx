@@ -42,6 +42,10 @@ export default async function CalendarPage() {
   const rsvpCounts = countRsvpsByEvent(rsvps);
   const countsFor = (e: { id: string; type: string }) =>
     e.type === "game" ? rsvpCounts.get(e.id) : undefined;
+  // Coaches jump straight to the event's edit form; parents to the detail.
+  const isCoach = current?.profile?.role === "coach";
+  const hrefFor = (e: { id: string }) =>
+    isCoach ? `/coaches/events?edit=${e.id}#event-${e.id}` : undefined;
 
   const playedGames = (past ?? []).filter((e) => e.type === "game");
   const otherPast = (past ?? []).filter((e) => e.type !== "game");
@@ -65,6 +69,7 @@ export default async function CalendarPage() {
               snack={snackByEvent.get(e.id)}
               currentUserId={current?.userId}
               rsvpCounts={countsFor(e)}
+              href={hrefFor(e)}
             />
           ))
         ) : (
@@ -82,7 +87,12 @@ export default async function CalendarPage() {
           </h2>
           <div className="space-y-2">
             {playedGames.map((e) => (
-              <EventCard key={e.id} event={e} rsvpCounts={countsFor(e)} />
+              <EventCard
+                key={e.id}
+                event={e}
+                rsvpCounts={countsFor(e)}
+                href={hrefFor(e)}
+              />
             ))}
           </div>
         </section>
@@ -95,7 +105,7 @@ export default async function CalendarPage() {
           </h2>
           <div className="space-y-2 opacity-75">
             {otherPast.map((e) => (
-              <EventCard key={e.id} event={e} />
+              <EventCard key={e.id} event={e} href={hrefFor(e)} />
             ))}
           </div>
         </section>

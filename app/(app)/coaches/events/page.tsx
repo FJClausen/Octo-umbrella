@@ -151,7 +151,7 @@ function EventFields({ event }: { event?: EventRow }) {
 export default async function ManageEventsPage({
   searchParams,
 }: {
-  searchParams: { share?: string };
+  searchParams: { share?: string; edit?: string };
 }) {
   const supabase = createClient();
   const [{ data: events }, { data: snackSlots }, { data: rsvps }] =
@@ -217,6 +217,8 @@ export default async function ManageEventsPage({
           const slot = snackSlotByEvent.get(e.id);
           return (
           <Card key={e.id} className={eventCardTint(e.type)}>
+            {/* Anchor target so links can land on (and auto-open) this event */}
+            <div id={`event-${e.id}`} className="scroll-mt-20" />
             <EventCardBody
               event={e}
               snack={slot ?? null}
@@ -231,7 +233,7 @@ export default async function ManageEventsPage({
               />
             </div>
 
-            <details className="mt-3">
+            <details className="mt-3" open={searchParams.edit === e.id}>
               <summary className="cursor-pointer text-sm text-brand-blue">
                 Edit
               </summary>

@@ -82,7 +82,7 @@ export function NavBar({
                     : "bg-brand-blue-light text-brand-blue-dark hover:bg-brand-blue hover:text-white"
                 }`}
               >
-                Coaches Corner
+                Coaching Corner
               </Link>
             ) : null}
           </nav>

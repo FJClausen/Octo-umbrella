@@ -3,7 +3,7 @@
 A mobile-first team hub for a youth soccer team, built with **Next.js** and
 **Supabase**. Parents get a calendar with RSVPs (with snack sign-ups built
 into each event), team news, a roster, and a shared photo gallery. Coaches
-get a private **Coaches Corner** with approvals, roster management with
+get a private **Coaching Corner** with approvals, roster management with
 private coaching notes, a general + per-game lineup planner, a practice
 planner, and shared documents.
 
@@ -24,7 +24,7 @@ planner, and shared documents.
 - **Team Gallery** — any approved parent can upload game-day photos; you can delete your own, coaches can delete any
 - **Account** — edit your name/phone and see your linked players
 
-### Coaches Corner (coaches only — invisible to parents)
+### Coaching Corner (coaches only — invisible to parents)
 - **Approvals** — approve/deny new families, promote an assistant coach
 - **Events** — full create/edit/delete, with the option to create (or later
   remove) a linked snack slot right from the event form — there's no
@@ -44,7 +44,7 @@ planner, and shared documents.
 ### How access works
 - The **first person to sign up automatically becomes the head coach** (approved).
 - Everyone after that signs up as a **pending parent** and must be approved by a
-  coach in **Coaches Corner → Approvals**.
+  coach in **Coaching Corner → Approvals**.
 - A coach can promote an approved parent to **assistant coach** at any time.
 - Privacy is enforced in the database (Row Level Security), not just the UI:
   parents can never read last names, coaching notes, or lineups.
@@ -133,7 +133,7 @@ app/
   (app)/            Protected area (requires an approved account)
     home, calendar (RSVP + snack claim/release lives on the event page),
     news, roster, gallery, account
-    coaches/        Coaches Corner (requires role = coach)
+    coaches/        Coaching Corner (requires role = coach)
       approvals, events, news, roster, lineups, practice, documents
   login, signup, pending, auth/signout
 components/         Nav, forms, cards, RSVP + snack controls,

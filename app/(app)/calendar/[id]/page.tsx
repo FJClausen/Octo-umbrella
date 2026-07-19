@@ -85,10 +85,10 @@ export default async function EventDetailPage({
           <EventTypeBadge type={event.type} />
           {isCoach ? (
             <Link
-              href="/coaches/events"
+              href={`/coaches/events?edit=${event.id}#event-${event.id}`}
               className="text-sm text-brand-blue underline"
             >
-              Manage
+              ✏️ Edit
             </Link>
           ) : null}
         </div>

@@ -86,7 +86,7 @@ export default async function ApprovalsPage() {
     <div className="space-y-5">
       <p className="text-sm text-slate-500">
         Approve new families, revoke access, and promote an assistant coach.
-        Coaches see the Coaches Corner; parents don’t. To invite someone, share
+        Coaches see the Coaching Corner; parents don’t. To invite someone, share
         the site link and have them tap “Request an account.”
       </p>
 

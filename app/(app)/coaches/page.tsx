@@ -6,7 +6,7 @@ import { formatEventWhen } from "@/lib/format";
 import { reminderMessage } from "@/lib/whatsapp";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 
-export const metadata = { title: "Coaches Corner" };
+export const metadata = { title: "Coaching Corner" };
 
 async function count(
   promise: PromiseLike<{ count: number | null }>
@@ -115,7 +115,10 @@ export default async function CoachesOverview() {
                   key={e.id}
                   className={`flex flex-wrap items-center justify-between gap-2 rounded-lg border p-3 ${eventCardTint(e.type)}`}
                 >
-                  <div>
+                  <Link
+                    href={`/coaches/events?edit=${e.id}#event-${e.id}`}
+                    className="block"
+                  >
                     <div className="flex items-center gap-2">
                       <EventTypeBadge type={e.type} />
                       <span className="text-sm font-medium text-brand-ink">
@@ -131,7 +134,7 @@ export default async function CoachesOverview() {
                         </span>
                       ) : null}
                     </p>
-                  </div>
+                  </Link>
                   <WhatsAppButton
                     text={reminderMessage(e, snack)}
                     label="Send reminder"
