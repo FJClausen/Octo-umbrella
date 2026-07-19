@@ -11,7 +11,7 @@ export const metadata = { title: "Practice Planner" };
 export default async function PracticePlannerPage({
   searchParams,
 }: {
-  searchParams: { error?: string };
+  searchParams: { error?: string; open?: string; event?: string };
 }) {
   const supabase = createClient();
   const today = new Date().toISOString().slice(0, 10);
@@ -63,6 +63,11 @@ export default async function PracticePlannerPage({
           + New practice session
         </h2>
         <PracticePlanEditor
+          initialEventId={
+            eventOptions.some((e) => e.id === searchParams.event)
+              ? searchParams.event
+              : undefined
+          }
           initialSessionDate={today}
           events={eventOptions}
           templates={editorTemplates}
@@ -78,6 +83,7 @@ export default async function PracticePlannerPage({
         {plans && plans.length > 0 ? (
           plans.map((p) => (
             <Card key={p.id}>
+              <div id={`plan-${p.id}`} className="scroll-mt-20" />
               <div className="flex items-center justify-between">
                 <p className="font-semibold text-brand-ink">
                   {formatDate(p.session_date)}
@@ -93,7 +99,7 @@ export default async function PracticePlannerPage({
                   </span>
                 ) : null}
               </div>
-              <details className="mt-2">
+              <details className="mt-2" open={searchParams.open === p.id}>
                 <summary className="cursor-pointer text-sm text-brand-blue">
                   View / edit
                 </summary>

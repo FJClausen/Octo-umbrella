@@ -1,9 +1,8 @@
-import { format } from "date-fns";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { Card, SubmitButton, eventCardTint } from "@/components/ui";
 import { EventCardBody } from "@/components/EventCard";
-import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/site";
+import { EventFields } from "@/components/EventFields";
 import { countRsvpsByEvent } from "@/lib/rsvp";
 import { newEventMessage, resultMessage } from "@/lib/whatsapp";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -18,11 +17,6 @@ import {
 } from "./actions";
 
 export const metadata = { title: "Manage Events" };
-
-function toInputDT(value?: string | null): string {
-  if (!value) return "";
-  return format(new Date(value), "yyyy-MM-dd'T'HH:mm");
-}
 
 function AddSnackSlotFields() {
   return (
@@ -43,120 +37,13 @@ function AddSnackSlotFields() {
   );
 }
 
-function EventFields({ event }: { event?: EventRow }) {
-  return (
-    <div className="grid gap-3 sm:grid-cols-2">
-      <div>
-        <label className="label">Type</label>
-        <select name="type" defaultValue={event?.type ?? "game"} className="input">
-          {EVENT_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {EVENT_TYPE_LABELS[t]}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label className="label">Title (optional)</label>
-        <input
-          name="title"
-          defaultValue={event?.title ?? ""}
-          className="input"
-          placeholder="Defaults to Game / Practice / Team Event"
-        />
-      </div>
-      <div>
-        <label className="label">Opponent (games)</label>
-        <input
-          name="opponent"
-          defaultValue={event?.opponent ?? ""}
-          className="input"
-          placeholder="e.g. Northside United"
-        />
-      </div>
-      <div>
-        <label className="label">Jersey color (games)</label>
-        <select
-          name="jersey_color"
-          defaultValue={event?.jersey_color ?? ""}
-          className="input"
-        >
-          <option value="">— not set —</option>
-          <option value="blue">🔵 Blue (home game)</option>
-          <option value="red">🔴 Red (away game)</option>
-        </select>
-      </div>
-      <div>
-        <label className="label">Location</label>
-        <input
-          name="location"
-          defaultValue={event?.location ?? ""}
-          className="input"
-          placeholder="e.g. Riverside Field 1"
-        />
-      </div>
-      <div>
-        <label className="label">Starts</label>
-        <input
-          type="datetime-local"
-          name="starts_at"
-          required
-          defaultValue={toInputDT(event?.starts_at)}
-          className="input"
-        />
-      </div>
-      <div>
-        <label className="label">Ends (optional)</label>
-        <input
-          type="datetime-local"
-          name="ends_at"
-          defaultValue={toInputDT(event?.ends_at)}
-          className="input"
-        />
-      </div>
-      <div className="sm:col-span-2">
-        <label className="label">Notes (optional)</label>
-        <textarea
-          name="notes"
-          rows={2}
-          defaultValue={event?.notes ?? ""}
-          className="input"
-          placeholder="Arrive 30 minutes early…"
-        />
-      </div>
-      <div className="sm:col-span-2">
-        <label className="label">Final score (games — fill in after playing)</label>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            name="score_us"
-            min={0}
-            defaultValue={event?.score_us ?? ""}
-            className="input w-24"
-            placeholder="Us"
-          />
-          <span className="text-slate-400">–</span>
-          <input
-            type="number"
-            name="score_them"
-            min={0}
-            defaultValue={event?.score_them ?? ""}
-            className="input w-24"
-            placeholder="Them"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default async function ManageEventsPage({
   searchParams,
 }: {
   searchParams: { share?: string; edit?: string; add?: string; result?: string };
 }) {
   const supabase = createClient();
-  const [{ data: events }, { data: snackSlots }, { data: rsvps }] =
+  const [{ data: events }, { data: snackSlots }, { data: rsvps }, { data: plans }] =
     await Promise.all([
       supabase
         .from("events")
@@ -164,7 +51,14 @@ export default async function ManageEventsPage({
         .order("starts_at", { ascending: false }),
       supabase.from("snack_slots").select("*"),
       supabase.from("rsvps").select("event_id, status"),
+      supabase.from("practice_plans").select("id, event_id"),
     ]);
+
+  const planByEvent = new Map(
+    (plans ?? [])
+      .filter((p) => p.event_id)
+      .map((p) => [p.event_id as string, p.id])
+  );
 
   const snackSlotByEvent = new Map<string, SnackSlot>(
     (snackSlots ?? [])
@@ -272,12 +166,37 @@ export default async function ManageEventsPage({
               rsvpCounts={e.type === "game" ? rsvpCounts.get(e.id) : undefined}
             />
 
-            <div className="mt-3">
+            <div className="mt-3 flex flex-wrap items-center gap-2">
               <WhatsAppButton
                 text={newEventMessage(e, slot ?? null)}
                 label="Share"
                 small
               />
+              {e.type === "practice" ? (
+                planByEvent.has(e.id) ? (
+                  <Link
+                    href={`/coaches/practice?open=${planByEvent.get(e.id)}#plan-${planByEvent.get(e.id)}`}
+                    className="btn-outline px-3 py-1 text-sm"
+                  >
+                    📋 Practice plan
+                  </Link>
+                ) : (
+                  <Link
+                    href={`/coaches/practice?event=${e.id}`}
+                    className="btn-outline px-3 py-1 text-sm"
+                  >
+                    ＋ Plan this practice
+                  </Link>
+                )
+              ) : null}
+              {e.type === "game" ? (
+                <Link
+                  href="/coaches/gameday"
+                  className="btn-outline px-3 py-1 text-sm"
+                >
+                  🥅 Lineup / Game Day
+                </Link>
+              ) : null}
             </div>
 
             <details className="mt-3" open={searchParams.edit === e.id}>
