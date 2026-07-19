@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-type NavItem = { href: string; label: string; icon: string };
+type NavItem = { href: string; label: string; icon: string; match?: string[] };
 
 const PARENT_NAV: NavItem[] = [
-  { href: "/home", label: "Home", icon: "🥅" },
+  { href: "/home", label: "Home", icon: "🥅", match: ["/home", "/news"] },
   { href: "/calendar", label: "Calendar", icon: "🏟️" },
-  { href: "/news", label: "News", icon: "📣" },
-  { href: "/roster", label: "Roster", icon: "👕" },
-  { href: "/gallery", label: "Gallery", icon: "📸" },
+  { href: "/roster", label: "Team", icon: "👕", match: ["/roster", "/gallery"] },
 ];
 
 export function NavBar({
@@ -28,8 +26,10 @@ export function NavBar({
 }) {
   const pathname = usePathname();
   const items = PARENT_NAV;
-  const isActive = (href: string) =>
+  const matchesOne = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
+  const isActive = (href: string, match?: string[]) =>
+    (match ?? [href]).some(matchesOne);
 
   return (
     <>
@@ -65,7 +65,7 @@ export function NavBar({
                 key={item.href}
                 href={item.href}
                 className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                  isActive(item.href)
+                  isActive(item.href, item.match)
                     ? "bg-brand-green-light text-brand-green-dark"
                     : "text-slate-600 hover:bg-slate-100"
                 }`}
@@ -109,13 +109,13 @@ export function NavBar({
 
       {/* Mobile bottom nav */}
       <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white sm:hidden">
-        <div className="mx-auto grid max-w-4xl grid-cols-6">
+        <div className="mx-auto grid max-w-4xl grid-cols-4">
           {items.map((item) => (
             <Link
               key={item.href}
               href={item.href}
               className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${
-                isActive(item.href)
+                isActive(item.href, item.match)
                   ? "text-brand-green-dark"
                   : "text-slate-500"
               }`}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { PageHeader, EmptyState, SubmitButton } from "@/components/ui";
+import { TeamSubTabs } from "@/components/TeamSubTabs";
 import { formatDay } from "@/lib/format";
 import { uploadGalleryPhoto, deleteGalleryPhoto } from "./actions";
 
@@ -29,6 +30,7 @@ export default async function GalleryPage({
 
   return (
     <div className="space-y-5">
+      <TeamSubTabs active="gallery" />
       <PageHeader
         title="Team Gallery"
         subtitle="Share your favorite game-day and practice photos with the team."

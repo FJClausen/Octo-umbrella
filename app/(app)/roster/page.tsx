@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { PageHeader, EmptyState } from "@/components/ui";
+import { TeamSubTabs } from "@/components/TeamSubTabs";
 
 export const metadata = { title: "Roster" };
 
@@ -16,6 +17,7 @@ export default async function RosterPage() {
 
   return (
     <div className="space-y-5">
+      <TeamSubTabs active="roster" />
       <PageHeader title="Team Roster" />
 
       {players && players.length > 0 ? (

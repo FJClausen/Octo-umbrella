@@ -7,6 +7,7 @@ import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/site";
 import { countRsvpsByEvent } from "@/lib/rsvp";
 import { newEventMessage } from "@/lib/whatsapp";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { ImportSchedule } from "@/components/ImportSchedule";
 import type { EventRow, SnackSlot } from "@/lib/types";
 import {
   createEvent,
@@ -207,10 +208,22 @@ export default async function ManageEventsPage({
         </summary>
         <form action={createEvent} className="mt-4 space-y-4">
           <EventFields />
+          <div className="rounded-lg border border-slate-200 p-3">
+            <label className="label">
+              🔁 Repeat weekly until (optional — e.g. for practices)
+            </label>
+            <input type="date" name="repeat_until" className="input" />
+            <p className="mt-1 text-xs text-slate-500">
+              Creates a copy of this event every week through the chosen
+              date.
+            </p>
+          </div>
           <AddSnackSlotFields />
           <SubmitButton>Add event</SubmitButton>
         </form>
       </details>
+
+      <ImportSchedule />
 
       <div className="space-y-2">
         {(events ?? []).map((e) => {

@@ -16,6 +16,9 @@ export default async function HomePage() {
   const current = await getCurrentProfile();
   const today = new Date().toISOString().slice(0, 10);
   const dayStart = `${today}T00:00:00`;
+  const twoWeeksOut = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
 
   const [
     { data: upcoming },
@@ -48,6 +51,14 @@ export default async function HomePage() {
       .order("first_name"),
   ]);
 
+  // Events over the next two weeks, for the "action needed" strip.
+  const { data: fortnight } = await supabase
+    .from("events")
+    .select("id, type, title, opponent, starts_at")
+    .gte("starts_at", dayStart)
+    .lte("starts_at", `${twoWeeksOut}T23:59:59`)
+    .order("starts_at");
+
   const snackByEvent = new Map(
     (snackSlots ?? [])
       .filter((s) => s.event_id)
@@ -76,12 +87,70 @@ export default async function HomePage() {
 
   const firstName = current?.profile?.full_name?.split(" ")[0] || "there";
 
+  // What still needs this family's attention in the next two weeks:
+  // missing RSVPs for their kids, and unclaimed game snacks.
+  const eventLabel = (e: {
+    title: string;
+    opponent: string | null;
+    starts_at: string;
+  }) =>
+    `${e.title}${e.opponent ? ` vs ${e.opponent}` : ""} (${formatDay(e.starts_at)})`;
+  const actionItems: { href: string; text: string }[] = [];
+  for (const e of fortnight ?? []) {
+    const unanswered = (myPlayers ?? []).filter(
+      (p) => !myStatusByEventPlayer.has(`${e.id}:${p.id}`)
+    );
+    if (unanswered.length > 0) {
+      actionItems.push({
+        href: `/calendar/${e.id}`,
+        text: `RSVP for ${unanswered.map((p) => p.first_name).join(" & ")} — ${eventLabel(e)}`,
+      });
+    }
+  }
+  for (const e of fortnight ?? []) {
+    const slot = snackByEvent.get(e.id);
+    if (e.type === "game" && slot && !slot.claimed_by) {
+      actionItems.push({
+        href: `/calendar/${e.id}`,
+        text: `🍊 Snack still open — ${eventLabel(e)}`,
+      });
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
         <p className="text-sm text-slate-500">Welcome back,</p>
         <h1 className="text-2xl font-bold text-brand-ink">{firstName}</h1>
       </div>
+
+      {actionItems.length > 0 ? (
+        <Card className="border-amber-300/70 bg-amber-50/80">
+          <h3 className="mb-1.5 font-semibold text-amber-900">
+            ⚠️ Action needed
+          </h3>
+          <ul className="space-y-1">
+            {actionItems.slice(0, 4).map((item, i) => (
+              <li key={i}>
+                <Link
+                  href={item.href}
+                  className="text-sm text-amber-800 underline-offset-2 hover:underline"
+                >
+                  • {item.text}
+                </Link>
+              </li>
+            ))}
+            {actionItems.length > 4 ? (
+              <li className="text-sm text-amber-700">
+                …and {actionItems.length - 4} more —{" "}
+                <Link href="/calendar" className="underline">
+                  see the calendar
+                </Link>
+              </li>
+            ) : null}
+          </ul>
+        </Card>
+      ) : null}
 
       {/* Next two events, with snack duty inline */}
       <section>

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { addDays, format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { requireCoach } from "@/lib/auth";
 
@@ -51,15 +52,23 @@ function revalidate() {
   revalidatePath("/home");
 }
 
+/** Shift a datetime-local string ("yyyy-MM-ddTHH:mm") by n days,
+ *  keeping the wall-clock time. */
+function shiftDT(value: string, days: number): string {
+  return format(addDays(new Date(value), days), "yyyy-MM-dd'T'HH:mm");
+}
+
 export async function createEvent(formData: FormData) {
   await requireCoach();
   const supabase = createClient();
   const starts_at = clean(formData.get("starts_at"));
   if (!starts_at) return;
 
+  const payload = eventPayload(formData, starts_at);
+
   const { data: inserted } = await supabase
     .from("events")
-    .insert(eventPayload(formData, starts_at))
+    .insert(payload)
     .select("id")
     .single();
 
@@ -71,9 +80,66 @@ export async function createEvent(formData: FormData) {
     });
   }
 
+  // Weekly repeats: create a copy every 7 days through the end date
+  // (capped at 30 extra events as a safety net).
+  const repeatUntil = clean(formData.get("repeat_until"));
+  if (repeatUntil) {
+    const repeats = [];
+    for (let i = 1; i <= 30; i++) {
+      const s = shiftDT(starts_at, 7 * i);
+      if (s.slice(0, 10) > repeatUntil) break;
+      repeats.push({
+        ...payload,
+        starts_at: s,
+        ends_at: payload.ends_at ? shiftDT(payload.ends_at, 7 * i) : null,
+        score_us: null,
+        score_them: null,
+      });
+    }
+    if (repeats.length) await supabase.from("events").insert(repeats);
+  }
+
   revalidate();
   // Land on the events list with a "share to WhatsApp" prompt for the new event.
   if (inserted) redirect(`/coaches/events?share=${inserted.id}`);
+}
+
+/** Bulk insert for the AI schedule import. */
+export async function createEventsBulk(
+  events: {
+    type: string;
+    title: string;
+    opponent: string | null;
+    location: string | null;
+    starts_at: string;
+    ends_at: string | null;
+    jersey_color: string | null;
+  }[]
+): Promise<{ created?: number; error?: string }> {
+  await requireCoach();
+  const supabase = createClient();
+
+  const rows = events
+    .filter((e) => e.starts_at)
+    .slice(0, 60)
+    .map((e) => ({
+      type: ["game", "practice", "event"].includes(e.type) ? e.type : "game",
+      title: e.title || TYPE_TITLES[e.type] || "Game",
+      opponent: e.opponent || null,
+      location: e.location || null,
+      starts_at: e.starts_at,
+      ends_at: e.ends_at || null,
+      jersey_color:
+        e.jersey_color === "blue" || e.jersey_color === "red"
+          ? e.jersey_color
+          : null,
+    }));
+  if (!rows.length) return { error: "Nothing to import." };
+
+  const { error } = await supabase.from("events").insert(rows);
+  if (error) return { error: error.message };
+  revalidate();
+  return { created: rows.length };
 }
 
 export async function updateEvent(formData: FormData) {
