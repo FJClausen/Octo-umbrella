@@ -30,11 +30,17 @@ export function NewSessionPlanner({
   templates: Template;
   onSave: (formData: FormData) => Promise<{ error?: string } | void>;
 }) {
-  const [focus, setFocus] = useState(FOCUS_AREAS[0]);
+  const [focus, setFocus] = useState<string[]>([]);
   const [plan, setPlan] = useState<GeneratedPlan | null>(null);
   const [generation, setGeneration] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  function toggleFocus(area: string) {
+    setFocus((prev) =>
+      prev.includes(area) ? prev.filter((f) => f !== area) : [...prev, area]
+    );
+  }
 
   function generate() {
     setError(null);
@@ -53,29 +59,39 @@ export function NewSessionPlanner({
     <div className="space-y-4">
       <div className="rounded-lg border border-brand-blue/30 bg-brand-blue-light/30 p-3">
         <p className="mb-2 text-sm font-medium text-brand-blue-dark">
-          ✨ Let AI plan this session from your saved exercises
+          ✨ Let AI plan this session from your saved exercises — pick one or
+          more focus areas
         </p>
-        <div className="flex flex-wrap items-center gap-2">
-          <select
-            value={focus}
-            onChange={(e) => setFocus(e.target.value)}
-            className="input w-auto"
-          >
-            {FOCUS_AREAS.map((f) => (
-              <option key={f} value={f}>
-                Focus: {f}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={generate}
-            disabled={isPending}
-            className="btn-blue"
-          >
-            {isPending ? "Planning…" : plan ? "↻ Replan" : "✨ Plan session"}
-          </button>
+        <div className="flex flex-wrap gap-2">
+          {FOCUS_AREAS.map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => toggleFocus(f)}
+              className={`badge transition ${
+                focus.includes(f)
+                  ? "bg-brand-blue text-white"
+                  : "bg-white text-slate-600 hover:bg-slate-100"
+              }`}
+            >
+              {f}
+            </button>
+          ))}
         </div>
+        <button
+          type="button"
+          onClick={generate}
+          disabled={isPending || focus.length === 0}
+          className="btn-blue mt-2 disabled:opacity-50"
+        >
+          {isPending
+            ? "Planning…"
+            : plan
+              ? "↻ Replan"
+              : focus.length === 0
+                ? "✨ Plan session (pick a focus first)"
+                : `✨ Plan ${focus.join(" + ")} session`}
+        </button>
         {error ? (
           <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
             {error}

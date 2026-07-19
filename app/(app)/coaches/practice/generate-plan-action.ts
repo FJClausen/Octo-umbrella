@@ -29,7 +29,7 @@ const OUTPUT_SCHEMA = {
       type: "array",
       items: { type: "string" },
       description:
-        "EXACT titles of 2-3 catalogue exercises that train the focus area (not warmups, not scrimmage variations)",
+        "EXACT titles of 2-3 catalogue exercises that together cover the focus areas (not warmups, not scrimmage variations)",
     },
     scrimmage: {
       type: "string",
@@ -41,10 +41,24 @@ const OUTPUT_SCHEMA = {
   additionalProperties: false,
 } as const;
 
+const ALLOWED_FOCUS = [
+  "Attacking",
+  "Defending",
+  "Dribbling",
+  "Passing",
+  "Shooting",
+  "Technique",
+];
+
 export async function generatePracticePlanAction(
-  focus: string
+  focusInput: string[]
 ): Promise<{ plan?: GeneratedPlan; error?: string }> {
   await requireCoach();
+
+  const focus = focusInput.filter((f) => ALLOWED_FOCUS.includes(f));
+  if (!focus.length) {
+    return { error: "Pick at least one focus area." };
+  }
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return {
@@ -91,7 +105,13 @@ export async function generatePracticePlanAction(
       messages: [
         {
           role: "user",
-          content: `Focus area for this session: ${focus}\n\nExercise catalogue:\n${catalogue}\n\nPick one Warmup-tagged exercise, 2-3 drills that train ${focus}, and one Scrimmage Variations exercise, and explain the session concept.`,
+          content: `Focus area${focus.length > 1 ? "s" : ""} for this session: ${focus.join(", ")}\n\nExercise catalogue:\n${catalogue}\n\nPick one Warmup-tagged exercise, 2-3 drills that together cover ${focus.join(" and ")}${
+            focus.length > 1
+              ? " (each focus area should be trained by at least one drill; drills covering several of them are ideal)"
+              : ""
+          }, and one Scrimmage Variations exercise — ideally one where the focus skills come up naturally. In the concept, explain how the session builds from warmup through the drills to the scrimmage${
+            focus.length > 1 ? " and how the focus areas connect" : ""
+          }.`,
         },
       ],
     });
