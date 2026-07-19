@@ -60,6 +60,8 @@ export function EventCardBody({
   const showRsvps =
     rsvpCounts != null &&
     rsvpCounts.going + rsvpCounts.maybe + rsvpCounts.not_going > 0;
+  // Snack duty only applies to games — never show the chip on practices.
+  const snackChip = event.type === "game" ? snack : null;
 
   // The type badge already says Game / Practice / Team Event — don't repeat
   // it as the title (e.g. a practice titled "Practice" or "Team Practice").
@@ -79,13 +81,13 @@ export function EventCardBody({
           <div className="flex flex-wrap items-center gap-2">
             <EventTypeBadge type={event.type} />
             {!redundantTitle || event.opponent ? (
-              <span className="truncate font-semibold text-brand-ink">
+              <span className="truncate font-display text-lg font-bold text-brand-ink">
                 {!redundantTitle ? event.title : null}
                 {event.opponent ? (
                   <span
                     className={
                       redundantTitle
-                        ? "font-semibold text-brand-ink"
+                        ? "font-bold text-brand-ink"
                         : "font-normal text-slate-500"
                     }
                   >
@@ -100,7 +102,7 @@ export function EventCardBody({
             {formatEventWhen(event.starts_at, event.ends_at)}
           </p>
 
-          {event.location || jersey || showRsvps || snack ? (
+          {event.location || jersey || showRsvps || snackChip ? (
             <div className="mt-2 flex flex-wrap items-center gap-1.5">
               {event.location ? (
                 <span className="badge bg-slate-100 text-slate-600">
@@ -119,13 +121,13 @@ export function EventCardBody({
                     : ""}
                 </span>
               ) : null}
-              {snack ? (
-                snack.claimed_by ? (
+              {snackChip ? (
+                snackChip.claimed_by ? (
                   <span className="badge bg-brand-green-light text-brand-green-dark">
                     🍊{" "}
-                    {currentUserId && snack.claimed_by === currentUserId
+                    {currentUserId && snackChip.claimed_by === currentUserId
                       ? "You 🎉"
-                      : `${snack.claimed_by_name || "Covered"} ✓`}
+                      : `${snackChip.claimed_by_name || "Covered"} ✓`}
                   </span>
                 ) : (
                   <span className="badge bg-amber-100 font-semibold text-amber-800">

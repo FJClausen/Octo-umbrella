@@ -10,6 +10,15 @@ body {
   @apply bg-slate-50 text-brand-ink antialiased;
 }
 
+/* Headings use the rounded display face (Nunito). */
+@layer base {
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+}
+
 /* Reusable component classes */
 @layer components {
   .btn {

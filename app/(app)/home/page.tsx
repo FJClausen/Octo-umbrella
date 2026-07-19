@@ -171,7 +171,8 @@ export default async function HomePage() {
                 <EventCard
                   key={e.id}
                   event={e}
-                  snack={slot}
+                  // The inline snack row below covers it — no chip too.
+                  snack={showSnack ? null : slot}
                   currentUserId={current?.userId}
                   rsvpCounts={
                     e.type === "game" ? rsvpCounts.get(e.id) : undefined
