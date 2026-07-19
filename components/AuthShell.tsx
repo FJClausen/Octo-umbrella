@@ -20,7 +20,7 @@ export function AuthShell({
             <img
               src={site.logoUrl}
               alt={site.teamName}
-              className="mx-auto mb-3 h-28 w-28 rounded-full object-cover shadow-card"
+              className="mx-auto mb-3 h-28 w-28 object-contain"
             />
           ) : (
             <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-brand-blue-dark text-2xl text-white shadow-card">

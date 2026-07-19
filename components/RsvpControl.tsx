@@ -51,13 +51,14 @@ export function RsvpControl({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {players.map((p) => (
-        <div key={p.playerId}>
-          <p className="mb-1 text-sm font-medium text-brand-ink">
-            {p.playerName}
-          </p>
-          <div className="flex flex-wrap gap-2">
+        <div
+          key={p.playerId}
+          className="flex flex-wrap items-center justify-between gap-2"
+        >
+          <p className="text-sm font-medium text-brand-ink">{p.playerName}</p>
+          <div className="flex gap-1.5">
             {RSVP_STATUSES.map((s) => {
               const active = local[p.playerId] === s;
               return (
@@ -66,7 +67,7 @@ export function RsvpControl({
                   type="button"
                   disabled={isPending}
                   onClick={() => choose(p.playerId, s)}
-                  className={`rounded-full border px-3 py-1 text-sm font-medium transition disabled:opacity-60 ${
+                  className={`rounded-full border px-2.5 py-0.5 text-xs font-medium transition disabled:opacity-60 ${
                     active
                       ? STYLES[s]
                       : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"

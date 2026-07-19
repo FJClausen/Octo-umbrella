@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Card, EventTypeBadge, eventCardTint } from "@/components/ui";
+import { Card, eventCardTint } from "@/components/ui";
+import { EVENT_TYPE_LABELS, type EventType } from "@/lib/site";
 import { formatEventWhen } from "@/lib/format";
 import type { RsvpCounts } from "@/lib/rsvp";
 import type { EventRow as EventRowType } from "@/lib/types";
@@ -74,27 +75,28 @@ export function EventCardBody({
     "team event",
   ].includes(normalizedTitle);
 
+  // The type is part of the heading, colored per type — so "Game" and
+  // "Practice" carry the same optical weight as the rest of the title.
+  const typeColor =
+    event.type === "game"
+      ? "text-brand-green-dark"
+      : event.type === "practice"
+        ? "text-brand-blue-dark"
+        : "text-amber-800";
+  const typeLabel =
+    EVENT_TYPE_LABELS[event.type as EventType] ?? "Team Event";
+
   return (
     <>
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <EventTypeBadge type={event.type} />
-            {!redundantTitle || event.opponent ? (
-              <span className="truncate font-display text-lg font-bold text-brand-ink">
-                {!redundantTitle ? event.title : null}
-                {event.opponent ? (
-                  <span
-                    className={
-                      redundantTitle
-                        ? "font-bold text-brand-ink"
-                        : "font-normal text-slate-500"
-                    }
-                  >
-                    {!redundantTitle ? " " : ""}vs {event.opponent}
-                  </span>
-                ) : null}
-              </span>
+          <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-1 font-display text-lg font-bold leading-snug">
+            <span className={typeColor}>{typeLabel}</span>
+            {!redundantTitle ? (
+              <span className="text-brand-ink">· {event.title}</span>
+            ) : null}
+            {event.opponent ? (
+              <span className="text-brand-ink">vs {event.opponent}</span>
             ) : null}
             <ScoreBadge event={event} />
           </div>

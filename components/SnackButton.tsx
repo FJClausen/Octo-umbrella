@@ -30,7 +30,7 @@ export function SnackButton({
         type="button"
         disabled={isPending}
         onClick={() => run(releaseSnackAction)}
-        className="btn-outline text-sm"
+        className="rounded-full border border-slate-300 bg-white px-2.5 py-0.5 text-xs font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-60"
       >
         {isPending ? "…" : "Give up"}
       </button>
@@ -43,7 +43,7 @@ export function SnackButton({
         type="button"
         disabled={isPending}
         onClick={() => run(claimSnackAction)}
-        className="btn-primary text-sm"
+        className="rounded-full bg-brand-green px-3 py-0.5 text-xs font-semibold text-white transition hover:bg-brand-green-dark disabled:opacity-60"
       >
         {isPending ? "…" : "I'll bring it"}
       </button>
