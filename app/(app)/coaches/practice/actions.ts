@@ -10,6 +10,7 @@ import type { Database } from "@/lib/types";
 function revalidate() {
   revalidatePath("/coaches/practice");
   revalidatePath("/coaches/practice/exercises");
+  revalidatePath("/coaches/events");
 }
 
 const VALID_TAGS = [
@@ -80,8 +81,17 @@ export async function savePracticePlan(
   if (!sessionDate) return { error: "Please pick a session date." };
   const supabase = createClient();
 
+  // Auto-link: a practice event on the same date becomes the linked event.
+  const { data: practiceEvents } = await supabase
+    .from("events")
+    .select("id, starts_at")
+    .eq("type", "practice");
+  const linked = (practiceEvents ?? []).find((e) =>
+    e.starts_at.startsWith(sessionDate)
+  );
+
   const payload: Database["public"]["Tables"]["practice_plans"]["Insert"] = {
-    event_id: String(formData.get("event_id") || "").trim() || null,
+    event_id: linked?.id ?? null,
     session_date: sessionDate,
     warmup: String(formData.get("warmup") || "").trim() || null,
     exercises: String(formData.get("exercises") || "").trim() || null,

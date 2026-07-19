@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card, SubmitButton, EmptyState } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import { PracticePlanEditor } from "@/components/PracticePlanEditor";
+import { NewSessionPlanner } from "@/components/NewSessionPlanner";
 import { PracticeSubTabs } from "@/components/PracticeSubTabs";
 import { exerciseSortRank } from "@/lib/site";
 import { savePracticePlan, deletePracticePlan } from "./actions";
@@ -48,6 +49,12 @@ export default async function PracticePlannerPage({
   const eventOptions = practiceEvents ?? [];
   const eventTitleById = new Map(eventOptions.map((e) => [e.id, e.title]));
 
+  // "Plan this practice" from an event card pre-fills that practice's date.
+  const fromEvent = searchParams.event
+    ? eventOptions.find((e) => e.id === searchParams.event)
+    : undefined;
+  const initialDate = fromEvent ? fromEvent.starts_at.slice(0, 10) : today;
+
   return (
     <div className="space-y-4">
       <PracticeSubTabs active="sessions" />
@@ -62,17 +69,10 @@ export default async function PracticePlannerPage({
         <h2 className="mb-3 font-semibold text-brand-ink">
           + New practice session
         </h2>
-        <PracticePlanEditor
-          initialEventId={
-            eventOptions.some((e) => e.id === searchParams.event)
-              ? searchParams.event
-              : undefined
-          }
-          initialSessionDate={today}
-          events={eventOptions}
+        <NewSessionPlanner
+          initialSessionDate={initialDate}
           templates={editorTemplates}
           onSave={savePracticePlan.bind(null, null)}
-          saveLabel="Save practice plan"
         />
       </Card>
 
@@ -105,13 +105,11 @@ export default async function PracticePlannerPage({
                 </summary>
                 <div className="mt-3">
                   <PracticePlanEditor
-                    initialEventId={p.event_id ?? undefined}
                     initialSessionDate={p.session_date}
                     initialWarmup={p.warmup ?? ""}
                     initialExercises={p.exercises ?? ""}
                     initialScrimmages={p.scrimmages ?? ""}
                     initialImageUrl={p.image_url}
-                    events={eventOptions}
                     templates={editorTemplates}
                     onSave={savePracticePlan.bind(null, p.id)}
                     saveLabel="Save changes"

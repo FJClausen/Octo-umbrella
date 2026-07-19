@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { formatDate } from "@/lib/format";
 import {
   DIFFICULTY_STYLES,
   EXERCISE_TAG_STYLES,
@@ -9,7 +8,6 @@ import {
   type ExerciseTag,
 } from "@/lib/site";
 
-type EventOption = { id: string; title: string; starts_at: string };
 type Template = {
   id: string;
   title: string;
@@ -197,29 +195,24 @@ function FieldWithTemplates({
 }
 
 export function PracticePlanEditor({
-  initialEventId,
   initialSessionDate,
   initialWarmup = "",
   initialExercises = "",
   initialScrimmages = "",
   initialImageUrl = null,
-  events,
   templates,
   onSave,
   saveLabel = "Save practice plan",
 }: {
-  initialEventId?: string | null;
   initialSessionDate: string;
   initialWarmup?: string;
   initialExercises?: string;
   initialScrimmages?: string;
   initialImageUrl?: string | null;
-  events: EventOption[];
   templates: Template[];
   onSave: (formData: FormData) => Promise<{ error?: string } | void>;
   saveLabel?: string;
 }) {
-  const [eventId, setEventId] = useState(initialEventId ?? "");
   const [sessionDate, setSessionDate] = useState(initialSessionDate);
   const [warmup, setWarmup] = useState(initialWarmup);
   const [exercises, setExercises] = useState(initialExercises);
@@ -234,7 +227,6 @@ export function PracticePlanEditor({
     setError(null);
     startTransition(async () => {
       const formData = new FormData();
-      formData.set("event_id", eventId);
       formData.set("session_date", sessionDate);
       formData.set("warmup", warmup);
       formData.set("exercises", exercises);
@@ -254,38 +246,21 @@ export function PracticePlanEditor({
 
   return (
     <div className="space-y-3">
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div>
-          <label className="label">Session date</label>
-          <input
-            type="date"
-            className="input"
-            value={sessionDate}
-            onChange={(e) => {
-              setSessionDate(e.target.value);
-              setSaved(false);
-            }}
-            required
-          />
-        </div>
-        <div>
-          <label className="label">Linked practice (optional)</label>
-          <select
-            className="input"
-            value={eventId}
-            onChange={(e) => {
-              setEventId(e.target.value);
-              setSaved(false);
-            }}
-          >
-            <option value="">— none —</option>
-            {events.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.title} ({formatDate(e.starts_at)})
-              </option>
-            ))}
-          </select>
-        </div>
+      <div>
+        <label className="label">Session date</label>
+        <input
+          type="date"
+          className="input"
+          value={sessionDate}
+          onChange={(e) => {
+            setSessionDate(e.target.value);
+            setSaved(false);
+          }}
+          required
+        />
+        <p className="mt-1 text-xs text-slate-500">
+          A practice on this date in the calendar is linked automatically.
+        </p>
       </div>
 
       <FieldWithTemplates
