@@ -2,7 +2,7 @@ import Link from "next/link";
 import { addDays } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { Card, EventTypeBadge, eventCardTint } from "@/components/ui";
-import { formatEventWhen } from "@/lib/format";
+import { formatEventWhen, formatDay } from "@/lib/format";
 import { reminderMessage } from "@/lib/whatsapp";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 
@@ -21,19 +21,13 @@ export default async function CoachesOverview() {
   const dayStart = `${today}T00:00:00`;
   const reminderEnd = `${addDays(new Date(), 2).toISOString().slice(0, 10)}T23:59:59`;
 
-  const [pending, players, { data: upcomingEvents }, { data: allSnacks }] =
+  const [pending, { data: upcomingEvents }, { data: allSnacks }] =
     await Promise.all([
       count(
         supabase
           .from("profiles")
           .select("*", { count: "exact", head: true })
           .eq("status", "pending")
-      ),
-      count(
-        supabase
-          .from("players")
-          .select("*", { count: "exact", head: true })
-          .eq("active", true)
       ),
       supabase
         .from("events")
@@ -51,52 +45,97 @@ export default async function CoachesOverview() {
       .map((s) => [s.event_id as string, s])
   );
 
-  const upcoming = (upcomingEvents ?? []).length;
+  // Next game: does it have a lineup and enough RSVPs?
+  const nextGame = (upcomingEvents ?? []).find((e) => e.type === "game") ?? null;
+  let nextGameHasLineup = false;
+  let nextGameGoing = 0;
+  if (nextGame) {
+    const [{ data: lineup }, going] = await Promise.all([
+      supabase
+        .from("lineups")
+        .select("id")
+        .eq("event_id", nextGame.id)
+        .maybeSingle(),
+      count(
+        supabase
+          .from("rsvps")
+          .select("*", { count: "exact", head: true })
+          .eq("event_id", nextGame.id)
+          .eq("status", "going")
+      ),
+    ]);
+    nextGameHasLineup = !!lineup;
+    nextGameGoing = going;
+  }
 
-  // "Open snack slots" = upcoming GAMES whose snack duty nobody has claimed.
-  // Practices don't need snack duty, and games already covered don't count.
-  const openSnacks = (upcomingEvents ?? []).filter((e) => {
-    if (e.type !== "game") return false;
+  const label = (e: {
+    title: string;
+    opponent: string | null;
+    starts_at: string;
+  }) =>
+    `${e.title}${e.opponent ? ` vs ${e.opponent}` : ""} (${formatDay(e.starts_at)})`;
+
+  // The coach's to-do list: everything that still needs a decision or a tap.
+  const todos: { href: string; text: string }[] = [];
+  if (pending > 0) {
+    todos.push({
+      href: "/coaches/approvals",
+      text: `${pending} parent account${pending === 1 ? "" : "s"} waiting for approval`,
+    });
+  }
+  if (nextGame && !nextGameHasLineup) {
+    todos.push({
+      href: "/coaches/gameday",
+      text: `No lineup yet for ${label(nextGame)}`,
+    });
+  }
+  if (nextGame && nextGameGoing < 7) {
+    todos.push({
+      href: "/coaches/gameday",
+      text: `Only ${nextGameGoing} "going" RSVP${nextGameGoing === 1 ? "" : "s"} for ${label(nextGame)} — nudge the group?`,
+    });
+  }
+  for (const e of upcomingEvents ?? []) {
+    if (e.type !== "game") continue;
     const slot = snackByEvent.get(e.id);
-    return slot != null && !slot.claimed_by;
-  }).length;
+    if (slot && !slot.claimed_by) {
+      todos.push({
+        href: `/coaches/events?edit=${e.id}#event-${e.id}`,
+        text: `🍊 Snack slot still open — ${label(e)}`,
+      });
+    }
+  }
 
   // Events within the next ~2 days, for one-tap WhatsApp reminders.
   const soonEvents = (upcomingEvents ?? []).filter(
     (e) => e.starts_at <= reminderEnd
   );
 
-  const tiles = [
-    {
-      href: "/coaches/approvals",
-      label: "Pending approvals",
-      value: pending,
-      accent: pending > 0 ? "text-amber-600" : "text-slate-400",
-    },
-    { href: "/coaches/events", label: "Upcoming events", value: upcoming },
-    { href: "/coaches/roster", label: "Active players", value: players },
-    {
-      href: "/coaches/events",
-      label: "Open snack slots",
-      value: openSnacks,
-      accent: openSnacks > 0 ? "text-amber-600" : "text-slate-400",
-    },
-  ];
-
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-2 gap-3">
-        {tiles.map((t) => (
-          <Link key={t.href} href={t.href}>
-            <Card className="hover:border-brand-blue/40">
-              <p className={`text-3xl font-bold ${t.accent ?? "text-brand-ink"}`}>
-                {t.value}
-              </p>
-              <p className="text-sm text-slate-500">{t.label}</p>
-            </Card>
-          </Link>
-        ))}
-      </div>
+      {todos.length > 0 ? (
+        <Card className="border-amber-300/70 bg-amber-50/80">
+          <h2 className="mb-1.5 font-semibold text-amber-900">⚠️ To do</h2>
+          <ul className="space-y-1">
+            {todos.map((t, i) => (
+              <li key={i}>
+                <Link
+                  href={t.href}
+                  className="text-sm text-amber-800 underline-offset-2 hover:underline"
+                >
+                  • {t.text}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      ) : (
+        <Card className="border-brand-green/40 bg-brand-green-light/60">
+          <p className="font-medium text-brand-green-dark">
+            ✅ All caught up — nothing needs your attention right now.
+          </p>
+        </Card>
+      )}
 
       {soonEvents && soonEvents.length > 0 ? (
         <Card className="border-[#25D366]/40">
@@ -147,20 +186,17 @@ export default async function CoachesOverview() {
         </Card>
       ) : null}
 
-      <Card>
-        <h2 className="mb-2 font-semibold text-brand-ink">Quick actions</h2>
-        <div className="flex flex-wrap gap-2">
-          <Link href="/coaches/events" className="btn-outline text-sm">
-            + Add event
-          </Link>
-          <Link href="/coaches/news" className="btn-outline text-sm">
-            + Post news
-          </Link>
-          <Link href="/coaches/roster" className="btn-outline text-sm">
-            + Add player
-          </Link>
-        </div>
-      </Card>
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+        <Link href="/coaches/approvals" className="hover:text-brand-ink">
+          Approvals
+        </Link>
+        <Link href="/coaches/news" className="hover:text-brand-ink">
+          Manage news
+        </Link>
+        <Link href="/coaches/documents" className="hover:text-brand-ink">
+          Documents
+        </Link>
+      </div>
     </div>
   );
 }

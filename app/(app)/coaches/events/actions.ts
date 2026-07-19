@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { addDays, format } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
 import { requireCoach } from "@/lib/auth";
+import { site } from "@/lib/site";
 
 function clean(value: FormDataEntryValue | null): string | null {
   const s = String(value ?? "").trim();
@@ -149,10 +150,22 @@ export async function updateEvent(formData: FormData) {
   const starts_at = clean(formData.get("starts_at"));
   if (!id || !starts_at) return;
 
-  await supabase
+  const { data: before } = await supabase
     .from("events")
-    .update(eventPayload(formData, starts_at))
-    .eq("id", id);
+    .select("type, score_us, score_them")
+    .eq("id", id)
+    .maybeSingle();
+
+  const payload = eventPayload(formData, starts_at);
+  await supabase.from("events").update(payload).eq("id", id);
+
+  // A game's score was just recorded for the first time — offer to share it.
+  const newlyScored =
+    before?.type === "game" &&
+    before.score_us == null &&
+    before.score_them == null &&
+    payload.score_us != null &&
+    payload.score_them != null;
 
   if (formData.get("add_snack_slot") === "on") {
     const { data: existing } = await supabase
@@ -171,6 +184,60 @@ export async function updateEvent(formData: FormData) {
   }
 
   revalidate();
+  if (newlyScored) redirect(`/coaches/events?result=${id}`);
+}
+
+/** One-tap news post for a freshly recorded game result. */
+export async function postResultNews(formData: FormData) {
+  const coach = await requireCoach();
+  const supabase = createClient();
+  const id = String(formData.get("id"));
+
+  const { data: e } = await supabase
+    .from("events")
+    .select("*")
+    .eq("id", id)
+    .maybeSingle();
+  if (e && e.score_us != null && e.score_them != null) {
+    const us = e.score_us;
+    const them = e.score_them;
+    const emoji = us > them ? "🎉" : us < them ? "💪" : "🤝";
+    const word = us > them ? "Win" : us < them ? "Tough loss" : "Draw";
+    await supabase.from("news").insert({
+      title: `${emoji} ${word}: ${site.teamName} ${us}–${them}${e.opponent ? ` vs ${e.opponent}` : ""}`,
+      body:
+        us > them
+          ? "What a game — great job, girls! 🌈⚽"
+          : us < them
+            ? "Hard-fought game — proud of the effort, girls! 🌈⚽"
+            : "An even battle — well played, girls! 🌈⚽",
+      published: true,
+      author_id: coach.id,
+    });
+    revalidatePath("/news");
+    revalidatePath("/home");
+    revalidatePath("/coaches/news");
+  }
+  redirect("/coaches/events");
+}
+
+/** One-tap news post after a schedule import. */
+export async function postScheduleNews(
+  count: number
+): Promise<{ error?: string }> {
+  const coach = await requireCoach();
+  const supabase = createClient();
+  const { error } = await supabase.from("news").insert({
+    title: `📅 Schedule updated — ${count} new event${count === 1 ? "" : "s"}`,
+    body: "New games and practices were just added to the calendar. Take a look and RSVP! ⚽",
+    published: true,
+    author_id: coach.id,
+  });
+  if (error) return { error: error.message };
+  revalidatePath("/news");
+  revalidatePath("/home");
+  revalidatePath("/coaches/news");
+  return {};
 }
 
 export async function deleteEvent(formData: FormData) {

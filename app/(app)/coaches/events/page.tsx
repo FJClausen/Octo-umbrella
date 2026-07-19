@@ -5,7 +5,7 @@ import { Card, SubmitButton, eventCardTint } from "@/components/ui";
 import { EventCardBody } from "@/components/EventCard";
 import { EVENT_TYPES, EVENT_TYPE_LABELS } from "@/lib/site";
 import { countRsvpsByEvent } from "@/lib/rsvp";
-import { newEventMessage } from "@/lib/whatsapp";
+import { newEventMessage, resultMessage } from "@/lib/whatsapp";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
 import { ImportSchedule } from "@/components/ImportSchedule";
 import type { EventRow, SnackSlot } from "@/lib/types";
@@ -14,6 +14,7 @@ import {
   updateEvent,
   deleteEvent,
   removeEventSnackSlot,
+  postResultNews,
 } from "./actions";
 
 export const metadata = { title: "Manage Events" };
@@ -152,7 +153,7 @@ function EventFields({ event }: { event?: EventRow }) {
 export default async function ManageEventsPage({
   searchParams,
 }: {
-  searchParams: { share?: string; edit?: string };
+  searchParams: { share?: string; edit?: string; add?: string; result?: string };
 }) {
   const supabase = createClient();
   const [{ data: events }, { data: snackSlots }, { data: rsvps }] =
@@ -175,9 +176,42 @@ export default async function ManageEventsPage({
   const shareEvent = searchParams.share
     ? (events ?? []).find((e) => e.id === searchParams.share)
     : undefined;
+  const resultEvent = searchParams.result
+    ? (events ?? []).find(
+        (e) =>
+          e.id === searchParams.result &&
+          e.score_us != null &&
+          e.score_them != null
+      )
+    : undefined;
 
   return (
     <div className="space-y-6">
+      {resultEvent ? (
+        <div className="card border-brand-green/40 bg-brand-green-light/40 p-4">
+          <p className="font-semibold text-brand-ink">
+            🏁 Score saved: {resultEvent.score_us}–{resultEvent.score_them}
+            {resultEvent.opponent ? ` vs ${resultEvent.opponent}` : ""}
+          </p>
+          <p className="mb-3 text-sm text-slate-500">
+            Share the result with the team?
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <form action={postResultNews}>
+              <input type="hidden" name="id" value={resultEvent.id} />
+              <SubmitButton>📣 Post to team news</SubmitButton>
+            </form>
+            <WhatsAppButton
+              text={resultMessage(resultEvent)}
+              label="WhatsApp"
+              small
+            />
+            <Link href="/coaches/events" className="text-sm text-slate-500">
+              Skip
+            </Link>
+          </div>
+        </div>
+      ) : null}
       {shareEvent ? (
         <div className="card border-[#25D366]/40 bg-[#25D366]/5 p-4">
           <p className="font-semibold text-brand-ink">
@@ -202,7 +236,7 @@ export default async function ManageEventsPage({
         </div>
       ) : null}
 
-      <details className="card p-4">
+      <details className="card p-4" open={searchParams.add === "1"}>
         <summary className="cursor-pointer font-semibold text-brand-ink">
           + Add an event
         </summary>

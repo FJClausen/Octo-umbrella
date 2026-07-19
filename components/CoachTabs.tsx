@@ -5,13 +5,10 @@ import { usePathname } from "next/navigation";
 
 const TABS = [
   { href: "/coaches", label: "Overview" },
-  { href: "/coaches/approvals", label: "Approvals" },
   { href: "/coaches/roster", label: "Roster" },
   { href: "/coaches/events", label: "Events" },
-  { href: "/coaches/news", label: "News" },
-  { href: "/coaches/lineups", label: "Lineups" },
-  { href: "/coaches/practice", label: "Practice Planner" },
-  { href: "/coaches/documents", label: "Docs" },
+  { href: "/coaches/gameday", label: "Game Day" },
+  { href: "/coaches/practice", label: "Practice" },
 ];
 
 export function CoachTabs() {

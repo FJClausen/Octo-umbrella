@@ -1,5 +1,6 @@
 import { requireCoach } from "@/lib/auth";
 import { CoachTabs } from "@/components/CoachTabs";
+import { CoachAddButton } from "@/components/CoachAddButton";
 
 export default async function CoachesLayout({
   children,
@@ -17,6 +18,7 @@ export default async function CoachesLayout({
       </div>
       <CoachTabs />
       <div>{children}</div>
+      <CoachAddButton />
     </div>
   );
 }

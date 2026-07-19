@@ -6,7 +6,10 @@ import {
   parseScheduleAction,
   type ParsedEvent,
 } from "@/app/(app)/coaches/events/import-action";
-import { createEventsBulk } from "@/app/(app)/coaches/events/actions";
+import {
+  createEventsBulk,
+  postScheduleNews,
+} from "@/app/(app)/coaches/events/actions";
 
 const TYPE_ICON: Record<ParsedEvent["type"], string> = {
   game: "⚽",
@@ -41,7 +44,17 @@ export function ImportSchedule() {
   const [checked, setChecked] = useState<boolean[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState<number | null>(null);
+  const [newsPosted, setNewsPosted] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  function postNews() {
+    if (done == null) return;
+    startTransition(async () => {
+      const res = await postScheduleNews(done);
+      if (res.error) setError(res.error);
+      else setNewsPosted(true);
+    });
+  }
 
   function parse() {
     setError(null);
@@ -117,9 +130,23 @@ export function ImportSchedule() {
           </p>
         ) : null}
         {done != null ? (
-          <p className="rounded-lg bg-brand-green-light px-3 py-2 text-sm text-brand-green-dark">
-            ✅ Added {done} event{done === 1 ? "" : "s"} to the calendar.
-          </p>
+          <div className="rounded-lg bg-brand-green-light px-3 py-2 text-sm text-brand-green-dark">
+            <p>
+              ✅ Added {done} event{done === 1 ? "" : "s"} to the calendar.
+            </p>
+            {newsPosted ? (
+              <p className="mt-1">📣 Posted to team news.</p>
+            ) : (
+              <button
+                type="button"
+                onClick={postNews}
+                disabled={isPending}
+                className="mt-1 font-medium underline underline-offset-2"
+              >
+                📣 Post to team news so parents know?
+              </button>
+            )}
+          </div>
         ) : null}
 
         {parsed ? (

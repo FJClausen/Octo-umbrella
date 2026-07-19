@@ -61,6 +61,18 @@ export function newEventMessage(event: EventLike, snack: SnackLike): string {
   );
 }
 
+/** Message for sharing a recorded final score. */
+export function resultMessage(
+  event: EventLike & { score_us: number | null; score_them: number | null }
+): string {
+  const us = event.score_us ?? 0;
+  const them = event.score_them ?? 0;
+  const headline =
+    us > them ? "🎉 We WON" : us < them ? "💪 Tough one today" : "🤝 A draw";
+  const vs = event.opponent ? ` vs ${event.opponent}` : "";
+  return `${headline}!\n\n⚽ ${site.teamName} ${us}–${them}${vs}\nGreat job, girls! 🌈`;
+}
+
 /** Message for reminding the group about an upcoming event. */
 export function reminderMessage(event: EventLike, snack: SnackLike): string {
   return (

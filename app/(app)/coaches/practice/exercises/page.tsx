@@ -134,7 +134,7 @@ function ExerciseFields({ exercise }: { exercise?: ExerciseTemplate }) {
 export default async function ExerciseCataloguePage({
   searchParams,
 }: {
-  searchParams: { error?: string; tag?: string };
+  searchParams: { error?: string; tag?: string; add?: string };
 }) {
   const supabase = createClient();
   const [{ data: templates }, { data: notes }, { data: coaches }] =
@@ -180,7 +180,7 @@ export default async function ExerciseCataloguePage({
 
       <ExerciseGenerator />
 
-      <details className="card p-4">
+      <details className="card p-4" open={searchParams.add === "1"}>
         <summary className="cursor-pointer text-sm font-semibold text-brand-blue">
           + Save a new exercise
         </summary>

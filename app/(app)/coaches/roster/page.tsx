@@ -47,7 +47,11 @@ function PositionCheckboxes({ selected = [] }: { selected?: string[] }) {
   );
 }
 
-export default async function ManageRosterPage() {
+export default async function ManageRosterPage({
+  searchParams,
+}: {
+  searchParams: { add?: string };
+}) {
   const supabase = createClient();
 
   const [{ data: players }, { data: priv }, { data: parents }] =
@@ -68,7 +72,7 @@ export default async function ManageRosterPage() {
 
   return (
     <div className="space-y-6">
-      <details className="card p-4">
+      <details className="card p-4" open={searchParams.add === "1"}>
         <summary className="cursor-pointer font-semibold text-brand-ink">
           + Add a player
         </summary>
