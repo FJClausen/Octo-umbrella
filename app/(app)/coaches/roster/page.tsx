@@ -74,7 +74,7 @@ export default async function ManageRosterPage({
     <div className="space-y-6">
       <details className="card p-4" open={searchParams.add === "1"}>
         <summary className="cursor-pointer font-semibold text-brand-ink">
-          + Add a player
+          ＋ Add player
         </summary>
         <form action={createPlayer} className="mt-4 grid gap-3 sm:grid-cols-2">
           <div>

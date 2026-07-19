@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { Alert } from "@/components/ui";
 import {
   parseScheduleAction,
   type ParsedEvent,
@@ -100,7 +101,7 @@ export function ImportSchedule() {
   return (
     <details className="card border-brand-blue/30 p-4">
       <summary className="cursor-pointer font-semibold text-brand-blue">
-        📥 Import season schedule with AI
+        ✨ Import season schedule
       </summary>
       <div className="mt-3 space-y-3">
         <p className="text-sm text-slate-500">
@@ -124,18 +125,14 @@ export function ImportSchedule() {
           {isPending && !parsed ? "Reading schedule…" : "Preview events"}
         </button>
 
-        {error ? (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </p>
-        ) : null}
+        {error ? <Alert variant="error">{error}</Alert> : null}
         {done != null ? (
-          <div className="rounded-lg bg-brand-green-light px-3 py-2 text-sm text-brand-green-dark">
+          <Alert variant="success">
             <p>
-              ✅ Added {done} event{done === 1 ? "" : "s"} to the calendar.
+              Added {done} event{done === 1 ? "" : "s"} to the calendar.
             </p>
             {newsPosted ? (
-              <p className="mt-1">📣 Posted to team news.</p>
+              <p className="mt-1">Posted to team news.</p>
             ) : (
               <button
                 type="button"
@@ -143,10 +140,10 @@ export function ImportSchedule() {
                 disabled={isPending}
                 className="mt-1 font-medium underline underline-offset-2"
               >
-                📣 Post to team news so parents know?
+                Post to team news so parents know?
               </button>
             )}
-          </div>
+          </Alert>
         ) : null}
 
         {parsed ? (

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
-import { Card } from "@/components/ui";
+import { Alert, Card, EmptyState, SectionHeading } from "@/components/ui";
 import { EventCard } from "@/components/EventCard";
 import { RsvpControl } from "@/components/RsvpControl";
 import { SnackButton } from "@/components/SnackButton";
@@ -125,23 +125,20 @@ export default async function HomePage() {
       </div>
 
       {actionItems.length > 0 ? (
-        <Card className="border-amber-300/70 bg-amber-50/80">
-          <h3 className="mb-1.5 font-semibold text-amber-900">
-            ⚠️ Action needed
-          </h3>
+        <Alert variant="warning" title="Action needed">
           <ul className="space-y-1">
             {actionItems.slice(0, 4).map((item, i) => (
               <li key={i}>
                 <Link
                   href={item.href}
-                  className="text-sm text-amber-800 underline-offset-2 hover:underline"
+                  className="underline-offset-2 hover:underline"
                 >
                   • {item.text}
                 </Link>
               </li>
             ))}
             {actionItems.length > 4 ? (
-              <li className="text-sm text-amber-700">
+              <li>
                 …and {actionItems.length - 4} more —{" "}
                 <Link href="/calendar" className="underline">
                   see the calendar
@@ -149,13 +146,13 @@ export default async function HomePage() {
               </li>
             ) : null}
           </ul>
-        </Card>
+        </Alert>
       ) : null}
 
       {/* Next two events, with snack duty inline */}
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="font-semibold text-brand-ink">Next Up</h3>
+          <SectionHeading>Next Up</SectionHeading>
           <Link href="/calendar" className="text-sm text-brand-blue">
             Full calendar →
           </Link>
@@ -219,11 +216,10 @@ export default async function HomePage() {
               );
             })
           ) : (
-            <Card>
-              <p className="text-sm text-slate-500">
-                No upcoming events on the calendar yet. Check back soon!
-              </p>
-            </Card>
+            <EmptyState
+              title="No upcoming events"
+              hint="Nothing on the calendar yet — check back soon!"
+            />
           )}
         </div>
       </section>
@@ -231,7 +227,7 @@ export default async function HomePage() {
       {/* Latest news */}
       <section>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="font-semibold text-brand-ink">Team news</h3>
+          <SectionHeading>Team News</SectionHeading>
           <Link href="/news" className="text-sm text-brand-blue">
             All news →
           </Link>
@@ -252,7 +248,10 @@ export default async function HomePage() {
               </Link>
             ))
           ) : (
-            <p className="text-sm text-slate-500">No news yet.</p>
+            <EmptyState
+              title="No news yet"
+              hint="Announcements from the coaches will show up here."
+            />
           )}
         </div>
       </section>

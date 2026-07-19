@@ -84,7 +84,7 @@ export default async function ManageEventsPage({
       {resultEvent ? (
         <div className="card border-brand-green/40 bg-brand-green-light/40 p-4">
           <p className="font-semibold text-brand-ink">
-            🏁 Score saved: {resultEvent.score_us}–{resultEvent.score_them}
+            Score saved: {resultEvent.score_us}–{resultEvent.score_them}
             {resultEvent.opponent ? ` vs ${resultEvent.opponent}` : ""}
           </p>
           <p className="mb-3 text-sm text-slate-500">
@@ -93,7 +93,7 @@ export default async function ManageEventsPage({
           <div className="flex flex-wrap items-center gap-3">
             <form action={postResultNews}>
               <input type="hidden" name="id" value={resultEvent.id} />
-              <SubmitButton>📣 Post to team news</SubmitButton>
+              <SubmitButton>Post to team news</SubmitButton>
             </form>
             <WhatsAppButton
               text={resultMessage(resultEvent)}
@@ -109,7 +109,7 @@ export default async function ManageEventsPage({
       {shareEvent ? (
         <div className="card border-[#25D366]/40 bg-[#25D366]/5 p-4">
           <p className="font-semibold text-brand-ink">
-            ✅ Event added: {shareEvent.title}
+            Event added: {shareEvent.title}
           </p>
           <p className="mb-3 text-sm text-slate-500">
             Want to alert the team? This opens WhatsApp with the announcement
@@ -132,7 +132,7 @@ export default async function ManageEventsPage({
 
       <details className="card p-4" open={searchParams.add === "1"}>
         <summary className="cursor-pointer font-semibold text-brand-ink">
-          + Add an event
+          ＋ Add event
         </summary>
         <form action={createEvent} className="mt-4 space-y-4">
           <EventFields />
@@ -178,7 +178,7 @@ export default async function ManageEventsPage({
                     href={`/coaches/practice?open=${planByEvent.get(e.id)}#plan-${planByEvent.get(e.id)}`}
                     className="btn-outline px-3 py-1 text-sm"
                   >
-                    📋 Practice plan
+                    Practice plan
                   </Link>
                 ) : (
                   <Link
@@ -194,7 +194,7 @@ export default async function ManageEventsPage({
                   href="/coaches/gameday"
                   className="btn-outline px-3 py-1 text-sm"
                 >
-                  🥅 Lineup / Game Day
+                  Game Day / lineup
                 </Link>
               ) : null}
             </div>

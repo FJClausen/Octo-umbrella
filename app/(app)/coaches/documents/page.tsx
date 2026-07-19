@@ -15,7 +15,7 @@ export default async function DocumentsPage() {
     <div className="space-y-6">
       <details className="card p-4">
         <summary className="cursor-pointer font-semibold text-brand-ink">
-          + Add a document or link
+          ＋ Add document or link
         </summary>
         <form action={createDocument} className="mt-4 space-y-3">
           <div>

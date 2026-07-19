@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
-import { Card, SubmitButton } from "@/components/ui";
+import { Alert, Card, SubmitButton } from "@/components/ui";
 import { formatDay } from "@/lib/format";
 import {
   deleteGalleryPhoto,
@@ -52,9 +52,7 @@ export default async function PhotoDetailPage({
       </Link>
 
       {searchParams.error ? (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {searchParams.error}
-        </p>
+        <Alert variant="error">{searchParams.error}</Alert>
       ) : null}
 
       {/* Full-size photo, uncropped */}

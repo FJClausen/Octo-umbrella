@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card, SubmitButton, EmptyState } from "@/components/ui";
+import { Alert, Card, SubmitButton, EmptyState } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import { PracticePlanEditor } from "@/components/PracticePlanEditor";
 import { NewSessionPlanner } from "@/components/NewSessionPlanner";
@@ -60,9 +60,7 @@ export default async function PracticePlannerPage({
       <PracticeSubTabs active="sessions" />
 
       {searchParams.error ? (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {searchParams.error}
-        </p>
+        <Alert variant="error">{searchParams.error}</Alert>
       ) : null}
 
       <Card>

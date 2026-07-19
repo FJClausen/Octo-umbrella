@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Alert } from "@/components/ui";
 import { DIFFICULTY_LEVELS, EXERCISE_TAGS, type Difficulty } from "@/lib/site";
 import { FieldSketch, diagramToElements } from "@/components/FieldSketch";
 import {
@@ -122,13 +123,9 @@ export function ExerciseGenerator() {
           disabled={isPending}
           className="btn-blue"
         >
-          {isPending ? "Generating…" : draft ? "↻ Regenerate" : "✨ Generate"}
+          {isPending ? "Generating…" : draft ? "↻ Regenerate" : "Generate"}
         </button>
-        {error ? (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-            {error}
-          </p>
-        ) : null}
+        {error ? <Alert variant="error">{error}</Alert> : null}
       </div>
 
       {draft ? (

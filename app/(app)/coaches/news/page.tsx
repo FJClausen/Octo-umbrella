@@ -3,9 +3,13 @@ import { Card, SubmitButton } from "@/components/ui";
 import { formatDay } from "@/lib/format";
 import { createNews, updateNews, deleteNews } from "./actions";
 
-export const metadata = { title: "Manage News" };
+export const metadata = { title: "News" };
 
-export default async function ManageNewsPage() {
+export default async function ManageNewsPage({
+  searchParams,
+}: {
+  searchParams: { add?: string };
+}) {
   const supabase = createClient();
   const { data: news } = await supabase
     .from("news")
@@ -14,9 +18,9 @@ export default async function ManageNewsPage() {
 
   return (
     <div className="space-y-6">
-      <details className="card p-4" open>
+      <details className="card p-4" open={searchParams.add === "1"}>
         <summary className="cursor-pointer font-semibold text-brand-ink">
-          + Post an announcement
+          ＋ Post news
         </summary>
         <form action={createNews} className="mt-4 space-y-3">
           <div>
@@ -40,7 +44,7 @@ export default async function ManageNewsPage() {
             <input type="checkbox" name="published" defaultChecked /> Publish now
             (visible to parents)
           </label>
-          <SubmitButton>Post</SubmitButton>
+          <SubmitButton>Post news</SubmitButton>
         </form>
       </details>
 

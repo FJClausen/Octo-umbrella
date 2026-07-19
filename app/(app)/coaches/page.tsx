@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { addDays } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
-import { Card, EventTypeBadge, eventCardTint } from "@/components/ui";
+import { Alert, Card, EventTypeBadge, eventCardTint } from "@/components/ui";
 import { formatEventWhen, formatDay } from "@/lib/format";
 import { reminderMessage } from "@/lib/whatsapp";
 import { WhatsAppButton } from "@/components/WhatsAppButton";
@@ -114,33 +114,31 @@ export default async function CoachesOverview() {
   return (
     <div className="space-y-5">
       {todos.length > 0 ? (
-        <Card className="border-amber-300/70 bg-amber-50/80">
-          <h2 className="mb-1.5 font-semibold text-amber-900">⚠️ To do</h2>
+        <Alert variant="warning" title="To do">
           <ul className="space-y-1">
             {todos.map((t, i) => (
               <li key={i}>
                 <Link
                   href={t.href}
-                  className="text-sm text-amber-800 underline-offset-2 hover:underline"
+                  className="underline-offset-2 hover:underline"
                 >
                   • {t.text}
                 </Link>
               </li>
             ))}
           </ul>
-        </Card>
+        </Alert>
       ) : (
-        <Card className="border-brand-green/40 bg-brand-green-light/60">
-          <p className="font-medium text-brand-green-dark">
-            ✅ All caught up — nothing needs your attention right now.
-          </p>
-        </Card>
+        <Alert
+          variant="success"
+          title="All caught up — nothing needs your attention right now."
+        />
       )}
 
       {soonEvents && soonEvents.length > 0 ? (
         <Card className="border-[#25D366]/40">
           <h2 className="font-semibold text-brand-ink">
-            ⏰ Reminders due — next 2 days
+            Reminders due — next 2 days
           </h2>
           <p className="mb-3 text-sm text-slate-500">
             One tap opens WhatsApp with the reminder pre-written — pick the
@@ -191,7 +189,7 @@ export default async function CoachesOverview() {
           Approvals
         </Link>
         <Link href="/coaches/news" className="hover:text-brand-ink">
-          Manage news
+          News
         </Link>
         <Link href="/coaches/documents" className="hover:text-brand-ink">
           Documents

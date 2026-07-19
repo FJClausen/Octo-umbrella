@@ -127,10 +127,12 @@ export type ExerciseTag = (typeof EXERCISE_TAGS)[number];
 export const DIFFICULTY_LEVELS = ["Easy", "Standard", "Challenge"] as const;
 export type Difficulty = (typeof DIFFICULTY_LEVELS)[number];
 
+// Outlined (not filled) so difficulty reads differently from the filled tag
+// chips, and the colors don't collide with the event-type green/blue/amber.
 export const DIFFICULTY_STYLES: Record<Difficulty, string> = {
-  Easy: "bg-brand-green-light text-brand-green-dark",
-  Standard: "bg-brand-blue-light text-brand-blue-dark",
-  Challenge: "bg-amber-100 text-amber-800",
+  Easy: "border border-slate-300 bg-white text-slate-600",
+  Standard: "border border-brand-blue/50 bg-white text-brand-blue-dark",
+  Challenge: "border border-violet-400 bg-white text-violet-700",
 };
 
 export const EXERCISE_TAG_STYLES: Record<ExerciseTag, string> = {

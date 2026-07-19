@@ -88,7 +88,7 @@ export default async function EventDetailPage({
               href={`/coaches/events?edit=${event.id}#event-${event.id}`}
               className="text-sm text-brand-blue underline"
             >
-              ✏️ Edit
+              Edit
             </Link>
           ) : null}
         </div>

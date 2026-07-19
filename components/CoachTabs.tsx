@@ -14,7 +14,7 @@ const TABS = [
 export function CoachTabs() {
   const pathname = usePathname();
   return (
-    <nav className="-mx-4 flex gap-1 overflow-x-auto px-4 pb-1">
+    <nav className="flex gap-1 overflow-x-auto rounded-xl bg-slate-100 p-1">
       {TABS.map((t) => {
         const active =
           t.href === "/coaches"
@@ -24,10 +24,10 @@ export function CoachTabs() {
           <Link
             key={t.href}
             href={t.href}
-            className={`whitespace-nowrap rounded-full px-3 py-1.5 text-sm font-medium transition ${
+            className={`flex-1 whitespace-nowrap rounded-lg px-3 py-1.5 text-center text-sm font-semibold transition ${
               active
-                ? "bg-brand-blue text-white"
-                : "bg-white text-slate-600 hover:bg-slate-100"
+                ? "bg-white text-brand-ink shadow-card"
+                : "text-slate-500 hover:text-brand-ink"
             }`}
           >
             {t.label}

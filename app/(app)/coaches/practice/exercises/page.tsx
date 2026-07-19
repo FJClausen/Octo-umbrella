@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { SubmitButton } from "@/components/ui";
+import { Alert, EmptyState, SubmitButton } from "@/components/ui";
 import { PracticeSubTabs } from "@/components/PracticeSubTabs";
 import {
   DIFFICULTY_LEVELS,
@@ -204,16 +204,14 @@ export default async function ExerciseCataloguePage({
       ) : null}
 
       {searchParams.error ? (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {searchParams.error}
-        </p>
+        <Alert variant="error">{searchParams.error}</Alert>
       ) : null}
 
       <ExerciseGenerator />
 
       <details className="card p-4" open={searchParams.add === "1"}>
-        <summary className="cursor-pointer text-sm font-semibold text-brand-blue">
-          + Save a new exercise
+        <summary className="cursor-pointer font-semibold text-brand-ink">
+          ＋ Add exercise
         </summary>
         <form action={createExerciseTemplate} className="mt-4 space-y-3">
           <ExerciseFields />
@@ -359,7 +357,7 @@ export default async function ExerciseCataloguePage({
 
                   <details className="mt-1">
                     <summary className="cursor-pointer text-sm text-brand-green-dark">
-                      📝 Experience notes (
+                      Experience notes (
                       {(notesByExercise.get(t.id) ?? []).length})
                     </summary>
                     <div className="mt-2 space-y-2">
@@ -373,10 +371,10 @@ export default async function ExerciseCataloguePage({
                           </p>
                           <div className="mt-1 flex items-center justify-between">
                             <p className="text-xs text-slate-400">
+                              {formatDate(n.created_at)} ·{" "}
                               {n.author_id
                                 ? coachNameById.get(n.author_id) ?? "Coach"
-                                : "Coach"}{" "}
-                              · {formatDate(n.created_at)}
+                                : "Coach"}
                             </p>
                             <form action={deleteExerciseNote}>
                               <input type="hidden" name="id" value={n.id} />
@@ -432,15 +430,17 @@ export default async function ExerciseCataloguePage({
               ))}
             </div>
           ) : (
-            <p className="text-sm text-slate-500">
-              No exercises tagged “{activeTag}” yet.
-            </p>
+            <EmptyState
+              title={`No exercises tagged “${activeTag}” yet`}
+              hint="Tag an exercise via Edit, or add a new one above."
+            />
           )}
         </>
       ) : (
-        <p className="text-sm text-slate-500">
-          No saved exercises yet — save one above to build your catalogue.
-        </p>
+        <EmptyState
+          title="The Exercise Catalogue is empty"
+          hint="Add an exercise above, or generate one with AI, to start building the catalogue."
+        />
       )}
     </div>
   );

@@ -54,6 +54,44 @@ export function EmptyState({
   );
 }
 
+const ALERT_STYLES = {
+  error: "border-red-200 bg-red-50 text-red-700",
+  success: "border-brand-green/40 bg-brand-green-light/60 text-brand-green-dark",
+  warning: "border-amber-300/70 bg-amber-50/80 text-amber-900",
+  info: "border-brand-blue/30 bg-brand-blue-light/40 text-brand-blue-dark",
+} as const;
+
+/** The one way messages look: errors, successes, warnings, info. */
+export function Alert({
+  variant = "info",
+  title,
+  children,
+  className = "",
+}: {
+  variant?: keyof typeof ALERT_STYLES;
+  title?: string;
+  children?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`card p-4 text-sm ${ALERT_STYLES[variant]} ${className}`}
+    >
+      {title ? <p className={children ? "mb-1 font-semibold" : "font-semibold"}>{title}</p> : null}
+      {children}
+    </div>
+  );
+}
+
+/** Page-level list section label (uppercase gray). Card titles stay bold ink. */
+export function SectionHeading({ children }: { children: ReactNode }) {
+  return (
+    <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
+      {children}
+    </h2>
+  );
+}
+
 const EVENT_BADGE: Record<EventType, string> = {
   game: "bg-brand-green-light text-brand-green-dark",
   practice: "bg-brand-blue-light text-brand-blue-dark",

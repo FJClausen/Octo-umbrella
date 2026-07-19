@@ -99,7 +99,7 @@ export default async function GameDayPage() {
                 href={`/coaches/events?edit=${nextGame.id}#event-${nextGame.id}`}
                 className="btn-outline px-3 py-1 text-sm"
               >
-                ✏️ Edit event
+                Edit event
               </Link>
             </div>
           </Card>

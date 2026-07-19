@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { Alert } from "@/components/ui";
 import { PracticePlanEditor } from "@/components/PracticePlanEditor";
 import { clearPlanDraft } from "@/lib/planDraft";
 import {
@@ -63,8 +64,8 @@ export function NewSessionPlanner({
     <div className="space-y-4">
       <div className="rounded-lg border border-brand-blue/30 bg-brand-blue-light/30 p-3">
         <p className="mb-2 text-sm font-medium text-brand-blue-dark">
-          ✨ Let AI plan this session from your saved exercises — pick one or
-          more focus areas
+          ✨ Plan this session with AI from your Exercise Catalogue — pick one
+          or more focus areas
         </p>
         <div className="flex flex-wrap gap-2">
           {FOCUS_AREAS.map((f) => (
@@ -93,17 +94,17 @@ export function NewSessionPlanner({
             : plan
               ? "↻ Replan"
               : focus.length === 0
-                ? "✨ Plan session (pick a focus first)"
-                : `✨ Plan ${focus.join(" + ")} session`}
+                ? "Plan session (pick a focus first)"
+                : `Plan ${focus.join(" + ")} session`}
         </button>
         {error ? (
-          <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          <Alert variant="error" className="mt-2">
             {error}
-          </p>
+          </Alert>
         ) : null}
         {plan?.concept ? (
           <p className="mt-2 rounded-lg bg-white/70 px-3 py-2 text-sm text-slate-700">
-            💡 <span className="font-medium">Session concept:</span>{" "}
+            <span className="font-medium">Session concept:</span>{" "}
             {plan.concept}
           </p>
         ) : null}
@@ -118,7 +119,7 @@ export function NewSessionPlanner({
         initialWarmup={plan?.warmup ?? ""}
         initialExercises={plan?.drills.join("\n") ?? ""}
         initialScrimmages={plan?.scrimmage ?? ""}
-        initialNotes={plan?.concept ? `💡 ${plan.concept}` : ""}
+        initialNotes={plan?.concept ? `Session concept: ${plan.concept}` : ""}
         templates={templates}
         onSave={onSave}
         saveLabel="Save practice plan"

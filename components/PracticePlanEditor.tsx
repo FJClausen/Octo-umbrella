@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, useTransition } from "react";
+import { Alert } from "@/components/ui";
 import {
   DIFFICULTY_STYLES,
   EXERCISE_TAG_STYLES,
@@ -272,9 +273,9 @@ export function PracticePlanEditor({
                       <button
                         type="button"
                         onClick={() => setOpenExercise(t)}
-                        className="text-left font-medium text-brand-blue hover:underline"
+                        className="text-left font-medium text-brand-blue underline-offset-2 hover:underline"
                       >
-                        🔗 {t.title}
+                        {t.title}
                       </button>
                     ) : (
                       <span className="text-slate-600">{title}</span>
@@ -353,11 +354,7 @@ export function PracticePlanEditor({
           <span className="text-sm text-brand-green-dark">Saved ✓</span>
         ) : null}
       </div>
-      {error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-          Couldn’t save: {error}
-        </p>
-      ) : null}
+      {error ? <Alert variant="error">Couldn’t save: {error}</Alert> : null}
 
       {openExercise ? (
         <ExerciseModal

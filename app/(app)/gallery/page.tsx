@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
-import { PageHeader, EmptyState, SubmitButton } from "@/components/ui";
+import { Alert, PageHeader, EmptyState, SubmitButton } from "@/components/ui";
 import { TeamSubTabs } from "@/components/TeamSubTabs";
 import { formatDay } from "@/lib/format";
 import { uploadGalleryPhoto, deleteGalleryPhoto } from "./actions";
@@ -37,14 +37,12 @@ export default async function GalleryPage({
       />
 
       {searchParams.error ? (
-        <p className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
-          {searchParams.error}
-        </p>
+        <Alert variant="error">{searchParams.error}</Alert>
       ) : null}
 
       <details className="card p-4">
         <summary className="cursor-pointer font-semibold text-brand-ink">
-          + Add a photo
+          ＋ Add photo
         </summary>
         <form action={uploadGalleryPhoto} className="mt-4 space-y-3">
           <div>
@@ -95,8 +93,8 @@ export default async function GalleryPage({
                     </Link>
                   ) : null}
                   <p className="mt-0.5 text-[11px] text-slate-400">
-                    {nameById.get(p.uploaded_by ?? "") || "A parent"} ·{" "}
-                    {formatDay(p.created_at)}
+                    {formatDay(p.created_at)} ·{" "}
+                    {nameById.get(p.uploaded_by ?? "") || "A parent"}
                   </p>
                   {mine || isCoach ? (
                     <form action={deleteGalleryPhoto} className="mt-1">
