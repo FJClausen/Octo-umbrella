@@ -25,16 +25,23 @@ const TYPE_TITLES: Record<string, string> = {
   event: "Team Event",
 };
 
-/** Shared form parsing for create/update. Title falls back to the type name. */
+/** Shared form parsing for create/update. Title falls back to the type name;
+ *  an auto-generated title ("Game", "Practice"…) follows a type change
+ *  instead of sticking to the old type. */
 function eventPayload(formData: FormData, starts_at: string) {
   const type = String(formData.get("type") || "game");
   const jersey = clean(formData.get("jersey_color"));
+  const rawTitle = String(formData.get("title") || "").trim();
+  const autoTitles = new Set(
+    Object.values(TYPE_TITLES).map((t) => t.toLowerCase())
+  );
+  const title =
+    !rawTitle || autoTitles.has(rawTitle.toLowerCase())
+      ? TYPE_TITLES[type] || "Event"
+      : rawTitle;
   return {
     type,
-    title:
-      String(formData.get("title") || "").trim() ||
-      TYPE_TITLES[type] ||
-      "Event",
+    title,
     opponent: clean(formData.get("opponent")),
     location: clean(formData.get("location")),
     starts_at,

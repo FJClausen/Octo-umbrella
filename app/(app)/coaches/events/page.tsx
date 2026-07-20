@@ -134,7 +134,7 @@ export default async function ManageEventsPage({
         <summary className="cursor-pointer font-semibold text-brand-ink">
           ＋ Add event
         </summary>
-        <form action={createEvent} className="mt-4 space-y-4">
+        <form action={createEvent} autoComplete="off" className="mt-4 space-y-4">
           <EventFields />
           <div className="rounded-lg border border-slate-200 p-3">
             <label className="label">
@@ -203,9 +203,19 @@ export default async function ManageEventsPage({
               <summary className="cursor-pointer text-sm text-brand-blue">
                 Edit
               </summary>
-              <form action={updateEvent} className="mt-3 space-y-4">
+              {/* autoComplete off + a content-derived key: the form always
+                  remounts with fresh DB values and the browser never
+                  restores another form's field values into this one. */}
+              <form
+                action={updateEvent}
+                autoComplete="off"
+                className="mt-3 space-y-4"
+              >
                 <input type="hidden" name="id" value={e.id} />
-                <EventFields event={e} />
+                <EventFields
+                  key={`${e.id}:${e.type}:${e.starts_at}:${e.title}:${e.opponent ?? ""}:${e.location ?? ""}`}
+                  event={e}
+                />
                 {!slot ? <AddSnackSlotFields /> : null}
                 <div className="flex gap-2">
                   <SubmitButton>Save</SubmitButton>
