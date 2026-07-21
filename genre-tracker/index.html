@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0e14">
+<title>Genre Explorer</title>
+<style>
+  :root {
+    --bg: #0e0e14;
+    --surface: #17171f;
+    --surface-2: #1f1f2a;
+    --border: #2b2b3a;
+    --text: #e8e8f0;
+    --muted: #9a9aad;
+    --accent: #8b7cf6;
+    --up: #4ade80;
+    --mid: #facc15;
+    --down: #f87171;
+    --none: #55556a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    min-height: 100dvh;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  }
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(14,14,20,.92); backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px 10px;
+  }
+  header h1 { font-size: 1.15rem; letter-spacing: .02em; }
+  header h1 span { color: var(--accent); }
+  header .anchor { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+  main { padding: 16px; max-width: 640px; margin: 0 auto; }
+  h2 { font-size: .95rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 18px 0 10px; }
+  h2:first-child { margin-top: 4px; }
+
+  /* Bottom nav */
+  nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 10;
+    display: flex; background: rgba(23,23,31,.97); backdrop-filter: blur(8px);
+    border-top: 1px solid var(--border);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  nav button {
+    flex: 1; background: none; border: none; color: var(--muted);
+    font-size: .68rem; padding: 8px 0 6px; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font-family: inherit;
+  }
+  nav button .ico { font-size: 1.25rem; line-height: 1.2; }
+  nav button.active { color: var(--accent); }
+
+  /* Cards & lists */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 14px; margin-bottom: 10px;
+  }
+  .branch-card {
+    display: flex; align-items: center; gap: 12px; cursor: pointer;
+    border-left: 5px solid var(--none);
+  }
+  .branch-card .dot { display: none; }
+  .branch-card.r-up   { border-left-color: var(--up); }
+  .branch-card.r-mid  { border-left-color: var(--mid); }
+  .branch-card.r-down { border-left-color: var(--down); }
+  .branch-card .info { flex: 1; min-width: 0; }
+  .branch-card .name { font-weight: 600; font-size: .98rem; }
+  .branch-card .meta { font-size: .78rem; color: var(--muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .branch-card .stats { font-size: .82rem; color: var(--muted); text-align: right; white-space: nowrap; }
+  .group-label { font-size: .78rem; color: var(--muted); margin: 14px 0 8px; }
+  .group-label b { color: var(--text); }
+
+  .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: .75rem; color: var(--muted); margin: 4px 0 14px; }
+  .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+  /* Forms */
+  label { display: block; font-size: .8rem; color: var(--muted); margin: 12px 0 5px; }
+  input[type=text], textarea, select {
+    width: 100%; background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--text); padding: 11px 12px; font-size: 1rem;
+    font-family: inherit; appearance: none;
+  }
+  input:focus, textarea:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  textarea { resize: vertical; min-height: 60px; }
+  .btn {
+    display: inline-block; background: var(--accent); color: #14101f; border: none;
+    border-radius: 10px; padding: 12px 18px; font-size: .95rem; font-weight: 700;
+    cursor: pointer; margin-top: 14px; font-family: inherit; width: 100%;
+  }
+  .btn.secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--border); font-weight: 500; }
+  .btn.small { width: auto; padding: 8px 14px; font-size: .82rem; margin-top: 8px; }
+  .btn.danger { background: none; border: 1px solid var(--border); color: var(--down); }
+
+  .rating-row { display: flex; gap: 8px; margin-top: 4px; }
+  .rating-row button {
+    flex: 1; font-size: 1.5rem; padding: 10px 0; background: var(--surface-2);
+    border: 2px solid var(--border); border-radius: 12px; cursor: pointer;
+  }
+  .rating-row button.sel-up   { border-color: var(--up);   background: rgba(74,222,128,.12); }
+  .rating-row button.sel-mid  { border-color: var(--mid);  background: rgba(250,204,21,.12); }
+  .rating-row button.sel-down { border-color: var(--down); background: rgba(248,113,113,.12); }
+
+  .seg { display: flex; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+  .seg button { flex: 1; background: none; border: none; color: var(--muted); padding: 9px 0; font-size: .88rem; cursor: pointer; font-family: inherit; }
+  .seg button.active { background: var(--accent); color: #14101f; font-weight: 700; }
+
+  /* Log entries */
+  .log-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .log-item:last-child { border-bottom: none; }
+  .log-item .emoji { font-size: 1.2rem; }
+  .log-item .body { flex: 1; min-width: 0; }
+  .log-item .title { font-size: .93rem; font-weight: 600; }
+  .log-item .title .tag { font-size: .68rem; font-weight: 500; color: var(--muted); border: 1px solid var(--border); border-radius: 5px; padding: 1px 5px; margin-left: 6px; vertical-align: 1px; }
+  .log-item .note { font-size: .82rem; color: var(--muted); margin-top: 2px; }
+  .log-item .date { font-size: .72rem; color: var(--muted); white-space: nowrap; }
+  .log-item .del { background: none; border: none; color: var(--muted); font-size: .95rem; cursor: pointer; padding: 2px 4px; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { font-size: .78rem; background: var(--surface-2); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; color: var(--text); }
+
+  .week-slot { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+  .week-slot select { flex: 1; }
+  .empty { color: var(--muted); font-size: .88rem; padding: 8px 2px; }
+  .back { background: none; border: none; color: var(--accent); font-size: .9rem; cursor: pointer; padding: 0 0 12px; font-family: inherit; }
+  .row-actions { display: flex; gap: 8px; }
+  .row-actions .btn { flex: 1; }
+  .hint { font-size: .78rem; color: var(--muted); margin-top: 6px; }
+  .toast {
+    position: fixed; left: 50%; bottom: calc(80px + env(safe-area-inset-bottom));
+    transform: translateX(-50%); background: var(--accent); color: #14101f;
+    font-weight: 700; font-size: .88rem; padding: 10px 18px; border-radius: 999px;
+    opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 20; white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+  .file-hidden { display: none; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🎛️ Genre <span>Explorer</span></h1>
+  <div class="anchor" id="anchorLine"></div>
+</header>
+
+<main id="main"></main>
+
+<nav id="nav">
+  <button data-view="branches"><span class="ico">🗺️</span>Branches</button>
+  <button data-view="log"><span class="ico">➕</span>Log</button>
+  <button data-view="week"><span class="ico">📅</span>This Week</button>
+  <button data-view="next"><span class="ico">🧭</span>Next Week</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="importFile" class="file-hidden" accept="application/json">
+
+<script>
+"use strict";
+
+/* ---------- storage ---------- */
+const KEY = "genre-explorer-v1";
+const ANCHOR = "Maribou State";
+
+function defaultState() {
+  const now = Date.now();
+  return {
+    anchor: ANCHOR,
+    branches: [
+      { id: uid(), name: "Downtempo/Chillout", seeds: ["Bonobo", "Tycho", "Emancipator"], parent: ANCHOR, createdAt: now },
+      { id: uid(), name: "UK Bass/2-Step", seeds: ["Burial", "Overmono", "Joy Orbison"], parent: ANCHOR, createdAt: now },
+    ],
+    logs: [],   // {id, branchId, name, kind: "track"|"artist", rating: "up"|"mid"|"down", note, date}
+    weeks: {},  // { "2026-W30": [branchId, branchId] }
+  };
+}
+
+let state = load();
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && Array.isArray(s.branches) && Array.isArray(s.logs)) {
+        s.weeks = s.weeks || {};
+        s.anchor = s.anchor || ANCHOR;
+        return s;
+      }
+    }
+  } catch (e) { /* fall through to fresh state */ }
+  return defaultState();
+}
+function save() { localStorage.setItem(KEY, JSON.stringify(state)); }
+function uid() { return Math.random().toString(36).slice(2, 10) + Date.now().toString(36); }
+
+/* ---------- helpers ---------- */
+const RATINGS = { up: "👍", mid: "😐", down: "👎" };
+const RANK = { up: 3, mid: 2, down: 1 };
+
+function branchLogs(id) { return state.logs.filter(l => l.branchId === id); }
+function bestRating(id) {
+  let best = null;
+  for (const l of branchLogs(id)) if (!best || RANK[l.rating] > RANK[best]) best = l.rating;
+  return best; // null = unexplored
+}
+function counts(id) {
+  const c = { up: 0, mid: 0, down: 0 };
+  for (const l of branchLogs(id)) c[l.rating]++;
+  return c;
+}
+function branchById(id) { return state.branches.find(b => b.id === id); }
+
+function isoWeekKey(d = new Date()) {
+  const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = date.getUTCDay() || 7;
+  date.setUTCDate(date.getUTCDate() + 4 - day);
+  const yearStart = new Date(Date.UTC(date.getUTCFullYear(), 0, 1));
+  const week = Math.ceil(((date - yearStart) / 86400000 + 1) / 7);
+  return date.getUTCFullYear() + "-W" + String(week).padStart(2, "0");
+}
+function fmtDate(ts) {
+  return new Date(ts).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+}
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => t.classList.remove("show"), 1800);
+}
+
+/* ---------- routing ---------- */
+let view = "branches";
+let viewArg = null; // branch id for detail view
+const main = document.getElementById("main");
+
+function go(v, arg = null) {
+  view = v; viewArg = arg;
+  document.querySelectorAll("nav button").forEach(b => {
+    b.classList.toggle("active", b.dataset.view === (v === "detail" || v === "add" ? "branches" : v));
+  });
+  render();
+  window.scrollTo(0, 0);
+}
+document.getElementById("nav").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (b) go(b.dataset.view);
+});
+
+/* ---------- render ---------- */
+function render() {
+  document.getElementById("anchorLine").textContent = "Anchor: " + state.anchor + " · " + state.branches.length + " branches · " + state.logs.length + " logged";
+  if (view === "branches") renderBranches();
+  else if (view === "add") renderAddBranch();
+  else if (view === "detail") renderDetail(viewArg);
+  else if (view === "log") renderLogForm(viewArg);
+  else if (view === "week") renderWeek();
+  else if (view === "next") renderNext();
+}
+
+/* --- branches map/list --- */
+function renderBranches() {
+  let html = `
+    <div class="legend">
+      <span><i style="background:var(--up)"></i>Loving it</span>
+      <span><i style="background:var(--mid)"></i>It's ok</span>
+      <span><i style="background:var(--down)"></i>Not for me</span>
+      <span><i style="background:var(--none)"></i>Unexplored</span>
+    </div>`;
+
+  // group branches by parent/anchor
+  const groups = new Map();
+  for (const b of state.branches) {
+    const p = b.parent || state.anchor;
+    if (!groups.has(p)) groups.set(p, []);
+    groups.get(p).push(b);
+  }
+  // anchor group first, then others alphabetically
+  const keys = [...groups.keys()].sort((a, b) =>
+    (a === state.anchor ? -1 : b === state.anchor ? 1 : a.localeCompare(b)));
+
+  if (!state.branches.length) {
+    html += `<p class="empty">No branches yet — add your first one below.</p>`;
+  }
+  for (const key of keys) {
+    html += `<div class="group-label">↳ branching from <b>${esc(key)}</b></div>`;
+    for (const b of groups.get(key).sort((x, y) => x.name.localeCompare(y.name))) {
+      const r = bestRating(b.id);
+      const c = counts(b.id);
+      const n = branchLogs(b.id).length;
+      html += `
+        <div class="card branch-card ${r ? "r-" + r : ""}" data-open="${b.id}">
+          <div class="info">
+            <div class="name">${esc(b.name)}</div>
+            <div class="meta">${b.seeds.length ? "Seeds: " + esc(b.seeds.join(", ")) : "No seed artists"}</div>
+          </div>
+          <div class="stats">${n ? `👍${c.up} 😐${c.mid} 👎${c.down}` : "new"}</div>
+        </div>`;
+    }
+  }
+  html += `<button class="btn" data-act="add-branch">＋ Add a branch</button>`;
+  html += `
+    <h2>Data</h2>
+    <div class="row-actions">
+      <button class="btn secondary" data-act="export">Export JSON</button>
+      <button class="btn secondary" data-act="import">Import JSON</button>
+    </div>
+    <p class="hint">Everything is stored locally on this device. Export to back up or move to another phone.</p>`;
+  main.innerHTML = html;
+}
+
+/* --- add branch --- */
+function renderAddBranch() {
+  const parents = [state.anchor, ...state.branches.map(b => b.name)];
+  main.innerHTML = `
+    <button class="back" data-act="back-branches">← Branches</button>
+    <h2>New branch</h2>
+    <div class="card">
+      <label for="bName">Branch name</label>
+      <input type="text" id="bName" placeholder="e.g. Melodic House, Garage Revival" autocomplete="off">
+      <label for="bSeeds">Seed artists (comma-separated)</label>
+      <input type="text" id="bSeeds" placeholder="e.g. Lane 8, Ben Böhmer" autocomplete="off">
+      <label for="bParent">Branches from</label>
+      <select id="bParent">
+        ${parents.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join("")}
+      </select>
+      <button class="btn" data-act="save-branch">Save branch</button>
+    </div>`;
+}
+
+/* --- branch detail --- */
+function renderDetail(id) {
+  const b = branchById(id);
+  if (!b) { go("branches"); return; }
+  const logs = branchLogs(id).sort((x, y) => y.date - x.date);
+  const r = bestRating(id);
+  main.innerHTML = `
+    <button class="back" data-act="back-branches">← Branches</button>
+    <div class="card branch-card ${r ? "r-" + r : ""}" style="cursor:default">
+      <div class="info">
+        <div class="name">${esc(b.name)}</div>
+        <div class="meta">↳ from ${esc(b.parent || state.anchor)}</div>
+        <div class="chips">${b.seeds.map(s => `<span class="chip">${esc(s)}</span>`).join("") || '<span class="empty">No seed artists</span>'}</div>
+      </div>
+    </div>
+    <button class="btn" data-act="log-here" data-id="${b.id}">➕ Log a track/artist here</button>
+    <h2>Logged (${logs.length})</h2>
+    <div class="card">
+      ${logs.length ? logs.map(l => logItemHtml(l)).join("") : '<p class="empty">Nothing logged yet — go listen!</p>'}
+    </div>
+    <button class="btn danger" data-act="del-branch" data-id="${b.id}">Delete branch</button>`;
+}
+
+function logItemHtml(l, withBranch = false) {
+  const b = withBranch ? branchById(l.branchId) : null;
+  return `
+    <div class="log-item">
+      <span class="emoji">${RATINGS[l.rating]}</span>
+      <div class="body">
+        <div class="title">${esc(l.name)}<span class="tag">${l.kind}</span>${b ? `<span class="tag">${esc(b.name)}</span>` : ""}</div>
+        ${l.note ? `<div class="note">${esc(l.note)}</div>` : ""}
+      </div>
+      <span class="date">${fmtDate(l.date)}</span>
+      <button class="del" data-act="del-log" data-id="${l.id}" aria-label="Delete">✕</button>
+    </div>`;
+}
+
+/* --- log form --- */
+let logDraft = { kind: "track", rating: null };
+function renderLogForm(presetBranchId) {
+  if (!state.branches.length) {
+    main.innerHTML = `<p class="empty">Add a branch first, then log tracks under it.</p>
+      <button class="btn" data-act="add-branch">＋ Add a branch</button>`;
+    return;
+  }
+  const recent = state.logs.slice().sort((a, b) => b.date - a.date).slice(0, 8);
+  main.innerHTML = `
+    <h2>Log a listen</h2>
+    <div class="card">
+      <label for="lBranch">Branch</label>
+      <select id="lBranch">
+        ${state.branches.slice().sort((a, b) => a.name.localeCompare(b.name))
+          .map(b => `<option value="${b.id}" ${b.id === presetBranchId ? "selected" : ""}>${esc(b.name)}</option>`).join("")}
+      </select>
+      <label>What is it?</label>
+      <div class="seg" id="kindSeg">
+        <button data-kind="track" class="${logDraft.kind === "track" ? "active" : ""}">Track</button>
+        <button data-kind="artist" class="${logDraft.kind === "artist" ? "active" : ""}">Artist</button>
+      </div>
+      <label for="lName">${logDraft.kind === "track" ? "Track — Artist" : "Artist name"}</label>
+      <input type="text" id="lName" placeholder="${logDraft.kind === "track" ? "e.g. Midas — Skee Mask" : "e.g. Skee Mask"}" autocomplete="off">
+      <label>Verdict</label>
+      <div class="rating-row" id="ratingRow">
+        <button data-r="up"   class="${logDraft.rating === "up" ? "sel-up" : ""}">👍</button>
+        <button data-r="mid"  class="${logDraft.rating === "mid" ? "sel-mid" : ""}">😐</button>
+        <button data-r="down" class="${logDraft.rating === "down" ? "sel-down" : ""}">👎</button>
+      </div>
+      <label for="lNote">Note (optional)</label>
+      <textarea id="lNote" placeholder="e.g. great late-night vibe, check the album"></textarea>
+      <button class="btn" data-act="save-log">Save</button>
+    </div>
+    ${recent.length ? `<h2>Recent</h2><div class="card">${recent.map(l => logItemHtml(l, true)).join("")}</div>` : ""}`;
+}
+
+/* --- weekly log --- */
+function renderWeek() {
+  const wk = isoWeekKey();
+  const cur = state.weeks[wk] || [];
+  const opts = sel => state.branches.slice().sort((a, b) => a.name.localeCompare(b.name))
+    .map(b => `<option value="${b.id}" ${b.id === sel ? "selected" : ""}>${esc(b.name)}</option>`).join("");
+  const slot = i => `
+    <div class="week-slot">
+      <select data-slot="${i}">
+        <option value="">— pick branch ${i + 1} —</option>
+        ${opts(cur[i])}
+      </select>
+    </div>`;
+
+  const past = Object.keys(state.weeks).filter(k => k !== wk).sort().reverse();
+  main.innerHTML = `
+    <h2>This week · ${wk}</h2>
+    <div class="card">
+      <p class="hint" style="margin:0 0 4px">Which 2 branches are you exploring this week?</p>
+      ${slot(0)}${slot(1)}
+    </div>
+    <h2>Past weeks</h2>
+    <div class="card">
+      ${past.length ? past.map(k => {
+        const names = (state.weeks[k] || []).map(id => {
+          const b = branchById(id);
+          return b ? esc(b.name) : "<i>(deleted)</i>";
+        }).join(" · ");
+        return `<div class="log-item"><div class="body"><div class="title">${k}</div><div class="note">${names || "—"}</div></div></div>`;
+      }).join("") : '<p class="empty">No history yet. Your picks are saved automatically each week.</p>'}
+    </div>`;
+}
+
+/* --- next week suggestions --- */
+function renderNext() {
+  const wk = isoWeekKey();
+  const thisWeek = new Set(state.weeks[wk] || []);
+  const scored = state.branches.map(b => ({ b, r: bestRating(b.id), c: counts(b.id), n: branchLogs(b.id).length }));
+
+  const deeper = scored.filter(s => s.r === "up")
+    .sort((x, y) => y.c.up - x.c.up || x.n - y.n);
+  const fresh = scored.filter(s => s.n === 0)
+    .sort((x, y) => x.b.createdAt - y.b.createdAt);
+  const maybe = scored.filter(s => s.r === "mid")
+    .sort((x, y) => y.c.mid - x.c.mid);
+
+  const row = s => `
+    <div class="card branch-card ${s.r ? "r-" + s.r : ""}" data-open="${s.b.id}">
+      <div class="info">
+        <div class="name">${esc(s.b.name)} ${thisWeek.has(s.b.id) ? '<span class="tag" style="font-size:.68rem;color:var(--accent);border:1px solid var(--accent);border-radius:5px;padding:1px 5px;">this week</span>' : ""}</div>
+        <div class="meta">${s.n ? `👍${s.c.up} 😐${s.c.mid} 👎${s.c.down} logged` : "Seeds: " + (esc(s.b.seeds.join(", ")) || "none")}</div>
+      </div>
+      <div class="stats">›</div>
+    </div>`;
+
+  main.innerHTML = `
+    <h2>🔥 Go deeper — these are hitting</h2>
+    ${deeper.length ? deeper.map(row).join("") : '<p class="empty">No 👍 branches yet. Keep sampling!</p>'}
+    <h2>🌱 Sample something new</h2>
+    ${fresh.length ? fresh.map(row).join("") : '<p class="empty">Every branch has been touched — add a new one to keep exploring.</p>'}
+    ${maybe.length ? `<h2>🤔 Worth another chance</h2>${maybe.map(row).join("")}` : ""}
+    <button class="btn secondary" data-act="add-branch">＋ Add a branch to explore</button>`;
+}
+
+/* ---------- events ---------- */
+main.addEventListener("click", e => {
+  const open = e.target.closest("[data-open]");
+  if (open) { go("detail", open.dataset.open); return; }
+  const act = e.target.closest("[data-act]");
+  if (!act) {
+    const kindBtn = e.target.closest("#kindSeg button");
+    if (kindBtn) {
+      logDraft.kind = kindBtn.dataset.kind;
+      const name = document.getElementById("lName").value;
+      const branch = document.getElementById("lBranch").value;
+      const note = document.getElementById("lNote").value;
+      renderLogForm(branch);
+      document.getElementById("lName").value = name;
+      document.getElementById("lNote").value = note;
+      return;
+    }
+    const rBtn = e.target.closest("#ratingRow button");
+    if (rBtn) {
+      logDraft.rating = rBtn.dataset.r;
+      document.querySelectorAll("#ratingRow button").forEach(b =>
+        b.className = b.dataset.r === logDraft.rating ? "sel-" + logDraft.rating : "");
+      return;
+    }
+    return;
+  }
+
+  switch (act.dataset.act) {
+    case "add-branch": go("add"); break;
+    case "back-branches": go("branches"); break;
+
+    case "save-branch": {
+      const name = document.getElementById("bName").value.trim();
+      if (!name) { toast("Give the branch a name"); return; }
+      if (state.branches.some(b => b.name.toLowerCase() === name.toLowerCase())) {
+        toast("That branch already exists"); return;
+      }
+      const seeds = document.getElementById("bSeeds").value.split(",").map(s => s.trim()).filter(Boolean);
+      const parent = document.getElementById("bParent").value || state.anchor;
+      state.branches.push({ id: uid(), name, seeds, parent, createdAt: Date.now() });
+      save(); toast("Branch added 🌱"); go("branches");
+      break;
+    }
+
+    case "log-here": go("log", act.dataset.id); break;
+
+    case "save-log": {
+      const name = document.getElementById("lName").value.trim();
+      if (!name) { toast("What did you listen to?"); return; }
+      if (!logDraft.rating) { toast("Pick a verdict"); return; }
+      state.logs.push({
+        id: uid(),
+        branchId: document.getElementById("lBranch").value,
+        name,
+        kind: logDraft.kind,
+        rating: logDraft.rating,
+        note: document.getElementById("lNote").value.trim(),
+        date: Date.now(),
+      });
+      save();
+      toast("Logged " + RATINGS[logDraft.rating]);
+      logDraft = { kind: "track", rating: null };
+      go("detail", document.getElementById("lBranch").value);
+      break;
+    }
+
+    case "del-log": {
+      const l = state.logs.find(x => x.id === act.dataset.id);
+      if (l && confirm(`Delete "${l.name}"?`)) {
+        state.logs = state.logs.filter(x => x.id !== l.id);
+        save(); render();
+      }
+      break;
+    }
+
+    case "del-branch": {
+      const b = branchById(act.dataset.id);
+      if (b && confirm(`Delete "${b.name}" and its ${branchLogs(b.id).length} logged entries?`)) {
+        state.branches = state.branches.filter(x => x.id !== b.id);
+        state.logs = state.logs.filter(x => x.branchId !== b.id);
+        for (const k of Object.keys(state.weeks)) {
+          state.weeks[k] = state.weeks[k].filter(id => id !== b.id);
+        }
+        save(); toast("Branch deleted"); go("branches");
+      }
+      break;
+    }
+
+    case "export": {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "genre-explorer-" + new Date().toISOString().slice(0, 10) + ".json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+      break;
+    }
+
+    case "import": document.getElementById("importFile").click(); break;
+  }
+});
+
+main.addEventListener("change", e => {
+  const slot = e.target.closest("select[data-slot]");
+  if (slot) {
+    const wk = isoWeekKey();
+    const cur = (state.weeks[wk] || []).slice();
+    cur[Number(slot.dataset.slot)] = slot.value || undefined;
+    state.weeks[wk] = cur.filter(Boolean);
+    save(); toast("Week saved");
+  }
+});
+
+document.getElementById("importFile").addEventListener("change", e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const s = JSON.parse(reader.result);
+      if (!s || !Array.isArray(s.branches) || !Array.isArray(s.logs)) throw new Error("bad shape");
+      if (!confirm("Replace all current data with this import?")) return;
+      s.weeks = s.weeks || {};
+      s.anchor = s.anchor || ANCHOR;
+      state = s;
+      save(); toast("Imported ✓"); go("branches");
+    } catch (err) {
+      toast("Couldn't read that file");
+    }
+  };
+  reader.readAsText(f);
+  e.target.value = "";
+});
+
+/* ---------- init ---------- */
+save(); // persist seed data on first run
+go("branches");
+</script>
+</body>
+</html>
