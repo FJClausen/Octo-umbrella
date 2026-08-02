@@ -21,7 +21,7 @@
 export const chapters = [
   {
     id: 'dc2011',
-    title: 'Where It Started',
+    title: 'The Early Days',
     year: '2011',
     place: 'Washington, DC',
     theme: 'dc',
@@ -95,7 +95,7 @@ export const chapters = [
     checkpoints: [
       {
         question: 'What colour was the house when we bought it?',
-        answers: ['Red / maroon', 'Blue', 'Green', 'Cream'],
+        answers: ['Red / maroon / salmon / terracotta', 'Blue', 'Green', 'Cream'],
         correct: 0,
         hint: 'Much darker than it is now. The blue one is next door.',
         reveal: 'after',
