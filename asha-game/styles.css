@@ -211,17 +211,23 @@ button.ghost { background: transparent; color: #6b6380; text-decoration: underli
 }
 .photos.single { grid-template-columns: 1fr; }
 
+/* Square, because the photos are a mix of portrait and landscape phone shots
+   and a square crop takes the least off either one. */
 .photo {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1 / 1;
   border-radius: 12px;
   overflow: hidden;
   background: #efe8dc;
   border: 3px solid #fff;
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
 }
-.photos.single .photo { aspect-ratio: 4 / 3; }
 
 .photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* The final group photo is the payoff -- never crop it. It is shown whole,
+   whatever shape it is, and capped so the message still fits on a phone. */
+.photos.single .photo { aspect-ratio: auto; background: #f4eee2; }
+.photos.single .photo img { height: auto; max-height: 50vh; object-fit: contain; }
 
 .photo.missing {
   display: flex;
@@ -277,5 +283,7 @@ button.ghost { background: transparent; color: #6b6380; text-decoration: underli
   h1 { font-size: 22px; }
   h2 { font-size: 18px; margin-bottom: 10px; }
   .lede { font-size: 14px; margin-bottom: 12px; }
-  .photo { aspect-ratio: 16 / 10; }
+  .photo { aspect-ratio: 4 / 3; }   /* a little wider when the screen is short */
+  .photos.single .photo { aspect-ratio: auto; }
+  .photos.single .photo img { max-height: 42vh; }
 }
