@@ -1,0 +1,97 @@
+# 🎂 Asha's Adventure
+
+A little pixel-art platformer for Asha's birthday. She plays herself, walks
+back through fourteen years of family history, answers a question at every
+checkpoint, jumps her way across each era, and meets Fabian and Naomi at the
+end — where the group photo and the birthday song unlock.
+
+- **Seven chapters** — DC 2011, Tulum 2015, the house, Naomi, the Arboretum,
+  Germany, Costa Rica — then the reunion.
+- **Two checkpoints per chapter**, each with a family question and two photos.
+- **Forgiving on purpose** — unlimited lives, instant respawn at the last
+  checkpoint, no enemies, no timers, and wrong answers only ever cost a retry
+  (a hint appears after the second miss).
+- **Phone first** — on-screen left / right / jump under the thumbs. Keyboard
+  (arrows + space) works too.
+- **Saves automatically**, so she can close the tab and pick it back up.
+- **No build step, no dependencies, no backend.** Plain HTML, CSS and ES
+  modules. Sound and characters are generated in code, so the only files to
+  upload are the photos.
+
+---
+
+## Running it locally
+
+Any static file server works — it just needs to be served over HTTP, not
+opened as a `file://` path, because the game uses ES modules.
+
+```bash
+cd asha-game
+python3 -m http.server 8000
+# then open http://localhost:8000
+```
+
+## Deploying to Vercel
+
+1. Push this folder to GitHub.
+2. In Vercel, **Add New → Project**, import the repo.
+3. Set **Root Directory** to `asha-game`.
+4. Framework preset: **Other**. No build command, no output directory.
+5. Deploy — you get a link you can text to her.
+
+If you'd rather it live in its own repository, this folder is completely
+self-contained: copy it out, `git init`, and deploy exactly the same way.
+
+## Making it private
+
+The link is unguessable but public. If you want it locked down, the simplest
+option is Vercel's built-in **Password Protection** (Project → Settings →
+Deployment Protection). The game itself only asks for a name — it's a greeting,
+not a login.
+
+---
+
+## What to edit
+
+| I want to change… | Edit this |
+|---|---|
+| Questions, answers, hints, chapter text | `src/data.js` |
+| Which photo shows where | `src/data.js` (`photos: [...]`) |
+| The photos themselves | drop files into `photos/` — see `photos/README.md` |
+| The final message and group photo | `src/data.js` (bottom, `finale`) |
+| Hair / skin / clothing colours of the characters | `src/sprites.js` (top) |
+| Jump feel, speed, gravity | `src/engine.js` (top) |
+| The layout of a chapter's jumps | `src/levels.js` (`runs`) |
+| Backgrounds and scenery | `src/levels.js` (`drawBackground`) |
+| Music and sound effects | `src/audio.js` |
+
+Everything is commented, and none of it needs rebuilding — save the file and
+reload the page.
+
+## How a chapter is put together
+
+```
+chapter card  →  checkpoint 1  →  question + 2 photos  →  parcours
+              →  checkpoint 2  →  question + 2 photos  →  parcours
+              →  goal  →  chapter complete card  →  next chapter
+```
+
+Falling into a gap respawns her at the last checkpoint she reached, with the
+question already answered — she never has to redo a quiz.
+
+## Files
+
+```
+asha-game/
+├── index.html        screens and layout
+├── styles.css        all styling, phone-first
+├── vercel.json       static hosting config
+├── photos/           your uploaded photos (+ naming guide)
+└── src/
+    ├── data.js       ← the story: chapters, questions, photos
+    ├── main.js       game flow, saving, input
+    ├── engine.js     physics, collision, rendering
+    ├── levels.js     level layouts + painted backgrounds
+    ├── sprites.js    the three pixel characters
+    └── audio.js      chiptune music, sound effects, birthday song
+```

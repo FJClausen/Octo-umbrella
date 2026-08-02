@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#141a3a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Asha's Adventure</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='14' font-size='14'>🎂</text></svg>" />
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game"></canvas>
+
+    <div id="hud">
+      <span id="hud-chapter"></span>
+      <span id="hud-right">
+        <span id="hud-hearts">♥ 0</span>
+        <button id="sound-btn" aria-label="Sound on or off">🔊</button>
+      </span>
+    </div>
+  </div>
+
+  <div id="controls">
+    <div class="pad">
+      <button id="btn-left" aria-label="Left">◀</button>
+      <button id="btn-right" aria-label="Right">▶</button>
+    </div>
+    <button id="btn-jump" aria-label="Jump">JUMP</button>
+  </div>
+
+  <!-- ---------------- title ---------------- -->
+  <section id="screen-name" class="screen">
+    <div class="panel">
+      <p class="kicker">A birthday adventure</p>
+      <h1>Asha's Adventure</h1>
+      <p class="lede">
+        Fourteen years, seven places, one family. Run, jump, and remember your
+        way home.
+      </p>
+      <label for="name-input">What should we call you?</label>
+      <input id="name-input" type="text" placeholder="Asha" autocomplete="off" />
+      <button id="start-btn" class="primary">Start a new adventure</button>
+      <div id="resume-row">
+        <button id="resume-btn" class="ghost">Continue</button>
+      </div>
+      <p class="tip">Made by Fabian &amp; Naomi 🎂</p>
+    </div>
+  </section>
+
+  <!-- ---------------- chapter card ---------------- -->
+  <section id="screen-card" class="screen">
+    <div class="panel">
+      <p class="kicker" id="card-kicker"></p>
+      <h2 id="card-title"></h2>
+      <p class="lede" id="card-body"></p>
+      <button id="card-btn" class="primary"></button>
+    </div>
+  </section>
+
+  <!-- ---------------- quiz ---------------- -->
+  <section id="screen-quiz" class="screen">
+    <div class="panel wide">
+      <div id="quiz-photos" class="photos"></div>
+      <p class="kicker" id="quiz-caption"></p>
+      <h2 id="quiz-question"></h2>
+      <div id="quiz-answers" class="answers"></div>
+      <p id="quiz-feedback" class="feedback"></p>
+    </div>
+  </section>
+
+  <!-- ---------------- finale ---------------- -->
+  <section id="screen-finale" class="screen">
+    <div class="panel wide finale">
+      <h1 id="finale-title">Happy Birthday, Mama</h1>
+      <div id="finale-photo" class="photos single"></div>
+      <p id="finale-message" class="message"></p>
+      <p id="finale-hearts" class="kicker"></p>
+      <div class="finale-buttons">
+        <button id="finale-song" class="primary">Play the song again 🎵</button>
+        <button id="finale-replay" class="ghost">Play from the start</button>
+      </div>
+    </div>
+  </section>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
