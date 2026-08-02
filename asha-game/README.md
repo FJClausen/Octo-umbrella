@@ -51,6 +51,21 @@ not a login.
 
 ---
 
+## The characters
+
+All three are hand-drawn 12-wide pixel grids in `src/sprites.js`, coloured from
+the family photos:
+
+- **Asha** — deep brown skin, cropped dark afro, orange top, teal shorts.
+- **Naomi** — big caramel curls, warm tan skin, orange top, pink sandals, and a
+  shorter body so she reads as a kid next to her parents.
+- **Fabian** — silver hair, grey stubble, black top, blue shorts.
+
+Every colour is a single value at the top of the file, so any of them can be
+re-dressed in seconds. The grids draw at exactly one pixel per cell — height
+differences are built into the grids rather than scaled, because fractional
+scaling turns crisp pixel art blurry on a phone.
+
 ## What to edit
 
 | I want to change… | Edit this |

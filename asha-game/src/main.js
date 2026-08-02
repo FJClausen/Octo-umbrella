@@ -388,6 +388,7 @@ function loop(now) {
   last = now;
 
   if (state.game) {
+    window.__game = state.game; // handy when tweaking levels from the console
     state.game.viewW = canvas.width;
     state.game.update(dt, input);
     state.game.draw(ctx);
