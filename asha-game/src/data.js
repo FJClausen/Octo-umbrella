@@ -9,8 +9,11 @@
 // here. A missing photo just shows a friendly placeholder, so the game always
 // runs even before you've uploaded everything.
 //
-// Questions marked DRAFT are our first guesses. Rewrite the text, the answers
-// and the hints freely -- nothing else in the game needs to change.
+// Every question here is a real one. Rewrite the text, the answers and the
+// hints freely -- nothing else in the game needs to change.
+//
+// A chapter may have one checkpoint or two; the level builder places a
+// checkpoint per question, so deleting one below is all it takes.
 //
 // reveal: 'after'  keeps the photos hidden until she answers correctly, so the
 // photo is the reward rather than the giveaway. Use it whenever the picture
@@ -31,11 +34,10 @@ export const chapters = [
     outro: 'Two people, one very lucky coincidence.',
     checkpoints: [
       {
-        // DRAFT
-        question: 'Where did Mama and Papa first meet in 2011?',
-        answers: ['At the World Bank', 'At a coffee shop', 'On a plane', 'At a wedding'],
+        question: 'What race got Mama and Papa together in 2011?',
+        answers: ['The High Heel Race', 'The Marine Corps Marathon', 'The Turkey Trot', 'The Cherry Blossom Ten Miler'],
         correct: 0,
-        hint: 'It was work. Very romantic, we know.',
+        hint: '17th Street, the week of Halloween. Not exactly running shoes.',
         photos: ['ch1-c.jpg', 'ch1-b.jpg'],
         caption: 'Washington, DC — 2011',
       },
@@ -72,13 +74,13 @@ export const chapters = [
         caption: 'The rehearsal dinner — Tulum, 2015',
       },
       {
-        // DRAFT
-        question: 'Roughly how many guests came to the wedding?',
-        answers: ['About 30', 'About 80', 'About 150', 'Just the two of us'],
+        question:
+          'Two days before the wedding, what were the naked guys night diving for?',
+        answers: ['A bottle of rum', 'A wedding ring', 'A phone', 'A conch shell'],
         correct: 0,
-        hint: 'Small enough that everyone fit at one very long table.',
+        hint: 'Still full. That was rather the point.',
         photos: ['ch2-b.jpg', 'ch2-c.jpg'],
-        caption: 'Married on the beach',
+        caption: 'Tulum — 2015',
       },
     ],
   },
@@ -103,13 +105,13 @@ export const chapters = [
         caption: 'Before — 2016',
       },
       {
-        // DRAFT
-        question: 'In which city did we buy our first house together?',
-        answers: ['Washington, DC', 'Berlin', 'Vienna', 'Mexico City'],
+        question:
+          'What was our helpful neighbour wearing while advising us on whether to buy in Eckington?',
+        answers: ['A bathrobe', 'A three-piece suit', 'A Santa suit', 'Full cycling kit'],
         correct: 0,
-        hint: 'Same city where it all started.',
+        hint: 'Not dressed for company. Not dressed for outside, either.',
         photos: ['ch3-b.jpg', 'ch3-c.jpg'],
-        caption: 'After',
+        caption: 'Eckington — after',
       },
     ],
   },
@@ -134,11 +136,10 @@ export const chapters = [
         caption: 'Hello, Naomi',
       },
       {
-        // DRAFT
-        question: 'Where was Naomi born?',
-        answers: ['Washington, DC', 'Munich', 'Tulum', 'San José'],
+        question: 'What was Papa’s main food source during Naomi’s birth week?',
+        answers: ['Panera Bread', 'The hospital cafeteria', 'Chipotle', 'Vending machines'],
         correct: 0,
-        hint: 'She is a DC kid.',
+        hint: 'Soup, a bread bowl, and rather a lot of both.',
         photos: ['ch4-c.jpg', 'ch4-d.jpg'],
         caption: 'The first days',
       },
@@ -165,11 +166,10 @@ export const chapters = [
         caption: 'Somewhere in DC',
       },
       {
-        // DRAFT
-        question: 'What stands in the middle of the Arboretum meadow?',
-        answers: ['The Capitol Columns', 'A lighthouse', 'A carousel', 'A windmill'],
+        question: 'What is the most common tree in the Arboretum?',
+        answers: ['The southern magnolia', 'The cherry blossom', 'The red oak', 'The dogwood'],
         correct: 0,
-        hint: 'Twenty-two of them, and they used to hold up the Capitol.',
+        hint: 'Glossy dark leaves, enormous white flowers.',
         photos: ['ch5-b.jpg', 'ch5-c.jpg'],
         caption: 'Under the columns',
       },
@@ -187,23 +187,15 @@ export const chapters = [
       'and mountains at the far end of the road.',
     outro: 'Family on the other side of the world.',
     checkpoints: [
+      // Germany asks a single question -- the level builder places one
+      // checkpoint instead of two when a chapter is written this way.
       {
-        // DRAFT
-        question: 'Which country is Papa from?',
-        answers: ['Germany', 'Austria', 'Switzerland', 'Denmark'],
+        question: 'What is the German sailing capital?',
+        answers: ['Kiel', 'Hamburg', 'Rostock', 'Bremen'],
         correct: 0,
-        hint: 'You have been there many times.',
+        hint: 'On the Baltic, with a famous week named after it.',
         photos: ['ch6-a.jpg', 'ch6-b.jpg'],
         caption: 'Germany',
-      },
-      {
-        // DRAFT
-        question: 'Who do we visit on our trips to Germany?',
-        answers: ['Papa’s family', 'Old colleagues', 'Nobody, just us', 'Friends from Tulum'],
-        correct: 0,
-        hint: 'The other half of Naomi’s grandparents.',
-        photos: ['ch6-c.jpg', 'ch6-d.jpg'],
-        caption: 'With the family',
       },
     ],
   },
@@ -220,16 +212,14 @@ export const chapters = [
     outro: 'Pura vida. Almost home.',
     checkpoints: [
       {
-        // DRAFT
-        question: 'Which country do we keep going back to for vacation?',
-        answers: ['Costa Rica', 'Panama', 'Belize', 'Colombia'],
+        question: 'What kind of monkey attacked Naomi and Papa?',
+        answers: ['A capuchin', 'A howler monkey', 'A spider monkey', 'A squirrel monkey'],
         correct: 0,
-        hint: 'Pura vida.',
+        hint: 'The little white-faced ones. They want your lunch.',
         photos: ['ch7-a.jpg', 'ch7-b.jpg'],
         caption: 'Costa Rica',
       },
       {
-        // DRAFT
         question: 'What is the Costa Rican saying we always bring home?',
         answers: ['Pura vida', 'Hakuna matata', 'La dolce vita', 'C’est la vie'],
         correct: 0,

@@ -111,9 +111,13 @@ export function buildLevel(chapter) {
   const pattern = runs[chapter.theme] || runs.dc;
   cursor = compile(pattern[0], cursor, out);
 
-  // Landing pad with the second checkpoint.
+  // Landing pad halfway. It only carries a checkpoint if the chapter actually
+  // has a second question -- a chapter with one question just runs straight
+  // through here, and the parcours is unchanged either way.
   out.platforms.push({ x: cursor, y: GROUND_Y, w: 120, h: 260, solid: true });
-  out.checkpoints.push({ x: cursor + 60, y: GROUND_Y, index: 1, reached: false, answered: false });
+  if (chapter.checkpoints.length > 1) {
+    out.checkpoints.push({ x: cursor + 60, y: GROUND_Y, index: 1, reached: false, answered: false });
+  }
   cursor += 120;
 
   cursor = compile(pattern[1], cursor, out);
