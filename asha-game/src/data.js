@@ -142,7 +142,7 @@ export const chapters = [
         correct: 0,
         hint: 'Soup, a bread bowl, and rather a lot of both.',
         reveal: 'after',
-        photos: ['ch4-c.png'],
+        photos: ['ch4-c.jpg', 'ch4-d.png'],
         caption: 'Birth week fuel',
       },
     ],
