@@ -262,6 +262,49 @@ button.ghost { background: transparent; color: #6b6380; text-decoration: underli
 .answer.wrong { background: #fbe2e2; border-color: #e08b8b; opacity: 0.75; }
 .answer:disabled { cursor: default; }
 
+/* A photo she has not earned yet. */
+.photo.locked {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(145deg, #efe6d6, #e2d7c2);
+  border-style: solid;
+}
+/* Needs its own shape: with no image inside it would otherwise collapse to
+   the height of the text, and a single shut photo has no aspect ratio. */
+.photo.locked,
+.photos.single .photo.locked { aspect-ratio: 4 / 3; }
+
+.photo.locked span {
+  display: block;
+  text-align: center;
+  font-size: 34px;
+  font-weight: 900;
+  color: #c3b49a;
+  line-height: 1;
+}
+.photo.locked small {
+  display: block;
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #b0a189;
+}
+
+/* ...and the moment it opens. */
+.photo.revealing { animation: reveal 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.2); }
+@keyframes reveal {
+  from { transform: scale(0.86) rotate(-2deg); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .photo.revealing { animation: none; }
+}
+
+#quiz-continue { display: none; margin-top: 14px; }
+#quiz-continue.on { display: block; }
+
 .feedback { min-height: 20px; margin: 12px 0 0; font-size: 14px; font-weight: 700; }
 .feedback.good { color: #2f9e58; }
 .feedback.bad { color: #c25a5a; }

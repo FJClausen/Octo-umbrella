@@ -11,6 +11,11 @@
 //
 // Questions marked DRAFT are our first guesses. Rewrite the text, the answers
 // and the hints freely -- nothing else in the game needs to change.
+//
+// reveal: 'after'  keeps the photos hidden until she answers correctly, so the
+// photo is the reward rather than the giveaway. Use it whenever the picture
+// would answer the question -- and leave it off when the question is about the
+// picture ("where was this?").
 // ---------------------------------------------------------------------------
 
 export const chapters = [
@@ -31,17 +36,17 @@ export const chapters = [
         answers: ['At the World Bank', 'At a coffee shop', 'On a plane', 'At a wedding'],
         correct: 0,
         hint: 'It was work. Very romantic, we know.',
-        photos: ['ch1-a.jpg', 'ch1-b.jpg'],
+        photos: ['ch1-c.jpg', 'ch1-b.jpg'],
         caption: 'Washington, DC — 2011',
       },
       {
-        // DRAFT
-        question: 'Which city did we both live in when we met?',
-        answers: ['Washington, DC', 'New York', 'Vienna', 'San José'],
+        question:
+          'What failed to ripen in our kitchen closet for four days in La Palma?',
+        answers: ['The avocados', 'The mangoes', 'The bananas', 'The tomatoes'],
         correct: 0,
-        hint: 'The one with the monuments.',
-        photos: ['ch1-c.jpg', 'ch1-d.jpg'],
-        caption: 'The DC years',
+        hint: 'We checked on them every single day. Rock hard, every time.',
+        photos: ['ch1-a.jpg'],
+        caption: 'La Palma',
       },
     ],
   },
@@ -58,13 +63,13 @@ export const chapters = [
     outro: 'Married on a beach, dancing until the music gave up.',
     checkpoints: [
       {
-        // DRAFT
-        question: 'Where did we get married?',
-        answers: ['Tulum, Mexico', 'Cancún, Mexico', 'Goa, India', 'Salzburg, Austria'],
+        question: 'What was the main dish at the rehearsal dinner?',
+        answers: ['Octopus', 'Suckling pig', 'Ceviche', 'Grilled snapper'],
         correct: 0,
-        hint: 'White sand, Yucatán peninsula.',
-        photos: ['ch2-a.jpg', 'ch2-b.jpg'],
-        caption: 'The wedding weekend — Tulum, 2015',
+        hint: 'Eight arms, on a wooden board, with a burnt lime.',
+        reveal: 'after',
+        photos: ['ch2-a.jpg'],
+        caption: 'The rehearsal dinner — Tulum, 2015',
       },
       {
         // DRAFT
@@ -72,7 +77,7 @@ export const chapters = [
         answers: ['About 30', 'About 80', 'About 150', 'Just the two of us'],
         correct: 0,
         hint: 'Small enough that everyone fit at one very long table.',
-        photos: ['ch2-c.jpg', 'ch2-d.jpg'],
+        photos: ['ch2-b.jpg', 'ch2-c.jpg'],
         caption: 'Married on the beach',
       },
     ],
@@ -89,13 +94,13 @@ export const chapters = [
     outro: 'Not just an address. A home.',
     checkpoints: [
       {
-        // DRAFT
-        question: 'What did we buy in 2016?',
-        answers: ['Our house in DC', 'A car', 'A boat', 'A dog'],
+        question: 'What colour was the house when we bought it?',
+        answers: ['Red / maroon', 'Blue', 'Green', 'Cream'],
         correct: 0,
-        hint: 'It has a front door and a lot of stairs.',
-        photos: ['ch3-a.jpg', 'ch3-b.jpg'],
-        caption: 'Moving day — 2016',
+        hint: 'Much darker than it is now. The blue one is next door.',
+        reveal: 'after',
+        photos: ['ch3-a.jpg'],
+        caption: 'Before — 2016',
       },
       {
         // DRAFT
@@ -103,8 +108,8 @@ export const chapters = [
         answers: ['Washington, DC', 'Berlin', 'Vienna', 'Mexico City'],
         correct: 0,
         hint: 'Same city where it all started.',
-        photos: ['ch3-c.jpg', 'ch3-d.jpg'],
-        caption: 'Home',
+        photos: ['ch3-b.jpg', 'ch3-c.jpg'],
+        caption: 'After',
       },
     ],
   },
@@ -121,11 +126,10 @@ export const chapters = [
     outro: 'And then there were three.',
     checkpoints: [
       {
-        // DRAFT
-        question: 'What year was Naomi born?',
-        answers: ['2017', '2015', '2018', '2019'],
+        question: 'How much did Naomi weigh when she was born?',
+        answers: ['7.1 lbs', '6.4 lbs', '8.2 lbs', '9.0 lbs'],
         correct: 0,
-        hint: 'One year after the house.',
+        hint: 'Just over seven pounds.',
         photos: ['ch4-a.jpg', 'ch4-b.jpg'],
         caption: 'Hello, Naomi',
       },
@@ -153,13 +157,12 @@ export const chapters = [
     outro: 'A strange year, made good by small walks.',
     checkpoints: [
       {
-        // DRAFT
-        question: 'Which DC spot did we walk to over and over during the pandemic?',
-        answers: ['The National Arboretum', 'The National Zoo', 'The Mall', 'Rock Creek Park'],
+        question: 'Where was this?',
+        answers: ['The National Arboretum', 'The National Zoo', 'Rock Creek Park', 'The Botanic Garden'],
         correct: 0,
-        hint: 'It has the famous old columns standing in a field.',
-        photos: ['ch5-a.jpg', 'ch5-b.jpg'],
-        caption: 'The Arboretum',
+        hint: 'Bonsai, old stone columns, and a great many pandemic walks.',
+        photos: ['ch5-a.jpg', 'ch5-d.jpg'],
+        caption: 'Somewhere in DC',
       },
       {
         // DRAFT
@@ -167,7 +170,7 @@ export const chapters = [
         answers: ['The Capitol Columns', 'A lighthouse', 'A carousel', 'A windmill'],
         correct: 0,
         hint: 'Twenty-two of them, and they used to hold up the Capitol.',
-        photos: ['ch5-c.jpg', 'ch5-d.jpg'],
+        photos: ['ch5-b.jpg', 'ch5-c.jpg'],
         caption: 'Under the columns',
       },
     ],
@@ -190,7 +193,7 @@ export const chapters = [
         answers: ['Germany', 'Austria', 'Switzerland', 'Denmark'],
         correct: 0,
         hint: 'You have been there many times.',
-        photos: ['ch6-a.jpg', 'ch6-b.jpg'], // ch6-b still to come
+        photos: ['ch6-a.jpg', 'ch6-b.jpg'],
         caption: 'Germany',
       },
       {

@@ -94,6 +94,14 @@ function photoEl(file, caption) {
   return wrap;
 }
 
+// A shut photo: what she sees before answering a reveal-after question.
+function lockedEl() {
+  const wrap = document.createElement('div');
+  wrap.className = 'photo locked';
+  wrap.innerHTML = '<span>?<small>answer to see the photo</small></span>';
+  return wrap;
+}
+
 // --- chapter cards -------------------------------------------------------
 
 function showCard({ kicker, title, body, button, onClick }) {
@@ -159,14 +167,32 @@ function askQuestion(ch, cp) {
   $('quiz-feedback').className = 'feedback';
 
   const photos = $('quiz-photos');
+  const files = (q.photos || []).filter(Boolean);
+  // Some questions would be given away by their own photo, so those stay shut
+  // until she gets it right -- the picture is the prize.
+  const revealAfter = q.reveal === 'after';
+
+  photos.className = 'photos' + (files.length === 1 ? ' single' : '');
   photos.innerHTML = '';
-  const files = q.photos || [];
-  photos.appendChild(photoEl(files[0], q.caption));
-  photos.appendChild(photoEl(files[1], q.caption));
+  if (revealAfter) {
+    photos.appendChild(lockedEl());
+  } else {
+    photos.appendChild(photoEl(files[0], q.caption));
+    if (files.length !== 1) photos.appendChild(photoEl(files[1], q.caption));
+  }
+
+  const cont = $('quiz-continue');
+  cont.classList.remove('on');
+  cont.onclick = null;
 
   const list = $('quiz-answers');
   list.innerHTML = '';
   let misses = 0;
+
+  const finish = () => {
+    show(null);
+    state.game.paused = false;
+  };
 
   q.answers.forEach((text, i) => {
     const btn = document.createElement('button');
@@ -183,10 +209,20 @@ function askQuestion(ch, cp) {
         cp.answered = true;
         state.answered = Math.max(state.answered, cp.index + 1);
         save();
-        setTimeout(() => {
-          show(null);
-          state.game.paused = false;
-        }, 900);
+
+        if (revealAfter) {
+          // Open the photo and let her look at it for as long as she likes.
+          photos.innerHTML = '';
+          files.forEach((f) => {
+            const el = photoEl(f, q.caption);
+            el.classList.add('revealing');
+            photos.appendChild(el);
+          });
+          cont.classList.add('on');
+          cont.onclick = finish;
+        } else {
+          setTimeout(finish, 900);
+        }
       } else {
         misses++;
         btn.classList.add('wrong');
