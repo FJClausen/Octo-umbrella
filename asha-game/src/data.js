@@ -110,8 +110,9 @@ export const chapters = [
         answers: ['A bathrobe', 'A three-piece suit', 'A Santa suit', 'Full cycling kit'],
         correct: 0,
         hint: 'Not dressed for company. Not dressed for outside, either.',
-        photos: ['ch3-b.jpg', 'ch3-c.jpg'],
-        caption: 'Eckington — after',
+        reveal: 'after',
+        photos: ['ch3-c.png', 'ch3-b.jpg'],
+        caption: 'Eckington — and the house today',
       },
     ],
   },
@@ -140,8 +141,9 @@ export const chapters = [
         answers: ['Panera Bread', 'The hospital cafeteria', 'Chipotle', 'Vending machines'],
         correct: 0,
         hint: 'Soup, a bread bowl, and rather a lot of both.',
-        photos: ['ch4-c.jpg', 'ch4-d.jpg'],
-        caption: 'The first days',
+        reveal: 'after',
+        photos: ['ch4-c.png'],
+        caption: 'Birth week fuel',
       },
     ],
   },
@@ -236,6 +238,6 @@ export const finale = {
   title: 'Happy Birthday, Mama',
   groupPhoto: 'family.jpg',
   message:
-    'Fourteen years, one wedding on a beach, one house, one Naomi, and a lot ' +
-    'of airports. Thank you for all of it.\n\nWe love you.\n\n— Fabian & Naomi',
+    'Fourteen years, lots of beaches, even more airports, and a little girl ' +
+    'that means the world.\n\nWe love you, Mama.',
 };
