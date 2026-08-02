@@ -73,7 +73,7 @@ export const chapters = [
         correct: 0,
         hint: 'Small enough that everyone fit at one very long table.',
         photos: ['ch2-c.jpg', 'ch2-d.jpg'],
-        caption: 'Dinner on the beach',
+        caption: 'The long dinner in Tulum',
       },
     ],
   },
