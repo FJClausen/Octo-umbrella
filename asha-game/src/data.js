@@ -64,7 +64,7 @@ export const chapters = [
         correct: 0,
         hint: 'White sand, Yucatán peninsula.',
         photos: ['ch2-a.jpg', 'ch2-b.jpg'],
-        caption: 'Tulum — 2015',
+        caption: 'The wedding weekend — Tulum, 2015',
       },
       {
         // DRAFT
@@ -73,7 +73,7 @@ export const chapters = [
         correct: 0,
         hint: 'Small enough that everyone fit at one very long table.',
         photos: ['ch2-c.jpg', 'ch2-d.jpg'],
-        caption: 'The long dinner in Tulum',
+        caption: 'Married on the beach',
       },
     ],
   },
@@ -190,7 +190,7 @@ export const chapters = [
         answers: ['Germany', 'Austria', 'Switzerland', 'Denmark'],
         correct: 0,
         hint: 'You have been there many times.',
-        photos: ['ch6-a.jpg', 'ch6-b.jpg'],
+        photos: ['ch6-a.jpg', 'ch6-b.jpg'], // ch6-b still to come
         caption: 'Germany',
       },
       {
