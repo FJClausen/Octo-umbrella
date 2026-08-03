@@ -34,9 +34,9 @@ export const palettes = {
     k: '#ff9ec0',
     o: '#ffffff',
   },
-  // Fair skin, silver hair, grey stubble. Black top.
+  // Fair skin, blond hair going grey, light stubble. Black top.
   fabian: {
-    h: '#dcdcd4',
+    h: '#ddc07c',
     s: '#e3b892',
     e: '#2a2018',
     b: '#2b2f38',

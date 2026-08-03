@@ -295,15 +295,19 @@ export class Game {
       ctx.fillRect(gx + 11, gy - 44, 3, 44);
     }
 
-    // the family, waiting at the end of the last level
+    // the family, waiting at the end of the last level -- and once she reaches
+    // them, all three bounce around each other while the song plays
     if (this.level.family) {
       const f = this.level.family;
-      drawShadow(ctx, f.x - 16, f.y);
-      drawShadow(ctx, f.x + 10, f.y);
-      const bobA = Math.sin(this.t * 4) * 1.5;
-      const bobB = Math.sin(this.t * 4 + 1) * 1.5;
-      drawSprite(ctx, 'fabian', 'stand', f.x + 14, f.y + bobA, true);
-      drawSprite(ctx, 'naomi', 'stand', f.x - 12, f.y + bobB, true);
+      const party = this.celebrating;
+      const hop = (phase, height) =>
+        party ? -Math.abs(Math.sin(this.t * 6 + phase)) * height
+              : Math.sin(this.t * 4 + phase) * 1.5;
+
+      drawShadow(ctx, f.x + 2, f.y);
+      drawShadow(ctx, f.x + 26, f.y);
+      drawSprite(ctx, 'fabian', party ? 'jump' : 'stand', f.x + 26, f.y + hop(0, 7), true);
+      drawSprite(ctx, 'naomi', party ? 'jump' : 'stand', f.x + 2, f.y + hop(2.1, 9), true);
     }
 
     // the parade, drawn behind her, oldest position furthest back
@@ -333,7 +337,10 @@ export class Game {
           drawShadow(ctx, spot.x, spot.y, 0.12);
           drawAnimal(ctx, name, spot.x, spot.y - 20 + bob, spot.face);
         } else {
-          const hop = moving ? Math.abs(Math.sin(this.t * 9 + i * 1.7)) * 2 : 0;
+          // everyone joins in the bouncing once she reaches the family
+          const hop = this.celebrating
+            ? Math.abs(Math.sin(this.t * 7 + i * 1.3)) * 6
+            : (moving ? Math.abs(Math.sin(this.t * 9 + i * 1.7)) * 2 : 0);
           drawShadow(ctx, spot.x, spot.y, 0.18);
           drawAnimal(ctx, name, spot.x, spot.y - hop, spot.face);
         }
@@ -344,7 +351,12 @@ export class Game {
     const p = this.player;
     if (!p.dead) {
       if (p.onGround) drawShadow(ctx, p.x, p.y);
-      drawSprite(ctx, 'asha', this.frameName(), p.x, p.y, p.faceLeft);
+      if (this.celebrating) {
+        const bounce = -Math.abs(Math.sin(this.t * 6 + 1)) * 8;
+        drawSprite(ctx, 'asha', 'jump', p.x, p.y + bounce, false); // facing them
+      } else {
+        drawSprite(ctx, 'asha', this.frameName(), p.x, p.y, p.faceLeft);
+      }
     } else {
       ctx.globalAlpha = 0.5;
       drawSprite(ctx, 'asha', 'jump', p.x, p.y, p.faceLeft);

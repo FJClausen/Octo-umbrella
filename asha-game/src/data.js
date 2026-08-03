@@ -190,8 +190,8 @@ export const chapters = [
     place: 'Germany',
     theme: 'germany',
     intro:
-      'Over the ocean to where Papa is from. Timber houses, cold mornings, ' +
-      'a train that hangs from the sky, and more matjes than anyone needs.',
+      'Over the ocean to where Papa is from. Cold mornings, a train that ' +
+      'hangs from the sky, and more matjes than anyone needs.',
     outro: 'Family on the other side of the world.',
     checkpoints: [
       {

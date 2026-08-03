@@ -353,13 +353,27 @@ function startFinale() {
       const level = buildFinaleLevel();
       state.game = new Game(level, {
         onJump: () => audio.sfxJump(),
-        onGoal: () => revealFinale(),
+        onGoal: () => celebrate(),
       }, companionsFor(chapters.length)); // the whole parade comes home
       setHud();
       show(null);
       audio.playMusic();
     },
   });
+}
+
+// Reaching the family is not the end of the scene: the three of them bounce
+// around each other with the whole parade while Happy Birthday plays, and only
+// then does the card with the photo and her time come up.
+function celebrate() {
+  state.game.celebrating = true;
+  audio.stopMusic();
+  audio.sfxGoal();
+  showToast('🎉 Happy Birthday, Mama! 🎉');
+
+  const songSeconds = audio.playBirthdaySong() || 8;
+  const wait = Math.min(Math.max(songSeconds * 1000, 5000), 13000);
+  setTimeout(() => revealFinale({ songAlreadyPlaying: true }), wait);
 }
 
 // --- the scoreboard ------------------------------------------------------
@@ -410,9 +424,8 @@ function showScore() {
     `<h3>${place < 3 ? 'You made the podium!' : 'Fastest runs home'}</h3><ol>${rows}</ol>`;
 }
 
-function revealFinale() {
+function revealFinale({ songAlreadyPlaying = false } = {}) {
   audio.stopMusic();
-  audio.sfxGoal();
 
   $('finale-title').textContent = finale.title;
   $('finale-message').textContent = finale.message;
@@ -424,7 +437,7 @@ function revealFinale() {
   wrap.appendChild(photoEl(finale.groupPhoto, 'Our family'));
 
   show('screen-finale');
-  setTimeout(() => audio.playBirthdaySong(), 700);
+  if (!songAlreadyPlaying) setTimeout(() => audio.playBirthdaySong(), 700);
 
   $('finale-replay').onclick = () => {
     clearSave();

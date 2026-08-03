@@ -311,15 +311,6 @@ export function drawBackground(ctx, theme, camX, t, W, H) {
         rect(ctx, cx - 2, 61, 2, 18, '#c8d2d8');
         rect(ctx, cx + 64, 61, 2, 18, '#c8d2d8');
       });
-      tile(ctx, camX, 130, 0.5, (x) => {
-        rect(ctx, x + 20, 116, 62, 58, '#f2ece0');
-        ctx.fillStyle = '#6b4a34';
-        ctx.beginPath();
-        ctx.moveTo(x + 14, 118); ctx.lineTo(x + 51, 90); ctx.lineTo(x + 88, 118); ctx.fill();
-        rect(ctx, x + 20, 134, 62, 4, '#6b4a34');
-        rect(ctx, x + 48, 116, 4, 58, '#6b4a34');
-        rect(ctx, x + 28, 120, 12, 12, '#ffe9a8');
-      });
       break;
 
     case 'costarica':
