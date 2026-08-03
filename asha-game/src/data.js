@@ -74,7 +74,8 @@ export const chapters = [
         correct: 0,
         hint: 'Eight arms, on a wooden board, with a burnt lime.',
         reveal: 'after',
-        photos: ['ch2-a.jpg'],
+        showFirst: ['ch2-b.jpg'],   // getting ready before the wedding...
+        photos: ['ch2-a.jpg'],      // ...switching to the octopus
         caption: 'The rehearsal dinner — Tulum, 2015',
       },
       {

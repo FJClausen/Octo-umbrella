@@ -15,7 +15,7 @@ answers correctly.
 |---|---|---|
 | 1 · The Early Days | The High Heel Race | `ch1-c.jpg` |
 | | The chicken in La Palma | `ch1-a.jpg` |
-| 2 · The Wedding | The rehearsal dinner | `ch2-a.jpg` — hidden until correct |
+| 2 · The Wedding | The rehearsal dinner | `ch2-b.jpg` → **swaps to** `ch2-a.jpg` |
 | | The pelican | `ch2-c.jpg` |
 | 3 · The House | What color before Todd | `ch3-b.jpg` → **swaps to** `ch3-a.jpg` |
 | | The neighbor's bathrobe | `ch3-c.jpg` — hidden until correct |
@@ -34,9 +34,6 @@ answers correctly.
 These are uploaded but not currently shown anywhere. They are kept in case a
 question changes — point any question at them in `../src/data.js`.
 
-- `ch2-b.jpg` — getting ready before the wedding
-- `ch4-c.jpg` — the Panera logo
-- `ch4-d.png` — a drawn bread bowl
 - `ch5-b.jpg` — the three of us in the meadow
 
 ## Tips
