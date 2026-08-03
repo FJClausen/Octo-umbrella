@@ -139,9 +139,8 @@ export const characters = {
 export const SPRITE_W = 12;
 export const SPRITE_H = 16;
 
-// An extra puff of hair, stacked on top of the head. She earns one for every
-// tumble into a pit, so her hair grows through the run.
-const PUFF = ['.hhhh.', 'hhhhhh', '.hhhh.'];
+// The puff on top of her head swells with every tumble into a pit, so her hair
+// grows through the run. Capped so it stays on screen.
 const MAX_PUFFS = 8;
 
 // Draws a sprite standing with its feet at (x, y), centred horizontally on x.
@@ -176,16 +175,18 @@ export function drawSprite(ctx, who, frameName, x, y, faceLeft, opts = {}) {
     }
   }
 
-  // One extra puff of hair per tumble, stacked above the head.
-  const puffs = Math.min(opts.puffs || 0, MAX_PUFFS);
-  ctx.fillStyle = c.palette.h;
-  for (let n = 0; n < puffs; n++) {
-    const top = -4 * (n + 1) * s;
-    for (let r = 0; r < PUFF.length; r++) {
-      for (let col = 0; col < PUFF[r].length; col++) {
-        if (PUFF[r][col] === '.') continue;
-        ctx.fillRect((3 + col) * s, top + r * s, s + 0.02, s + 0.02);
-      }
+  // The puff, sitting on top of the head and growing with every tumble.
+  const n = Math.min(opts.puffs || 0, MAX_PUFFS);
+  if (n > 0) {
+    const w = 6 + n * 1.6;          // 7.6 wide at one fall, 18.8 at eight
+    const h = 3 + n * 0.9;
+    ctx.fillStyle = c.palette.h;
+    for (let r = 0; r < Math.round(h); r++) {
+      // an ellipse, drawn a row at a time so it stays properly pixelated
+      const t = ((r + 0.5) / h) * 2 - 1;
+      const half = Math.round((w / 2) * Math.sqrt(Math.max(0, 1 - t * t)));
+      if (half <= 0) continue;
+      ctx.fillRect((6 - half) * s, (r - Math.round(h)) * s, half * 2 * s + 0.02, s + 0.02);
     }
   }
 

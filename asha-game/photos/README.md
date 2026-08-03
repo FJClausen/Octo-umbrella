@@ -1,41 +1,51 @@
-# Photos go here
+# Photos
 
-Drop the image files straight into this folder. No resizing or renaming tools
-needed — just match the file names below. JPG or PNG both work.
+Drop image files straight into this folder — the names below are what the game
+looks for. JPG and PNG both work.
 
-The game **runs fine with photos missing**: any photo that isn't here yet shows
-a "not uploaded yet" placeholder instead, so you can add them one at a time.
+The game **runs fine with photos missing**: anything absent shows a "not
+uploaded yet" placeholder instead, so nothing breaks.
 
-## File names
+## Where each photo appears
 
-Two photos per checkpoint, two checkpoints per chapter — so four per chapter.
+One photo per question. A few questions swap one photo for another when she
+answers correctly.
 
-| Chapter | Checkpoint 1 | Checkpoint 2 |
+| Chapter | Question | Photo |
 |---|---|---|
-| 1. Where It Started (DC, 2011) | `ch1-a.jpg`, `ch1-b.jpg` | `ch1-c.jpg`, `ch1-d.jpg` |
-| 2. The Wedding (Tulum, 2015) | `ch2-a.jpg`, `ch2-b.jpg` | `ch2-c.jpg`, `ch2-d.jpg` |
-| 3. The House (DC, 2016) | `ch3-a.jpg`, `ch3-b.jpg` | `ch3-c.jpg`, `ch3-d.jpg` |
-| 4. Naomi Arrives (DC, 2017) | `ch4-a.jpg`, `ch4-b.jpg` | `ch4-c.jpg`, `ch4-d.jpg` |
-| 5. The Arboretum (2020) | `ch5-a.jpg`, `ch5-b.jpg` | `ch5-c.jpg`, `ch5-d.jpg` |
-| 6. Papa's Germany | `ch6-a.jpg`, `ch6-b.jpg` | `ch6-c.jpg`, `ch6-d.jpg` |
-| 7. Pura Vida (Costa Rica) | `ch7-a.jpg`, `ch7-b.jpg` | `ch7-c.jpg`, `ch7-d.jpg` |
+| 1 · The Early Days | The High Heel Race | `ch1-c.jpg` |
+| | The chicken in La Palma | `ch1-a.jpg` |
+| 2 · The Wedding | The rehearsal dinner | `ch2-a.jpg` — hidden until correct |
+| | The pelican | `ch2-c.jpg` |
+| 3 · The House | What color before Todd | `ch3-b.jpg` → **swaps to** `ch3-a.jpg` |
+| | The neighbor's bathrobe | `ch3-c.jpg` — hidden until correct |
+| 4 · Naomi Arrives | Naomi's birth weight | `ch4-a.jpg` |
+| | The dodo | `ch4-b.jpg` |
+| 5 · The Arboretum | The smallest tree | `ch5-a.jpg` — hidden until correct |
+| | The praying mantis | `ch5-c.jpg` → **swaps to** `ch5-d.jpg` |
+| 6 · Germany | The sailing capital | `ch6-a.jpg` |
+| | The red panda | `ch6-b.jpg` — hidden until correct |
+| 7 · Costa Rica | Pura vida | `ch7-a.jpg` |
+| | The capuchin | `ch7-b.jpg` |
+| **The ending** | The group photo she unlocks | **`family.jpg`** |
 
-Plus the last one:
+## Spares
 
-| The ending | `family.jpg` — the group photo she unlocks |
-|---|---|
+These are uploaded but not currently shown anywhere. They are kept in case a
+question changes — point any question at them in `../src/data.js`.
+
+- `ch2-b.jpg` — getting ready before the wedding
+- `ch4-c.jpg` — the Panera logo
+- `ch4-d.png` — a drawn bread bowl
+- `ch5-b.jpg` — the three of us in the meadow
 
 ## Tips
 
-- Photos are shown in a **4:3 box, cropped to fill**. Faces near the centre
-  survive the crop best.
-- Anything from a phone camera is already plenty sharp. If a file is over
-  ~3 MB it's worth shrinking, just so it loads fast on mobile data.
-- Want a different photo somewhere? Change the file name in
-  `../src/data.js` — each checkpoint has a `photos: [...]` line.
-
-## For the character art
-
-Separately from the game photos, send us **1–2 clear, well-lit face photos of
-each of the three of you**. Those don't go in this folder — they're only for
-tuning the pixel characters' hair and skin colours in `../src/sprites.js`.
+- Quiz photos are shown in a **square box, cropped to fill**. Faces near the
+  centre survive the crop best. The final group photo is never cropped.
+- Photos are resized to 1200px on the long edge before being committed, which
+  keeps each one around 150–300 KB so they load quickly on mobile data.
+- Rotation is applied on import rather than left to the browser, so nothing
+  turns up sideways on her phone.
+- To move a photo somewhere else, edit the `photos:` (or `showFirst:`) line for
+  that question in `../src/data.js`. No rebuild needed.

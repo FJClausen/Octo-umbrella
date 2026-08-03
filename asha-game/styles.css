@@ -351,9 +351,6 @@ button.secondary:active { background: #fff1f5; transform: translateY(2px); }
   .photo.revealing { animation: none; }
 }
 
-#quiz-continue { display: none; margin-top: 14px; }
-#quiz-continue.on { display: block; }
-
 .feedback { min-height: 20px; margin: 12px 0 0; font-size: 14px; font-weight: 700; }
 .feedback.good { color: #2f9e58; }
 .feedback.bad { color: #c25a5a; }

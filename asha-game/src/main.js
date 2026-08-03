@@ -170,7 +170,9 @@ function startChapter(index, resumeAtCheckpoint = 0) {
   state.answered = resumeAtCheckpoint;
   const ch = chapters[index];
   showCard({
-    kicker: [ch.year, ch.place].filter(Boolean).join(' · '),
+    // Germany's place is "Germany", so printing it under the title of the
+    // same name just says it twice.
+    kicker: [ch.year, ch.place === ch.title ? '' : ch.place].filter(Boolean).join(' · '),
     title: ch.title,
     body: ch.intro,
     button: resumeAtCheckpoint > 0 ? 'Keep going' : 'Let’s go',
@@ -244,10 +246,6 @@ function askQuestion(ch, cp) {
     if (files.length !== 1) photos.appendChild(photoEl(files[1], q.caption));
   }
 
-  const cont = $('quiz-continue');
-  cont.classList.remove('on');
-  cont.onclick = null;
-
   const list = $('quiz-answers');
   list.innerHTML = '';
   let misses = 0;
@@ -294,18 +292,18 @@ function askQuestion(ch, cp) {
         }
 
         if (revealAfter) {
-          // Open the photo and let her look at it for as long as she likes.
           photos.innerHTML = '';
           files.forEach((f) => {
             const el = photoEl(f, q.caption);
             el.classList.add('revealing');
             photos.appendChild(el);
           });
-          cont.classList.add('on');
-          cont.onclick = finish;
-        } else {
-          setTimeout(finish, joined ? 1700 : 900);
         }
+
+        // Every question carries on by itself -- no question has a button, so
+        // none of them do. A revealed photo holds a little longer so she can
+        // look at it, and longer still when an animal has just joined.
+        setTimeout(finish, Math.max(revealAfter ? 3000 : 900, joined ? 1700 : 0));
         if (joined) showToast(`${animalNames[joined]} joined you!`);
       } else {
         misses++;

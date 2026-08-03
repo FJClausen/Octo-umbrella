@@ -5,7 +5,9 @@
 //   ['g', w]            solid ground, w pixels wide
 //   ['gap', w]          a hole -- falling in costs a life
 //   ['p', w, dy]        a floating stepping stone, dy pixels above the ground
-//   ['m', w, dy, r, sp] a moving platform: range r, speed sp (dy < 0 = higher)
+//   ['m', w, dy, r, sp] a moving platform: range r, speed sp (dy < 0 = higher).
+//                       Keep r small: the platform's swing ADDS to the gap in
+//                       front of it, and gap + r has to stay jumpable.
 //   ['over', w, dy]     an optional platform ABOVE the ground just laid --
 //                       nothing to fall into, purely a bonus route
 //   ['heart']           a collectible heart floating above the cursor
@@ -27,12 +29,12 @@ const runs = {
      ['gap', 40], ['p', 76, -24], ['gap', 40], ['g', 160],
      ['gap', 46], ['g', 140], ['over', 70, -46], ['heart'], ['gap', 42], ['g', 150]],
     [['g', 140], ['gap', 40], ['p', 80, -26], ['gap', 40], ['g', 150], ['heart'],
-     ['gap', 44], ['g', 140], ['gap', 38], ['m', 76, -24, 30, 26], ['gap', 38], ['g', 170]],
+     ['gap', 44], ['g', 140], ['gap', 38], ['m', 76, -24, 18, 26], ['gap', 38], ['g', 170]],
   ],
   tulum: [
     [['g', 150], ['gap', 42], ['g', 140], ['over', 70, -44], ['heart'],
      ['gap', 40], ['p', 76, -22], ['gap', 40], ['g', 150], ['gap', 44], ['g', 160]],
-    [['g', 140], ['gap', 38], ['m', 78, -22, 30, 24], ['gap', 38], ['g', 150], ['heart'],
+    [['g', 140], ['gap', 38], ['m', 78, -22, 18, 24], ['gap', 38], ['g', 150], ['heart'],
      ['gap', 44], ['g', 140], ['gap', 40], ['p', 76, -28], ['gap', 40], ['g', 170]],
   ],
   house: [
@@ -40,31 +42,31 @@ const runs = {
     // missed step just means landing on the pavement, never a fall
     [['g', 160], ['over', 72, -22], ['heart'], ['g', 130], ['over', 72, -40], ['heart'],
      ['gap', 44], ['g', 150], ['gap', 40], ['p', 78, -26], ['gap', 40], ['g', 160]],
-    [['g', 140], ['gap', 44], ['g', 150], ['gap', 38], ['m', 78, -26, 30, 26], ['gap', 38],
+    [['g', 140], ['gap', 44], ['g', 150], ['gap', 38], ['m', 78, -26, 18, 26], ['gap', 38],
      ['g', 140], ['heart'], ['gap', 42], ['g', 170]],
   ],
   naomi: [
     [['g', 150], ['gap', 40], ['p', 78, -24], ['gap', 40], ['g', 150], ['heart'],
      ['gap', 44], ['g', 140], ['over', 70, -46], ['heart'], ['gap', 42], ['g', 160]],
     [['g', 140], ['gap', 42], ['g', 140], ['gap', 40], ['p', 76, -30], ['gap', 40],
-     ['g', 150], ['heart'], ['gap', 38], ['m', 78, -24, 28, 24], ['gap', 38], ['g', 170]],
+     ['g', 150], ['heart'], ['gap', 38], ['m', 78, -24, 18, 24], ['gap', 38], ['g', 170]],
   ],
   arboretum: [
     [['g', 160], ['over', 72, -44], ['heart'], ['gap', 44], ['g', 150],
      ['gap', 40], ['p', 78, -24], ['gap', 40], ['g', 150], ['gap', 42], ['g', 150]],
-    [['g', 140], ['gap', 38], ['m', 76, -22, 30, 24], ['gap', 38], ['g', 150], ['heart'],
+    [['g', 140], ['gap', 38], ['m', 76, -22, 18, 24], ['gap', 38], ['g', 150], ['heart'],
      ['gap', 44], ['g', 140], ['gap', 40], ['p', 76, -26], ['gap', 40], ['g', 170]],
   ],
   germany: [
     [['g', 150], ['gap', 42], ['g', 140], ['over', 70, -42], ['heart'],
      ['gap', 40], ['p', 76, -26], ['gap', 40], ['g', 150], ['gap', 44], ['g', 160]],
     [['g', 140], ['gap', 40], ['p', 80, -28], ['gap', 40], ['g', 150], ['heart'],
-     ['gap', 38], ['m', 78, -24, 30, 26], ['gap', 38], ['g', 140], ['gap', 42], ['g', 170]],
+     ['gap', 38], ['m', 78, -24, 18, 26], ['gap', 38], ['g', 140], ['gap', 42], ['g', 170]],
   ],
   costarica: [
     [['g', 150], ['gap', 44], ['g', 140], ['gap', 40], ['p', 78, -26], ['gap', 40],
      ['g', 150], ['over', 70, -46], ['heart'], ['gap', 42], ['g', 160]],
-    [['g', 140], ['gap', 38], ['m', 78, -26, 30, 26], ['gap', 38], ['g', 150], ['heart'],
+    [['g', 140], ['gap', 38], ['m', 78, -26, 18, 26], ['gap', 38], ['g', 150], ['heart'],
      ['gap', 40], ['p', 76, -22], ['gap', 40], ['g', 150], ['gap', 44], ['g', 180]],
   ],
 };

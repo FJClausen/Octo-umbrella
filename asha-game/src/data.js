@@ -3,7 +3,7 @@
 //
 // This is the only file you need to edit to change the game's content.
 // Each chapter has two checkpoints. Each checkpoint asks one question and
-// shows up to two photos.
+// shows one photo.
 //
 // Photos: drop the image files into asha-game/photos/ and write the file name
 // here. A missing photo just shows a friendly placeholder, so the game always
@@ -112,7 +112,7 @@ export const chapters = [
       {
         question:
           'What was our helpful neighbor wearing while advising us on whether to buy in Eckington?',
-        answers: ['A bathrobe', 'A three-piece suit', 'A Santa suit', 'Full cycling kit'],
+        answers: ['A bathrobe', 'A three-piece suit', 'A Santa suit', 'A full cycling kit'],
         correct: 0,
         hint: 'Not dressed for company. Not dressed for outside, either.',
         reveal: 'after',
@@ -238,7 +238,7 @@ export const chapters = [
         correct: 0,
         hint: 'It means pure life.',
         photos: ['ch7-a.jpg'],
-        caption: 'Costa Rica',
+        caption: 'Pura vida',
       },
       {
         question: 'What kind of monkey attacked Papa?',
