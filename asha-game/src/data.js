@@ -19,6 +19,9 @@
 // photo is the reward rather than the giveaway. Use it whenever the picture
 // would answer the question -- and leave it off when the question is about the
 // picture ("where was this?").
+//
+// showFirst: [...]  goes with reveal: 'after'. Instead of a blank tile, this
+// photo is shown while she is answering and then swaps for the one in photos.
 // ---------------------------------------------------------------------------
 
 export const chapters = [
@@ -97,13 +100,14 @@ export const chapters = [
     outro: 'Not just an address. A home.',
     checkpoints: [
       {
-        question: 'What color was the house before we bought it?',
+        question: 'What color was our house before Todd flipped it?',
         answers: ['Red / maroon / salmon / terracotta', 'Blue', 'Green', 'Cream'],
         correct: 0,
         hint: 'Much darker than it is now. The blue one is next door.',
         reveal: 'after',
-        photos: ['ch3-a.jpg'],
-        caption: 'Before — 2016',
+        showFirst: ['ch3-b.jpg'],   // the house as it is now...
+        photos: ['ch3-a.jpg'],      // ...switching to how Todd found it
+        caption: 'Our house',
       },
       {
         question:
@@ -176,8 +180,10 @@ export const chapters = [
         answers: ['A praying mantis', 'A stick insect', 'A cicada', 'A firefly'],
         correct: 0,
         hint: 'Stands very still, with its arms folded.',
-        photos: ['ch5-c.jpg'],
-        caption: 'Under the columns',
+        reveal: 'after',
+        showFirst: ['ch5-c.jpg'],   // the three of us under the columns...
+        photos: ['ch5-d.jpg'],      // ...switching to Naomi on her bike
+        caption: 'The Arboretum',
       },
     ],
   },
@@ -217,7 +223,7 @@ export const chapters = [
   {
     id: 'costarica',
     animal: 'capuchin',
-    title: 'Pura Vida',
+    title: 'Costa Rica',
     year: '',
     place: 'Costa Rica',
     theme: 'costarica',

@@ -139,8 +139,14 @@ export const characters = {
 export const SPRITE_W = 12;
 export const SPRITE_H = 16;
 
+// An extra puff of hair, stacked on top of the head. She earns one for every
+// tumble into a pit, so her hair grows through the run.
+const PUFF = ['.hhhh.', 'hhhhhh', '.hhhh.'];
+const MAX_PUFFS = 8;
+
 // Draws a sprite standing with its feet at (x, y), centred horizontally on x.
-export function drawSprite(ctx, who, frameName, x, y, faceLeft) {
+// opts.puffs stacks extra hair balls above the head.
+export function drawSprite(ctx, who, frameName, x, y, faceLeft, opts = {}) {
   const c = characters[who];
   const rows = c.frames[frameName] || c.frames.stand;
   const s = c.scale;
@@ -169,6 +175,20 @@ export function drawSprite(ctx, who, frameName, x, y, faceLeft) {
       ctx.fillRect(col * s, r * s, s + 0.02, s + 0.02);
     }
   }
+
+  // One extra puff of hair per tumble, stacked above the head.
+  const puffs = Math.min(opts.puffs || 0, MAX_PUFFS);
+  ctx.fillStyle = c.palette.h;
+  for (let n = 0; n < puffs; n++) {
+    const top = -4 * (n + 1) * s;
+    for (let r = 0; r < PUFF.length; r++) {
+      for (let col = 0; col < PUFF[r].length; col++) {
+        if (PUFF[r][col] === '.') continue;
+        ctx.fillRect((3 + col) * s, top + r * s, s + 0.02, s + 0.02);
+      }
+    }
+  }
+
   ctx.restore();
 }
 

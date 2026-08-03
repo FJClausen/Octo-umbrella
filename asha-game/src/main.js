@@ -230,10 +230,15 @@ function askQuestion(ch, cp) {
   // until she gets it right -- the picture is the prize.
   const revealAfter = q.reveal === 'after';
 
+  // A question can show one photo while she answers and swap it for another
+  // when she gets it right -- the house changing color, for instance.
+  const first = q.showFirst || null;
+
   photos.className = 'photos' + (files.length === 1 ? ' single' : '');
   photos.innerHTML = '';
   if (revealAfter) {
-    photos.appendChild(lockedEl());
+    if (first) first.forEach((f) => photos.appendChild(photoEl(f, q.caption)));
+    else photos.appendChild(lockedEl());
   } else {
     photos.appendChild(photoEl(files[0], q.caption));
     if (files.length !== 1) photos.appendChild(photoEl(files[1], q.caption));
@@ -581,6 +586,7 @@ function loop(now) {
   if (state.game) {
     window.__game = state.game; // handy when tweaking levels from the console
     state.game.viewW = canvas.width;
+    state.game.extraPuffs = state.falls;
     if (state.screen === 'play' && !state.game.paused) {
       state.timeMs += dt * 1000;
       if (Math.floor(state.timeMs / 1000) !== lastShownSecond) {

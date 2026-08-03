@@ -35,6 +35,7 @@ export class Game {
     this.level = level;
     this.hooks = hooks;
     this.companions = companions; // animals collected so far, in order
+    this.extraPuffs = 0;          // one more puff of hair for every tumble
     this.trail = [];              // where she has been, newest first
     this.t = 0;
     this.camX = 0;
@@ -353,13 +354,13 @@ export class Game {
       if (p.onGround) drawShadow(ctx, p.x, p.y);
       if (this.celebrating) {
         const bounce = -Math.abs(Math.sin(this.t * 6 + 1)) * 8;
-        drawSprite(ctx, 'asha', 'jump', p.x, p.y + bounce, false); // facing them
+        drawSprite(ctx, 'asha', 'jump', p.x, p.y + bounce, false, { puffs: this.extraPuffs });
       } else {
-        drawSprite(ctx, 'asha', this.frameName(), p.x, p.y, p.faceLeft);
+        drawSprite(ctx, 'asha', this.frameName(), p.x, p.y, p.faceLeft, { puffs: this.extraPuffs });
       }
     } else {
       ctx.globalAlpha = 0.5;
-      drawSprite(ctx, 'asha', 'jump', p.x, p.y, p.faceLeft);
+      drawSprite(ctx, 'asha', 'jump', p.x, p.y, p.faceLeft, { puffs: this.extraPuffs });
       ctx.globalAlpha = 1;
     }
 
