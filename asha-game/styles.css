@@ -24,6 +24,14 @@ html, body {
   color: var(--paper);
   overscroll-behavior: none;
   touch-action: manipulation;
+
+  /* Holding a control button while a question card appears used to turn the
+     touch into a text selection, highlighting the question and answers. None
+     of this is text to be selected, so selection is off everywhere -- see the
+     name field below for the one exception. */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;   /* and no iOS copy/define popup on long press */
 }
 
 body {
@@ -126,6 +134,7 @@ body {
 #controls .pad { display: flex; gap: 12px; }
 
 #controls button {
+  touch-action: none;            /* the button owns the whole gesture */
   border: 0;
   border-radius: 16px;
   background: #2a3160;
@@ -200,6 +209,8 @@ label {
 }
 
 input[type="text"] {
+  -webkit-user-select: text;     /* the one place typing and selecting belong */
+  user-select: text;
   width: 100%;
   padding: 13px 14px;
   font-size: 16px; /* 16px stops iOS zooming on focus */
@@ -271,7 +282,11 @@ button.secondary:active { background: #fff1f5; transform: translateY(2px); }
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.16);
 }
 
-.photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photo img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
 
 /* The final group photo is the payoff -- never crop it. It is shown whole,
    whatever shape it is, and capped so the message still fits on a phone. */

@@ -85,6 +85,9 @@ function clearSave() {
 // --- screens -------------------------------------------------------------
 
 function show(id) {
+  // Whatever she was holding, let go of it: a card can open mid-stride, and
+  // the button never sees the release once it is behind an overlay.
+  if (id) { input.left = false; input.right = false; input.jump = false; }
   for (const el of document.querySelectorAll('.screen')) el.classList.remove('on');
   if (id) $(id).classList.add('on');
   state.screen = id || 'play';
@@ -510,6 +513,10 @@ function bindButton(el, key) {
   el.addEventListener('pointerup', off);
   el.addEventListener('pointercancel', off);
   el.addEventListener('pointerleave', off);
+  // iOS starts its long-press selection from the touch events, which a
+  // pointerdown handler alone will not stop.
+  el.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+  el.addEventListener('touchend', off, { passive: false });
   el.addEventListener('contextmenu', (e) => e.preventDefault());
 }
 
