@@ -25,9 +25,10 @@ const BUFFER = 0.16;
 const BODY_W = 8;
 const BODY_H = 16;
 
-// Frames of delay between each animal in the parade -- about 18px apart at
-// running speed, which keeps most of the group on screen at once by the end.
-const FOLLOW_GAP = 9;
+// How far apart the animals sit, measured along the path she actually walked
+// rather than in frames. Spacing by distance means they hold their places when
+// she stops instead of piling up on top of her.
+const FOLLOW_SPACING = 15;
 
 export class Game {
   constructor(level, hooks = {}, companions = []) {
@@ -192,11 +193,16 @@ export class Game {
     }
 
     // --- the parade ---
-    // Every frame remembers where she was; each animal walks the same path a
-    // little later, which makes them trot along behind her over the platforms.
-    this.trail.unshift({ x: p.x, y: p.y, face: p.faceLeft, moving: Math.abs(p.vx) > 1 });
-    const needed = (this.companions.length + 1) * FOLLOW_GAP + 4;
-    if (this.trail.length > needed) this.trail.length = needed;
+    // Remember the path she walks, but only once she has actually moved. While
+    // she stands still nothing is recorded, so the animals stay where they are
+    // instead of closing in on her.
+    const head = this.trail[0];
+    const moved = !head || Math.hypot(p.x - head.x, p.y - head.y) > 0.6;
+    if (moved) {
+      this.trail.unshift({ x: p.x, y: p.y, face: p.faceLeft });
+      const needed = (this.companions.length + 2) * FOLLOW_SPACING * 3;
+      if (this.trail.length > needed) this.trail.length = needed;
+    }
 
     // --- animation + camera ---
     p.animT += Math.abs(p.vx) * dt;
@@ -301,17 +307,28 @@ export class Game {
     }
 
     // the parade, drawn behind her, oldest position furthest back
-    this.companions.forEach((name, i) => {
-      // Right after a respawn the trail is short, so fall back to the oldest
-      // point we have. The animals bunch up around her and then string out
-      // again as she walks, rather than blinking out of existence.
-      if (!this.trail.length) return;
-      const spot = this.trail[Math.min((i + 1) * FOLLOW_GAP, this.trail.length - 1)];
-      if (!spot) return;
-      const hop = spot.moving ? Math.abs(Math.sin(this.t * 9 + i)) * 2 : 0;
-      drawShadow(ctx, spot.x, spot.y, 0.18);
-      drawAnimal(ctx, name, spot.x, spot.y - hop, spot.face);
-    });
+    // Walk back along her path, dropping an animal every FOLLOW_SPACING pixels.
+    // Because the spacing is measured in distance travelled, they keep an even
+    // row behind her and never stack up on her or on each other.
+    if (this.trail.length) {
+      let idx = 0;
+      let walked = 0;
+      const moving = Math.abs(this.player.vx) > 1;
+
+      this.companions.forEach((name, i) => {
+        const want = (i + 1) * FOLLOW_SPACING;
+        while (walked < want && idx < this.trail.length - 1) {
+          const a = this.trail[idx];
+          const b = this.trail[idx + 1];
+          walked += Math.hypot(b.x - a.x, b.y - a.y);
+          idx++;
+        }
+        const spot = this.trail[Math.min(idx, this.trail.length - 1)];
+        const hop = moving ? Math.abs(Math.sin(this.t * 9 + i * 1.7)) * 2 : 0;
+        drawShadow(ctx, spot.x, spot.y, 0.18);
+        drawAnimal(ctx, name, spot.x, spot.y - hop, spot.face);
+      });
+    }
 
     // the player
     const p = this.player;

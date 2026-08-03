@@ -119,6 +119,18 @@ function lockedEl() {
   return wrap;
 }
 
+// Announces a new friend over the game itself, once the quiz card clears.
+let toastTimer = null;
+function showToast(text) {
+  const el = $('toast');
+  el.textContent = text;
+  el.classList.remove('on');
+  void el.offsetWidth;      // restart the animation
+  el.classList.add('on');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('on'), 2800);
+}
+
 // --- chapter cards -------------------------------------------------------
 
 function showCard({ kicker, title, body, button, onClick }) {
@@ -244,7 +256,7 @@ function askQuestion(ch, cp) {
         save();
 
         if (joined) {
-          $('quiz-feedback').textContent = `Yes! ♥  ${animalNames[joined]} joins you!`;
+          $('quiz-feedback').textContent = `Yes! ♥  ${animalNames[joined]} joined you!`;
           audio.sfxHeart();
         }
 
@@ -261,6 +273,7 @@ function askQuestion(ch, cp) {
         } else {
           setTimeout(finish, joined ? 1700 : 900);
         }
+        if (joined) showToast(`${animalNames[joined]} joined you!`);
       } else {
         misses++;
         btn.classList.add('wrong');

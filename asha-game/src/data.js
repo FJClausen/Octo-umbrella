@@ -43,11 +43,10 @@ export const chapters = [
         caption: 'Washington, DC — 2011',
       },
       {
-        question:
-          'What failed to ripen in our kitchen closet for four days in La Palma?',
-        answers: ['The avocados', 'The mangoes', 'The bananas', 'The tomatoes'],
+        question: 'What creature ran around our backyard in La Palma?',
+        answers: ['A chicken', 'A goat', 'A cat', 'A lizard'],
         correct: 0,
-        hint: 'We checked on them every single day. Rock hard, every time.',
+        hint: 'Feathers, and absolutely no manners.',
         photos: ['ch1-a.jpg'],
         caption: 'La Palma',
       },
@@ -56,6 +55,7 @@ export const chapters = [
 
   {
     id: 'tulum2015',
+    animal: 'pelican',
     title: 'The Wedding',
     year: '2015',
     place: 'Tulum, Mexico',
@@ -75,11 +75,10 @@ export const chapters = [
         caption: 'The rehearsal dinner — Tulum, 2015',
       },
       {
-        question:
-          'Two days before the wedding, what were the naked guys night diving for?',
-        answers: ['A bottle of rum', 'A wedding ring', 'A phone', 'A conch shell'],
+        question: 'Which big bird kept patrolling the beach in Tulum?',
+        answers: ['A pelican', 'A flamingo', 'A seagull', 'A frigatebird'],
         correct: 0,
-        hint: 'Still full. That was rather the point.',
+        hint: 'Enormous beak. Truly terrible landings.',
         photos: ['ch2-c.jpg'],
         caption: 'Tulum — 2015',
       },
@@ -98,23 +97,22 @@ export const chapters = [
     outro: 'Not just an address. A home.',
     checkpoints: [
       {
-        question: 'What color was the house before we bought it?',
-        answers: ['Red / maroon / salmon / terracotta', 'Blue', 'Green', 'Cream'],
-        correct: 0,
-        hint: 'Much darker than it is now. The blue one is next door.',
-        reveal: 'after',
-        photos: ['ch3-a.jpg'],
-        caption: 'Before — 2016',
-      },
-      {
         question:
           'What was our helpful neighbor wearing while advising us on whether to buy in Eckington?',
         answers: ['A bathrobe', 'A three-piece suit', 'A Santa suit', 'Full cycling kit'],
         correct: 0,
         hint: 'Not dressed for company. Not dressed for outside, either.',
         reveal: 'after',
-        photos: ['ch3-c.png'],
-        caption: 'Eckington — and the house today',
+        photos: ['ch3-c.jpg'],
+        caption: 'Eckington',
+      },
+      {
+        question: 'Which animal kept raiding the bins behind the house?',
+        answers: ['A raccoon', 'A fox', 'A possum', 'A squirrel'],
+        correct: 0,
+        hint: 'Little hands, black mask, no shame whatsoever.',
+        photos: ['ch3-b.jpg'],
+        caption: 'The house today',
       },
     ],
   },
@@ -140,13 +138,13 @@ export const chapters = [
         caption: 'Hello, Naomi',
       },
       {
-        question: 'What was Papa’s main food source during Naomi’s birth week?',
-        answers: ['Panera Bread', 'The hospital cafeteria', 'Chipotle', 'Vending machines'],
+        // A whimsical one -- swap in a real memory if you have a better fit.
+        question: 'Which flightless bird, long extinct, is tagging along from here?',
+        answers: ['The dodo', 'The moa', 'The great auk', 'The passenger pigeon'],
         correct: 0,
-        hint: 'Soup, a bread bowl, and rather a lot of both.',
-        reveal: 'after',
-        photos: ['ch4-c.jpg'],
-        caption: 'Birth week fuel',
+        hint: 'From Mauritius, and famously not very quick.',
+        photos: ['ch4-b.jpg'],
+        caption: 'The first days',
       },
     ],
   },
@@ -172,10 +170,10 @@ export const chapters = [
         caption: 'Somewhere in DC',
       },
       {
-        question: 'What is the most common tree in the Arboretum?',
-        answers: ['The southern magnolia', 'The cherry blossom', 'The red oak', 'The dogwood'],
+        question: 'Which insect did we find in the Arboretum?',
+        answers: ['A praying mantis', 'A stick insect', 'A cicada', 'A firefly'],
         correct: 0,
-        hint: 'Glossy dark leaves, enormous white flowers.',
+        hint: 'Stands very still, with its arms folded.',
         photos: ['ch5-c.jpg'],
         caption: 'Under the columns',
       },
@@ -194,8 +192,6 @@ export const chapters = [
       'and mountains at the far end of the road.',
     outro: 'Family on the other side of the world.',
     checkpoints: [
-      // Germany asks a single question -- the level builder places one
-      // checkpoint instead of two when a chapter is written this way.
       {
         question: 'What is the German sailing capital?',
         answers: ['Kiel', 'Hamburg', 'Rostock', 'Bremen'],
@@ -203,6 +199,15 @@ export const chapters = [
         hint: 'On the Baltic, with a famous week named after it.',
         photos: ['ch6-a.jpg'],
         caption: 'Germany',
+      },
+      {
+        question: 'Which animal did we go to see at the zoo in Germany?',
+        answers: ['A red panda', 'A giant panda', 'A snow leopard', 'An otter'],
+        correct: 0,
+        hint: 'Rust-colored, ringed tail, entirely unbothered.',
+        reveal: 'after',
+        photos: ['ch6-b.jpg'],
+        caption: 'At the zoo',
       },
     ],
   },
@@ -220,20 +225,20 @@ export const chapters = [
     outro: 'Pura vida. Almost home.',
     checkpoints: [
       {
+        question: 'What is the Costa Rican saying we always bring home?',
+        answers: ['Pura vida', 'Hakuna matata', 'La dolce vita', 'C’est la vie'],
+        correct: 0,
+        hint: 'It means pure life.',
+        photos: ['ch7-a.jpg'],
+        caption: 'Costa Rica',
+      },
+      {
         question: 'What kind of monkey attacked Papa?',
         answers: ['A capuchin', 'A howler monkey', 'A spider monkey', 'A squirrel monkey'],
         correct: 0,
         hint: 'The little white-faced ones. They want your lunch.',
         photos: ['ch7-b.jpg'],
         caption: 'Costa Rica',
-      },
-      {
-        question: 'What is the Costa Rican saying we always bring home?',
-        answers: ['Pura vida', 'Hakuna matata', 'La dolce vita', 'C’est la vie'],
-        correct: 0,
-        hint: 'It means pure life.',
-        photos: ['ch7-c.jpg'],
-        caption: 'The last vacation',
       },
     ],
   },
@@ -242,6 +247,7 @@ export const chapters = [
 // What each animal is called when it joins the parade.
 export const animalNames = {
   chicken: 'A chicken',
+  pelican: 'A pelican',
   raccoon: 'A raccoon',
   dodo: 'A dodo',
   mantis: 'A praying mantis',

@@ -50,9 +50,18 @@ export const palettes = {
 // Each hair style is the three rows above the face, plus whether the hair
 // also frames the face and falls onto the shoulders.
 const styles = {
-  // cropped afro with a puff gathered on top
+  // cropped afro with a big puff tied on top -- pinched at the base so the
+  // puff reads as its own ball rather than merging into the rest of the hair
   afro: {
-    top: ['....hhhh....', '...hhhhhh...', '..hhhhhhhh..', '.hhhhhhhhhh.', '.hhhhhhhhhh.'],
+    top: [
+      '...hhhhhh...',
+      '..hhhhhhhh..',
+      '..hhhhhhhh..',
+      '...hhhhhh...',
+      '..hhhhhhhh..',
+      '.hhhhhhhhhh.',
+      '.hhhhhhhhhh.',
+    ],
     faceSide: 'h',
     torsoSide: 's',
   },
@@ -183,6 +192,19 @@ export const animals = {
       '.swwwwws.',
       '..ssss...',
       '..b..b...',
+    ],
+  },
+  pelican: {
+    palette: { w: '#f6f6f2', g: '#c9cdd2', y: '#f0b83c', e: '#241a14', o: '#e09a34' },
+    rows: [
+      '...www...',
+      '..wwwww..',
+      '..wewww..',
+      '..wwwyyyy',
+      '.wgggwyy.',
+      '.wggggw..',
+      '.wwwww...',
+      '..o.o....',
     ],
   },
   raccoon: {
