@@ -97,6 +97,15 @@ export const chapters = [
     outro: 'Not just an address. A home.',
     checkpoints: [
       {
+        question: 'What color was the house before we bought it?',
+        answers: ['Red / maroon / salmon / terracotta', 'Blue', 'Green', 'Cream'],
+        correct: 0,
+        hint: 'Much darker than it is now. The blue one is next door.',
+        reveal: 'after',
+        photos: ['ch3-a.jpg'],
+        caption: 'Before — 2016',
+      },
+      {
         question:
           'What was our helpful neighbor wearing while advising us on whether to buy in Eckington?',
         answers: ['A bathrobe', 'A three-piece suit', 'A Santa suit', 'Full cycling kit'],
@@ -105,14 +114,6 @@ export const chapters = [
         reveal: 'after',
         photos: ['ch3-c.jpg'],
         caption: 'Eckington',
-      },
-      {
-        question: 'Which animal kept raiding the bins behind the house?',
-        answers: ['A raccoon', 'A fox', 'A possum', 'A squirrel'],
-        correct: 0,
-        hint: 'Little hands, black mask, no shame whatsoever.',
-        photos: ['ch3-b.jpg'],
-        caption: 'The house today',
       },
     ],
   },
@@ -162,15 +163,16 @@ export const chapters = [
     outro: 'A strange year, made good by small walks.',
     checkpoints: [
       {
-        question: 'Where was this?',
-        answers: ['The National Arboretum', 'The National Zoo', 'Rock Creek Park', 'The Botanic Garden'],
+        question: 'What is the smallest tree in the Arboretum?',
+        answers: ['A bonsai', 'A dogwood', 'A crabapple', 'A cherry tree'],
         correct: 0,
-        hint: 'Bonsai, old stone columns, and a great many pandemic walks.',
+        hint: 'It lives in a tray, and it is older than all of us.',
+        reveal: 'after',
         photos: ['ch5-a.jpg'],
-        caption: 'Somewhere in DC',
+        caption: 'The bonsai museum',
       },
       {
-        question: 'Which insect did we find in the Arboretum?',
+        question: 'What insect was all over one particular bush in the Arboretum?',
         answers: ['A praying mantis', 'A stick insect', 'A cicada', 'A firefly'],
         correct: 0,
         hint: 'Stands very still, with its arms folded.',
@@ -189,7 +191,7 @@ export const chapters = [
     theme: 'germany',
     intro:
       'Over the ocean to where Papa is from. Timber houses, cold mornings, ' +
-      'and mountains at the far end of the road.',
+      'a train that hangs from the sky, and more matjes than anyone needs.',
     outro: 'Family on the other side of the world.',
     checkpoints: [
       {

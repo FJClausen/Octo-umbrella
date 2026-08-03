@@ -66,6 +66,8 @@ body {
   pointer-events: none;
 }
 #hud.on { display: flex; }
+#hud-left { display: flex; align-items: center; gap: 10px; }
+#hud-time { color: var(--gold); font-variant-numeric: tabular-nums; }
 #hud-right { display: flex; align-items: center; gap: 10px; pointer-events: auto; }
 #hud-hearts { color: var(--pink); }
 
@@ -355,6 +357,46 @@ button.secondary:active { background: #fff1f5; transform: translateY(2px); }
 .feedback { min-height: 20px; margin: 12px 0 0; font-size: 14px; font-weight: 700; }
 .feedback.good { color: #2f9e58; }
 .feedback.bad { color: #c25a5a; }
+
+/* ---------------- finale: time and the leaderboard ---------------- */
+
+#finale-score {
+  margin: 6px 0 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #fff;
+  border: 2px solid #ffe0ea;
+}
+#finale-score .big {
+  display: block;
+  font-size: 30px;
+  font-weight: 900;
+  color: var(--pink);
+  font-variant-numeric: tabular-nums;
+}
+#finale-score .small { font-size: 13px; color: #6b6380; }
+
+#finale-board { margin-bottom: 12px; }
+#finale-board h3 {
+  margin: 0 0 6px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #8a7f9c;
+}
+#finale-board ol { list-style: none; margin: 0; padding: 0; }
+#finale-board li {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 10px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #4a4459;
+  font-variant-numeric: tabular-nums;
+}
+#finale-board li:nth-child(odd) { background: #fff6f9; }
+#finale-board li.you { background: #ffe3ee; color: var(--ink); }
 
 /* ---------------- finale ---------------- */
 

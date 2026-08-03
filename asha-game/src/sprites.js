@@ -195,6 +195,7 @@ export const animals = {
     ],
   },
   pelican: {
+    flies: true,
     palette: { w: '#f6f6f2', g: '#c9cdd2', y: '#f0b83c', e: '#241a14', o: '#e09a34' },
     rows: [
       '...www...',

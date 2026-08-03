@@ -9,7 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import { GROUND_Y, DEATH_Y, drawBackground, drawGround } from './levels.js';
-import { drawSprite, drawShadow, drawAnimal } from './sprites.js';
+import { drawSprite, drawShadow, drawAnimal, animals } from './sprites.js';
 
 // The world window, in game pixels. Kept small on purpose: the smaller this
 // is, the bigger Asha appears on a phone screen. 220 across still shows about
@@ -324,9 +324,19 @@ export class Game {
           idx++;
         }
         const spot = this.trail[Math.min(idx, this.trail.length - 1)];
-        const hop = moving ? Math.abs(Math.sin(this.t * 9 + i * 1.7)) * 2 : 0;
-        drawShadow(ctx, spot.x, spot.y, 0.18);
-        drawAnimal(ctx, name, spot.x, spot.y - hop, spot.face);
+        const flier = animals[name] && animals[name].flies;
+
+        if (flier) {
+          // Fliers cruise above the ground on a slow wingbeat rather than
+          // trotting along it, and always keep flying even when she stops.
+          const bob = Math.sin(this.t * 4 + i) * 2.5;
+          drawShadow(ctx, spot.x, spot.y, 0.12);
+          drawAnimal(ctx, name, spot.x, spot.y - 20 + bob, spot.face);
+        } else {
+          const hop = moving ? Math.abs(Math.sin(this.t * 9 + i * 1.7)) * 2 : 0;
+          drawShadow(ctx, spot.x, spot.y, 0.18);
+          drawAnimal(ctx, name, spot.x, spot.y - hop, spot.face);
+        }
       });
     }
 

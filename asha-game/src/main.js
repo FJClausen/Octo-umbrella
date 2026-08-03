@@ -13,6 +13,11 @@ import { Game, VW, VH } from './engine.js';
 import * as audio from './audio.js';
 
 const SAVE_KEY = 'asha-birthday-game-v1';
+const TIMES_KEY = 'asha-birthday-times-v1';
+
+// Falling in a pit costs ten seconds. It never ends the run -- it just nudges
+// her down the leaderboard, so there is something to beat on a replay.
+const PIT_PENALTY_MS = 10000;
 
 const $ = (id) => document.getElementById(id);
 const canvas = $('game');
@@ -25,6 +30,9 @@ const state = {
   answered: 0, // checkpoints answered in the current chapter
   hearts: 0,
   companions: [],   // animals collected, in the order she met them
+  timeMs: 0,        // time spent actually playing
+  penaltyMs: 0,     // ten seconds for every tumble
+  falls: 0,
   game: null,
   screen: 'name',
 };
@@ -56,6 +64,9 @@ function save() {
       answered: state.answered,
       hearts: state.hearts,
       companions: state.companions,
+      timeMs: state.timeMs,
+      penaltyMs: state.penaltyMs,
+      falls: state.falls,
     }));
   } catch (e) { /* private browsing -- just play without saving */ }
 }
@@ -81,12 +92,23 @@ function show(id) {
   $('controls').classList.toggle('on', !id);
 }
 
+// mm:ss, which is all a run of this length needs.
+function clock(ms) {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, '0')}`;
+}
+
+function totalMs() {
+  return state.timeMs + state.penaltyMs;
+}
+
 function setHud() {
   const ch = chapters[state.chapterIndex];
   $('hud-chapter').textContent = ch
     ? `${state.chapterIndex + 1}/${chapters.length}  ${ch.title}`
     : 'Home';
   $('hud-hearts').textContent = `♥ ${state.hearts}`;
+  $('hud-time').textContent = clock(totalMs());
 }
 
 // --- photos --------------------------------------------------------------
@@ -162,7 +184,13 @@ function beginLevel(ch, fromCheckpoint) {
   state.companions = companionsFor(state.chapterIndex, fromCheckpoint);
   const game = new Game(level, {
     onCheckpoint: (cp) => askQuestion(ch, cp),
-    onDeath: () => audio.sfxDeath(),
+    onDeath: () => {
+      audio.sfxDeath();
+      state.falls++;
+      state.penaltyMs += PIT_PENALTY_MS;
+      setHud();
+      save();
+    },
     onJump: () => audio.sfxJump(),
     onHeart: () => { state.hearts++; setHud(); audio.sfxHeart(); save(); },
     onGoal: () => finishChapter(ch),
@@ -334,6 +362,54 @@ function startFinale() {
   });
 }
 
+// --- the scoreboard ------------------------------------------------------
+
+function loadTimes() {
+  try { return JSON.parse(localStorage.getItem(TIMES_KEY)) || []; } catch (e) { return []; }
+}
+
+// Records this run and returns the table, marking which row is hers.
+function recordTime(entry) {
+  const times = loadTimes();
+  times.push(entry);
+  times.sort((a, b) => a.total - b.total);
+  try { localStorage.setItem(TIMES_KEY, JSON.stringify(times.slice(0, 10))); } catch (e) {}
+  return times;
+}
+
+function showScore() {
+  const total = totalMs();
+  const entry = {
+    name: state.name || 'Asha',
+    total,
+    falls: state.falls,
+    hearts: state.hearts,
+    at: Date.now(),
+  };
+  const times = recordTime(entry);
+  const place = times.indexOf(entry);
+
+  const tumbles = state.falls === 0
+    ? 'Not a single tumble. Showing off.'
+    : `${state.falls} tumble${state.falls === 1 ? '' : 's'} along the way (+${state.falls * 10}s)`;
+
+  $('finale-score').innerHTML =
+    `<span class="big">${clock(total)}</span>` +
+    `<span class="small">${tumbles}<br>` +
+    `${state.hearts} heart${state.hearts === 1 ? '' : 's'} · ` +
+    `${state.companions.length} friend${state.companions.length === 1 ? '' : 's'} picked up` +
+    `</span>`;
+
+  const medals = ['🥇', '🥈', '🥉'];
+  const rows = times.slice(0, 3).map((t, i) => {
+    const mine = t === entry ? ' class="you"' : '';
+    return `<li${mine}><span>${medals[i]} ${t.name}</span><span>${clock(t.total)}</span></li>`;
+  }).join('');
+
+  $('finale-board').innerHTML =
+    `<h3>${place < 3 ? 'You made the podium!' : 'Fastest runs home'}</h3><ol>${rows}</ol>`;
+}
+
 function revealFinale() {
   audio.stopMusic();
   audio.sfxGoal();
@@ -341,6 +417,7 @@ function revealFinale() {
   $('finale-title').textContent = finale.title;
   $('finale-message').textContent = finale.message;
   $('finale-hearts').textContent = `${state.hearts} hearts collected`;
+  showScore();
 
   const wrap = $('finale-photo');
   wrap.innerHTML = '';
@@ -355,6 +432,9 @@ function revealFinale() {
     state.answered = 0;
     state.hearts = 0;
     state.companions = [];
+    state.timeMs = 0;
+    state.penaltyMs = 0;
+    state.falls = 0;
     audio.stopMusic();
     startChapter(0);
   };
@@ -380,6 +460,9 @@ function initTitle() {
       state.answered = saved.answered || 0;
       state.companions = saved.companions ||
         companionsFor(saved.chapterIndex, saved.answered || 0);
+      state.timeMs = saved.timeMs || 0;
+      state.penaltyMs = saved.penaltyMs || 0;
+      state.falls = saved.falls || 0;
       if (saved.chapterIndex >= chapters.length) startFinale();
       else startChapter(saved.chapterIndex, saved.answered || 0);
     };
@@ -391,6 +474,9 @@ function initTitle() {
     state.hearts = 0;
     state.answered = 0;
     state.companions = [];
+    state.timeMs = 0;
+    state.penaltyMs = 0;
+    state.falls = 0;
     clearSave();
     save();
     startChapter(0);
@@ -473,6 +559,7 @@ resize();
 
 // --- main loop -----------------------------------------------------------
 
+let lastShownSecond = -1;
 let last = performance.now();
 function loop(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
@@ -481,6 +568,13 @@ function loop(now) {
   if (state.game) {
     window.__game = state.game; // handy when tweaking levels from the console
     state.game.viewW = canvas.width;
+    if (state.screen === 'play' && !state.game.paused) {
+      state.timeMs += dt * 1000;
+      if (Math.floor(state.timeMs / 1000) !== lastShownSecond) {
+        lastShownSecond = Math.floor(state.timeMs / 1000);
+        setHud();
+      }
+    }
     state.game.update(dt, input);
     state.game.draw(ctx);
   } else {

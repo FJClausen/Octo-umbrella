@@ -285,14 +285,31 @@ export function drawBackground(ctx, theme, camX, t, W, H) {
       break;
 
     case 'germany':
-      // alps far away, half-timbered houses near
-      tile(ctx, camX, 300, 0.18, (x) => {
-        ctx.fillStyle = '#93a7c4';
-        ctx.beginPath();
-        ctx.moveTo(x, 174); ctx.lineTo(x + 90, 66); ctx.lineTo(x + 180, 174); ctx.fill();
-        ctx.fillStyle = '#ffffff';
-        ctx.beginPath();
-        ctx.moveTo(x + 66, 96); ctx.lineTo(x + 90, 66); ctx.lineTo(x + 114, 96); ctx.fill();
+      // The Wuppertal Schwebebahn: a steel track on A-frames with the carriage
+      // hanging underneath it, running above the river.
+      // Kept high above the rooflines, so the carriage clears the
+      // half-timbered houses that are drawn in front of it.
+      tile(ctx, camX, 240, 0.18, (x) => {
+        for (const bx of [x + 16, x + 150]) {          // supporting A-frames
+          ctx.strokeStyle = '#4f6f5a';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(bx, 168); ctx.lineTo(bx + 20, 48);
+          ctx.moveTo(bx + 40, 168); ctx.lineTo(bx + 20, 48);
+          ctx.stroke();
+        }
+        rect(ctx, x, 44, 200, 7, '#4f6f5a');            // the track beam
+        rect(ctx, x, 42, 200, 2, '#6d8f78');
+
+        // the carriage, hanging underneath
+        const cx = x + 62;
+        rect(ctx, cx + 28, 51, 4, 8, '#3f5a48');        // the arm it hangs from
+        rect(ctx, cx, 59, 64, 22, '#eef2f5');
+        rect(ctx, cx, 59, 64, 5, '#2f6fa8');
+        rect(ctx, cx, 76, 64, 5, '#2f6fa8');
+        for (let w = 0; w < 5; w++) rect(ctx, cx + 6 + w * 12, 65, 8, 8, '#9fc4dd');
+        rect(ctx, cx - 2, 61, 2, 18, '#c8d2d8');
+        rect(ctx, cx + 64, 61, 2, 18, '#c8d2d8');
       });
       tile(ctx, camX, 130, 0.5, (x) => {
         rect(ctx, x + 20, 116, 62, 58, '#f2ece0');
