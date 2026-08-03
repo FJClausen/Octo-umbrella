@@ -9,7 +9,7 @@
 // ---------------------------------------------------------------------------
 
 import { GROUND_Y, DEATH_Y, drawBackground, drawGround } from './levels.js';
-import { drawSprite, drawShadow } from './sprites.js';
+import { drawSprite, drawShadow, drawAnimal } from './sprites.js';
 
 // The world window, in game pixels. Kept small on purpose: the smaller this
 // is, the bigger Asha appears on a phone screen. 220 across still shows about
@@ -25,10 +25,16 @@ const BUFFER = 0.16;
 const BODY_W = 8;
 const BODY_H = 16;
 
+// Frames of delay between each animal in the parade -- about 18px apart at
+// running speed, which keeps most of the group on screen at once by the end.
+const FOLLOW_GAP = 9;
+
 export class Game {
-  constructor(level, hooks = {}) {
+  constructor(level, hooks = {}, companions = []) {
     this.level = level;
     this.hooks = hooks;
+    this.companions = companions; // animals collected so far, in order
+    this.trail = [];              // where she has been, newest first
     this.t = 0;
     this.camX = 0;
     this.paused = false;
@@ -82,6 +88,7 @@ export class Game {
         p.vx = 0; p.vy = 0;
         p.dead = false;
         p.onGround = true;
+        this.trail = []; // the animals reappear with her, not back at the pit
       }
       return;
     }
@@ -184,6 +191,13 @@ export class Game {
       return;
     }
 
+    // --- the parade ---
+    // Every frame remembers where she was; each animal walks the same path a
+    // little later, which makes them trot along behind her over the platforms.
+    this.trail.unshift({ x: p.x, y: p.y, face: p.faceLeft, moving: Math.abs(p.vx) > 1 });
+    const needed = (this.companions.length + 1) * FOLLOW_GAP + 4;
+    if (this.trail.length > needed) this.trail.length = needed;
+
     // --- animation + camera ---
     p.animT += Math.abs(p.vx) * dt;
     const view = this.viewW || VW;
@@ -285,6 +299,19 @@ export class Game {
       drawSprite(ctx, 'fabian', 'stand', f.x + 14, f.y + bobA, true);
       drawSprite(ctx, 'naomi', 'stand', f.x - 12, f.y + bobB, true);
     }
+
+    // the parade, drawn behind her, oldest position furthest back
+    this.companions.forEach((name, i) => {
+      // Right after a respawn the trail is short, so fall back to the oldest
+      // point we have. The animals bunch up around her and then string out
+      // again as she walks, rather than blinking out of existence.
+      if (!this.trail.length) return;
+      const spot = this.trail[Math.min((i + 1) * FOLLOW_GAP, this.trail.length - 1)];
+      if (!spot) return;
+      const hop = spot.moving ? Math.abs(Math.sin(this.t * 9 + i)) * 2 : 0;
+      drawShadow(ctx, spot.x, spot.y, 0.18);
+      drawAnimal(ctx, name, spot.x, spot.y - hop, spot.face);
+    });
 
     // the player
     const p = this.player;

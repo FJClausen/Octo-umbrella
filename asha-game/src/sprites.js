@@ -50,9 +50,9 @@ export const palettes = {
 // Each hair style is the three rows above the face, plus whether the hair
 // also frames the face and falls onto the shoulders.
 const styles = {
-  // cropped round afro
+  // cropped afro with a puff gathered on top
   afro: {
-    top: ['..hhhhhhhh..', '.hhhhhhhhhh.', '.hhhhhhhhhh.'],
+    top: ['....hhhh....', '...hhhhhh...', '..hhhhhhhh..', '.hhhhhhhhhh.', '.hhhhhhhhhh.'],
     faceSide: 'h',
     torsoSide: 's',
   },
@@ -158,6 +158,124 @@ export function drawSprite(ctx, who, frameName, x, y, faceLeft) {
       // The slight overdraw keeps neighbouring pixels from showing seams
       // once the whole canvas is scaled up on a phone.
       ctx.fillRect(col * s, r * s, s + 0.02, s + 0.02);
+    }
+  }
+  ctx.restore();
+}
+
+// ---------------------------------------------------------------------------
+// THE ANIMALS
+//
+// One friend per chapter. Each joins when its chapter begins and then follows
+// her for the rest of the game, so the parade behind her grows chapter by
+// chapter. Small and chunky, so they still read at a few pixels tall.
+// ---------------------------------------------------------------------------
+
+export const animals = {
+  chicken: {
+    palette: { w: '#fdfdf8', s: '#e2ded0', c: '#e0483c', b: '#f0a63c', e: '#241a14' },
+    rows: [
+      '...cc....',
+      '..cccc...',
+      '..wwwwb..',
+      '.wwewwbb.',
+      'swwwwwww.',
+      '.swwwwws.',
+      '..ssss...',
+      '..b..b...',
+    ],
+  },
+  raccoon: {
+    palette: { g: '#9aa0a8', d: '#3b3f47', w: '#e8ebee', e: '#1a1a1e', n: '#2a2c30' },
+    rows: [
+      '.........',
+      '..ddd....',
+      '.wwwww...',
+      '.dedew...',
+      '.wwnww...',
+      'gggggggd.',
+      'gggggggdg',
+      '.g.g.g.dg',
+    ],
+  },
+  dodo: {
+    palette: { b: '#8ea3b8', l: '#b9c8d6', y: '#f0c04c', e: '#1c1c22', o: '#e0a83c' },
+    rows: [
+      '....bbb..',
+      '...bbbbb.',
+      '...bebbyy',
+      '...bbbbyy',
+      '..bbbbb..',
+      '.lbbbbb..',
+      '.lllbbb..',
+      '...o.o...',
+    ],
+  },
+  mantis: {
+    palette: { g: '#5fbf5a', d: '#3d8f3a', e: '#1c2a1c', l: '#8ede84' },
+    rows: [
+      '.......dd',
+      '......ggg',
+      '.d....geg',
+      '.dd..gggg',
+      '..dggggg.',
+      '.lgggggd.',
+      '.g.g.g...',
+      '..d...d..',
+    ],
+  },
+  redpanda: {
+    palette: { r: '#c96a34', w: '#f4ece0', d: '#3a2a20', e: '#1a1210', t: '#a8542a' },
+    rows: [
+      '.........',
+      '..w...w..',
+      '.rwwwwwr.',
+      '.wewrrew.',
+      '.wwwwwww.',
+      'rrrrrrrtt',
+      'rrrrrrrtt',
+      '.d.d.d...',
+    ],
+  },
+  capuchin: {
+    palette: { n: '#6b4a30', f: '#f0dcc0', d: '#3a2618', e: '#1a1210' },
+    rows: [
+      '...ddd...',
+      '..dfffd..',
+      '..fefef..',
+      '..ffffn..',
+      '.nnnnnn..',
+      'nnnnnnnn.',
+      '.n.n.nnnn',
+      '.d.d....n',
+    ],
+  },
+};
+
+export const ANIMAL_W = 9;
+export const ANIMAL_H = 8;
+
+// Draws an animal with its feet at (x, y), centred on x.
+export function drawAnimal(ctx, key, x, y, faceLeft) {
+  const a = animals[key];
+  if (!a) return;
+  ctx.save();
+  ctx.translate(Math.round(x), Math.round(y - ANIMAL_H));
+  if (faceLeft) {
+    ctx.translate(ANIMAL_W / 2, 0);
+    ctx.scale(-1, 1);
+    ctx.translate(-ANIMAL_W / 2, 0);
+  }
+  ctx.translate(-ANIMAL_W / 2, 0);
+  for (let r = 0; r < a.rows.length; r++) {
+    const row = a.rows[r];
+    for (let c = 0; c < row.length; c++) {
+      const ch = row[c];
+      if (ch === '.') continue;
+      const colour = a.palette[ch];
+      if (!colour) continue;
+      ctx.fillStyle = colour;
+      ctx.fillRect(c, r, 1.02, 1.02);
     }
   }
   ctx.restore();

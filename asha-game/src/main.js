@@ -24,9 +24,19 @@ const state = {
   chapterIndex: 0,
   answered: 0, // checkpoints answered in the current chapter
   hearts: 0,
+  companions: [],   // animals collected, in the order she met them
   game: null,
   screen: 'name',
 };
+
+// Everyone she has met by the time the given chapter starts, including that
+// chapter's own animal -- so a new friend is waiting at the start of the level.
+function companionsFor(chapterIndex) {
+  return chapters
+    .slice(0, chapterIndex + 1)
+    .map((c) => c.animal)
+    .filter(Boolean);
+}
 
 const input = { left: false, right: false, jump: false };
 
@@ -39,6 +49,7 @@ function save() {
       chapterIndex: state.chapterIndex,
       answered: state.answered,
       hearts: state.hearts,
+      companions: state.companions,
     }));
   } catch (e) { /* private browsing -- just play without saving */ }
 }
@@ -130,13 +141,14 @@ function startChapter(index, resumeAtCheckpoint = 0) {
 function beginLevel(ch, fromCheckpoint) {
   const level = buildLevel(ch);
 
+  state.companions = companionsFor(state.chapterIndex);
   const game = new Game(level, {
     onCheckpoint: (cp) => askQuestion(ch, cp),
     onDeath: () => audio.sfxDeath(),
     onJump: () => audio.sfxJump(),
     onHeart: () => { state.hearts++; setHud(); audio.sfxHeart(); save(); },
     onGoal: () => finishChapter(ch),
-  });
+  }, state.companions);
 
   // Resuming: treat already-answered checkpoints as done and start at the last.
   for (let i = 0; i < fromCheckpoint && i < level.checkpoints.length; i++) {
@@ -194,13 +206,21 @@ function askQuestion(ch, cp) {
     state.game.paused = false;
   };
 
-  q.answers.forEach((text, i) => {
+  // Shuffled, so the right answer is not always sitting in the same place.
+  // Fisher-Yates rather than a random sort comparator, which is biased.
+  const options = q.answers.map((text, i) => ({ text, right: i === q.correct }));
+  for (let i = options.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [options[i], options[j]] = [options[j], options[i]];
+  }
+
+  options.forEach(({ text, right }) => {
     const btn = document.createElement('button');
     btn.className = 'answer';
     btn.textContent = text;
     btn.onclick = () => {
       audio.start();
-      if (i === q.correct) {
+      if (right) {
         btn.classList.add('right');
         audio.sfxRight();
         $('quiz-feedback').textContent = 'Yes! ♥';
@@ -275,7 +295,7 @@ function startFinale() {
       state.game = new Game(level, {
         onJump: () => audio.sfxJump(),
         onGoal: () => revealFinale(),
-      });
+      }, companionsFor(chapters.length)); // the whole parade comes home
       setHud();
       show(null);
       audio.playMusic();
@@ -303,6 +323,7 @@ function revealFinale() {
     state.chapterIndex = 0;
     state.answered = 0;
     state.hearts = 0;
+    state.companions = [];
     audio.stopMusic();
     startChapter(0);
   };
@@ -326,6 +347,7 @@ function initTitle() {
       state.hearts = saved.hearts || 0;
       state.chapterIndex = saved.chapterIndex;
       state.answered = saved.answered || 0;
+      state.companions = saved.companions || companionsFor(saved.chapterIndex);
       if (saved.chapterIndex >= chapters.length) startFinale();
       else startChapter(saved.chapterIndex, saved.answered || 0);
     };
@@ -336,6 +358,7 @@ function initTitle() {
     state.name = (nameInput.value || 'Asha').trim();
     state.hearts = 0;
     state.answered = 0;
+    state.companions = [];
     clearSave();
     save();
     startChapter(0);

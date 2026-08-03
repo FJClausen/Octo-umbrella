@@ -196,6 +196,25 @@ button.primary { background: var(--pink); color: #fff; box-shadow: var(--shadow)
 button.primary:active { transform: translateY(3px); box-shadow: 0 3px 0 rgba(0, 0, 0, 0.22); }
 button.ghost { background: transparent; color: #6b6380; text-decoration: underline; }
 
+/* A real button, not a link -- she should be able to start over easily. */
+button.secondary {
+  width: 100%;
+  padding: 15px 16px;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  border: 2px solid #f0aec2;
+  border-radius: 14px;
+  background: #fff;
+  color: #d8497a;
+  cursor: pointer;
+}
+button.secondary:active { background: #fff1f5; transform: translateY(2px); }
+
+.hearts-note { font-size: 14px; color: #6b6380; background: #fdf3e4;
+  border-radius: 12px; padding: 10px 12px; margin-bottom: 16px; }
+.hearts-note strong { color: var(--pink); }
+
 #resume-row { display: none; margin-top: 8px; }
 #resume-row.on { display: block; }
 

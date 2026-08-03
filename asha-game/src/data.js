@@ -24,6 +24,7 @@
 export const chapters = [
   {
     id: 'dc2011',
+    animal: 'chicken',
     title: 'The Early Days',
     year: '2011',
     place: 'Washington, DC',
@@ -38,7 +39,7 @@ export const chapters = [
         answers: ['The High Heel Race', 'The Marine Corps Marathon', 'The Turkey Trot', 'The Cherry Blossom Ten Miler'],
         correct: 0,
         hint: '17th Street, the week of Halloween. Not exactly running shoes.',
-        photos: ['ch1-c.jpg', 'ch1-b.jpg'],
+        photos: ['ch1-c.jpg'],
         caption: 'Washington, DC — 2011',
       },
       {
@@ -79,7 +80,7 @@ export const chapters = [
         answers: ['A bottle of rum', 'A wedding ring', 'A phone', 'A conch shell'],
         correct: 0,
         hint: 'Still full. That was rather the point.',
-        photos: ['ch2-b.jpg', 'ch2-c.jpg'],
+        photos: ['ch2-c.jpg'],
         caption: 'Tulum — 2015',
       },
     ],
@@ -87,6 +88,7 @@ export const chapters = [
 
   {
     id: 'house2016',
+    animal: 'raccoon',
     title: 'The House',
     year: '2016',
     place: 'Washington, DC',
@@ -96,7 +98,7 @@ export const chapters = [
     outro: 'Not just an address. A home.',
     checkpoints: [
       {
-        question: 'What colour was the house when we bought it?',
+        question: 'What color was the house before we bought it?',
         answers: ['Red / maroon / salmon / terracotta', 'Blue', 'Green', 'Cream'],
         correct: 0,
         hint: 'Much darker than it is now. The blue one is next door.',
@@ -106,12 +108,12 @@ export const chapters = [
       },
       {
         question:
-          'What was our helpful neighbour wearing while advising us on whether to buy in Eckington?',
+          'What was our helpful neighbor wearing while advising us on whether to buy in Eckington?',
         answers: ['A bathrobe', 'A three-piece suit', 'A Santa suit', 'Full cycling kit'],
         correct: 0,
         hint: 'Not dressed for company. Not dressed for outside, either.',
         reveal: 'after',
-        photos: ['ch3-c.png', 'ch3-b.jpg'],
+        photos: ['ch3-c.png'],
         caption: 'Eckington — and the house today',
       },
     ],
@@ -119,6 +121,7 @@ export const chapters = [
 
   {
     id: 'naomi2017',
+    animal: 'dodo',
     title: 'Naomi Arrives',
     year: '2017',
     place: 'Washington, DC',
@@ -133,7 +136,7 @@ export const chapters = [
         answers: ['7.1 lbs', '6.4 lbs', '8.2 lbs', '9.0 lbs'],
         correct: 0,
         hint: 'Just over seven pounds.',
-        photos: ['ch4-a.jpg', 'ch4-b.jpg'],
+        photos: ['ch4-a.jpg'],
         caption: 'Hello, Naomi',
       },
       {
@@ -142,7 +145,7 @@ export const chapters = [
         correct: 0,
         hint: 'Soup, a bread bowl, and rather a lot of both.',
         reveal: 'after',
-        photos: ['ch4-c.jpg', 'ch4-d.png'],
+        photos: ['ch4-c.jpg'],
         caption: 'Birth week fuel',
       },
     ],
@@ -150,6 +153,7 @@ export const chapters = [
 
   {
     id: 'arboretum',
+    animal: 'mantis',
     title: 'The Arboretum',
     year: '2020',
     place: 'National Arboretum, DC',
@@ -164,7 +168,7 @@ export const chapters = [
         answers: ['The National Arboretum', 'The National Zoo', 'Rock Creek Park', 'The Botanic Garden'],
         correct: 0,
         hint: 'Bonsai, old stone columns, and a great many pandemic walks.',
-        photos: ['ch5-a.jpg', 'ch5-d.jpg'],
+        photos: ['ch5-a.jpg'],
         caption: 'Somewhere in DC',
       },
       {
@@ -172,7 +176,7 @@ export const chapters = [
         answers: ['The southern magnolia', 'The cherry blossom', 'The red oak', 'The dogwood'],
         correct: 0,
         hint: 'Glossy dark leaves, enormous white flowers.',
-        photos: ['ch5-b.jpg', 'ch5-c.jpg'],
+        photos: ['ch5-c.jpg'],
         caption: 'Under the columns',
       },
     ],
@@ -180,7 +184,8 @@ export const chapters = [
 
   {
     id: 'germany',
-    title: 'Papa’s Germany',
+    animal: 'redpanda',
+    title: 'Germany',
     year: '',
     place: 'Germany',
     theme: 'germany',
@@ -196,7 +201,7 @@ export const chapters = [
         answers: ['Kiel', 'Hamburg', 'Rostock', 'Bremen'],
         correct: 0,
         hint: 'On the Baltic, with a famous week named after it.',
-        photos: ['ch6-a.jpg', 'ch6-b.jpg'],
+        photos: ['ch6-a.jpg'],
         caption: 'Germany',
       },
     ],
@@ -204,6 +209,7 @@ export const chapters = [
 
   {
     id: 'costarica',
+    animal: 'capuchin',
     title: 'Pura Vida',
     year: '',
     place: 'Costa Rica',
@@ -214,11 +220,11 @@ export const chapters = [
     outro: 'Pura vida. Almost home.',
     checkpoints: [
       {
-        question: 'What kind of monkey attacked Naomi and Papa?',
+        question: 'What kind of monkey attacked Papa?',
         answers: ['A capuchin', 'A howler monkey', 'A spider monkey', 'A squirrel monkey'],
         correct: 0,
         hint: 'The little white-faced ones. They want your lunch.',
-        photos: ['ch7-a.jpg', 'ch7-b.jpg'],
+        photos: ['ch7-b.jpg'],
         caption: 'Costa Rica',
       },
       {
@@ -226,7 +232,7 @@ export const chapters = [
         answers: ['Pura vida', 'Hakuna matata', 'La dolce vita', 'C’est la vie'],
         correct: 0,
         hint: 'It means pure life.',
-        photos: ['ch7-c.jpg', 'ch7-d.jpg'],
+        photos: ['ch7-c.jpg'],
         caption: 'The last vacation',
       },
     ],
