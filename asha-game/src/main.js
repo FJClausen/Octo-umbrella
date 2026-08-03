@@ -7,7 +7,7 @@
 // she can close the tab and come back exactly where she left off.
 // ---------------------------------------------------------------------------
 
-import { chapters, finale } from './data.js';
+import { chapters, finale, animalNames } from './data.js';
 import { buildLevel, buildFinaleLevel } from './levels.js';
 import { Game, VW, VH } from './engine.js';
 import * as audio from './audio.js';
@@ -29,13 +29,19 @@ const state = {
   screen: 'name',
 };
 
-// Everyone she has met by the time the given chapter starts, including that
-// chapter's own animal -- so a new friend is waiting at the start of the level.
-function companionsFor(chapterIndex) {
-  return chapters
-    .slice(0, chapterIndex + 1)
-    .map((c) => c.animal)
-    .filter(Boolean);
+// Everyone she has earned so far. A chapter's animal is won by answering that
+// chapter's last question, so it is only hers once the chapter's questions are
+// all done -- earlier chapters count in full.
+function companionsFor(chapterIndex, answeredInCurrent = 0) {
+  const list = [];
+  for (let i = 0; i < chapterIndex && i < chapters.length; i++) {
+    if (chapters[i].animal) list.push(chapters[i].animal);
+  }
+  const current = chapters[chapterIndex];
+  if (current && current.animal && answeredInCurrent >= current.checkpoints.length) {
+    list.push(current.animal);
+  }
+  return list;
 }
 
 const input = { left: false, right: false, jump: false };
@@ -141,7 +147,7 @@ function startChapter(index, resumeAtCheckpoint = 0) {
 function beginLevel(ch, fromCheckpoint) {
   const level = buildLevel(ch);
 
-  state.companions = companionsFor(state.chapterIndex);
+  state.companions = companionsFor(state.chapterIndex, fromCheckpoint);
   const game = new Game(level, {
     onCheckpoint: (cp) => askQuestion(ch, cp),
     onDeath: () => audio.sfxDeath(),
@@ -228,7 +234,19 @@ function askQuestion(ch, cp) {
         for (const b of list.children) b.disabled = true;
         cp.answered = true;
         state.answered = Math.max(state.answered, cp.index + 1);
+
+        // Answering a chapter's last question wins its animal, which joins the
+        // parade immediately -- the array is shared with the running game.
+        const last = cp.index === ch.checkpoints.length - 1;
+        const joined = last && ch.animal && !state.companions.includes(ch.animal)
+          ? ch.animal : null;
+        if (joined) state.companions.push(joined);
         save();
+
+        if (joined) {
+          $('quiz-feedback').textContent = `Yes! ♥  ${animalNames[joined]} joins you!`;
+          audio.sfxHeart();
+        }
 
         if (revealAfter) {
           // Open the photo and let her look at it for as long as she likes.
@@ -241,7 +259,7 @@ function askQuestion(ch, cp) {
           cont.classList.add('on');
           cont.onclick = finish;
         } else {
-          setTimeout(finish, 900);
+          setTimeout(finish, joined ? 1700 : 900);
         }
       } else {
         misses++;
@@ -347,7 +365,8 @@ function initTitle() {
       state.hearts = saved.hearts || 0;
       state.chapterIndex = saved.chapterIndex;
       state.answered = saved.answered || 0;
-      state.companions = saved.companions || companionsFor(saved.chapterIndex);
+      state.companions = saved.companions ||
+        companionsFor(saved.chapterIndex, saved.answered || 0);
       if (saved.chapterIndex >= chapters.length) startFinale();
       else startChapter(saved.chapterIndex, saved.answered || 0);
     };

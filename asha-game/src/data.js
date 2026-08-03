@@ -239,6 +239,16 @@ export const chapters = [
   },
 ];
 
+// What each animal is called when it joins the parade.
+export const animalNames = {
+  chicken: 'A chicken',
+  raccoon: 'A raccoon',
+  dodo: 'A dodo',
+  mantis: 'A praying mantis',
+  redpanda: 'A red panda',
+  capuchin: 'A capuchin monkey',
+};
+
 // The final scene. No questions here -- just a short walk to the family.
 export const finale = {
   title: 'Happy Birthday, Mama',
