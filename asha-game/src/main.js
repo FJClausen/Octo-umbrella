@@ -15,8 +15,8 @@ import * as audio from './audio.js';
 // Bumping these version numbers retires everything stored under the old ones,
 // which is how the leaderboard and any test progress get wiped on every device
 // at once -- there is no way to reach into her phone and clear it by hand.
-const SAVE_KEY = 'asha-birthday-game-v2';
-const TIMES_KEY = 'asha-birthday-times-v2';
+const SAVE_KEY = 'asha-birthday-game-v3';
+const TIMES_KEY = 'asha-birthday-times-v3';
 
 // Falling in a pit costs ten seconds. It never ends the run -- it just nudges
 // her down the leaderboard, so there is something to beat on a replay.
