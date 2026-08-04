@@ -170,7 +170,34 @@ body {
   overflow-y: auto;
   z-index: 10;
 }
-.screen.on { display: flex; }
+/* Cards fade the backdrop in and lift the panel up, rather than snapping into
+   place. On the way out the screen keeps its space for the length of the fade,
+   which is why `leaving` still says display: flex. */
+.screen.on { display: flex; animation: screen-in 0.2s ease both; }
+.screen.on .panel { animation: panel-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.05) both; }
+
+.screen.leaving {
+  display: flex;
+  pointer-events: none;
+  animation: screen-out 0.18s ease both;
+}
+
+@keyframes screen-in {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to   { opacity: 1; }
+}
+@keyframes screen-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+@keyframes panel-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen.on, .screen.on .panel, .screen.leaving { animation: none; }
+}
 
 .panel {
   width: 100%;

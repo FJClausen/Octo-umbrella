@@ -12,8 +12,11 @@ import { buildLevel, buildFinaleLevel } from './levels.js';
 import { Game, VW, VH } from './engine.js';
 import * as audio from './audio.js';
 
-const SAVE_KEY = 'asha-birthday-game-v1';
-const TIMES_KEY = 'asha-birthday-times-v1';
+// Bumping these version numbers retires everything stored under the old ones,
+// which is how the leaderboard and any test progress get wiped on every device
+// at once -- there is no way to reach into her phone and clear it by hand.
+const SAVE_KEY = 'asha-birthday-game-v2';
+const TIMES_KEY = 'asha-birthday-times-v2';
 
 // Falling in a pit costs ten seconds. It never ends the run -- it just nudges
 // her down the leaderboard, so there is something to beat on a replay.
@@ -88,7 +91,14 @@ function show(id) {
   // Whatever she was holding, let go of it: a card can open mid-stride, and
   // the button never sees the release once it is behind an overlay.
   if (id) { input.left = false; input.right = false; input.jump = false; }
-  for (const el of document.querySelectorAll('.screen')) el.classList.remove('on');
+
+  for (const el of document.querySelectorAll('.screen')) {
+    if (!el.classList.contains('on') || el.id === id) continue;
+    // fade the old card out instead of cutting it
+    el.classList.remove('on');
+    el.classList.add('leaving');
+    setTimeout(() => el.classList.remove('leaving'), 180);
+  }
   if (id) $(id).classList.add('on');
   state.screen = id || 'play';
   $('hud').classList.toggle('on', !id);
