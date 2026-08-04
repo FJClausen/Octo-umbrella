@@ -259,6 +259,17 @@ function askQuestion(ch, cp) {
     if (files.length !== 1) photos.appendChild(photoEl(files[1], q.caption));
   }
 
+  // Fetch the answer's photo now, while she is still reading the question, so
+  // it arrives already decoded: a swap becomes a straight cut, and a shut tile
+  // opens onto the actual photo instead of an empty box that fills in later.
+  const revealReady = revealAfter
+    ? Promise.all(files.map((f) => new Promise((done) => {
+        const img = new Image();
+        img.onload = img.onerror = done;
+        img.src = `photos/${f}`;
+      })))
+    : Promise.resolve();
+
   const list = $('quiz-answers');
   list.innerHTML = '';
   let misses = 0;
@@ -305,12 +316,27 @@ function askQuestion(ch, cp) {
         }
 
         if (revealAfter) {
-          photos.innerHTML = '';
-          files.forEach((f) => {
-            const el = photoEl(f, q.caption);
-            el.classList.add('revealing');
-            photos.appendChild(el);
-          });
+          const shown = photos.querySelectorAll('img');
+          if (first && shown.length === files.length) {
+            // A swap: keep the same elements and just point them at the new
+            // file. Rebuilding them emptied the box for a frame, and the pop
+            // animation on top of that read as a glitch. Wait for the preload
+            // so the new photo is already decoded and the change is instant.
+            revealReady.then(() => {
+              files.forEach((f, i) => { shown[i].src = `photos/${f}`; });
+            });
+          } else {
+            // A shut tile has no photo to swap, so this one is built and popped
+            // -- once the preload is in, so the pop shows the photo itself.
+            revealReady.then(() => {
+              photos.innerHTML = '';
+              files.forEach((f) => {
+                const el = photoEl(f, q.caption);
+                el.classList.add('revealing');
+                photos.appendChild(el);
+              });
+            });
+          }
         }
 
         // Every question carries on by itself -- no question has a button, so
