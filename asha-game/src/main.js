@@ -97,7 +97,7 @@ function show(id) {
     // fade the old card out instead of cutting it
     el.classList.remove('on');
     el.classList.add('leaving');
-    setTimeout(() => el.classList.remove('leaving'), 180);
+    setTimeout(() => el.classList.remove('leaving'), 280);
   }
   if (id) $(id).classList.add('on');
   state.screen = id || 'play';

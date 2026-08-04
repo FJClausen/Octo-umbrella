@@ -170,33 +170,48 @@ body {
   overflow-y: auto;
   z-index: 10;
 }
-/* Cards fade the backdrop in and lift the panel up, rather than snapping into
-   place. On the way out the screen keeps its space for the length of the fade,
-   which is why `leaving` still says display: flex. */
-.screen.on { display: flex; animation: screen-in 0.2s ease both; }
-.screen.on .panel { animation: panel-in 0.3s cubic-bezier(0.2, 0.9, 0.3, 1.05) both; }
+/* Cards spin up from small: the backdrop washes in while the panel arrives
+   tumbling, overshoots very slightly, and settles. Slow enough to actually
+   read -- half a second, not the two frames it used to take. On the way out
+   it shrinks and tips away, which is why a leaving screen keeps its space
+   for the length of the fade. */
+.screen.on { display: flex; animation: screen-in 0.34s ease both; }
+.screen.on .panel {
+  animation: panel-in 0.55s cubic-bezier(0.18, 0.89, 0.32, 1.06) both;
+}
 
 .screen.leaving {
   display: flex;
   pointer-events: none;
-  animation: screen-out 0.18s ease both;
+  animation: screen-out 0.28s ease both;
 }
+.screen.leaving .panel { animation: panel-out 0.26s ease-in both; }
 
 @keyframes screen-in {
-  from { opacity: 0; backdrop-filter: blur(0); }
+  from { opacity: 0; }
   to   { opacity: 1; }
 }
 @keyframes screen-out {
   from { opacity: 1; }
   to   { opacity: 0; }
 }
+
+/* small and tilted -> big and straight, with a little wobble at the end */
 @keyframes panel-in {
-  from { opacity: 0; transform: translateY(14px) scale(0.97); }
-  to   { opacity: 1; transform: none; }
+  0%   { opacity: 0; transform: scale(0.3) rotate(-16deg); }
+  55%  { opacity: 1; transform: scale(1.05) rotate(4deg); }
+  75%  { transform: scale(0.98) rotate(-2deg); }
+  90%  { transform: scale(1.01) rotate(0.6deg); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes panel-out {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: scale(0.55) rotate(10deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .screen.on, .screen.on .panel, .screen.leaving { animation: none; }
+  .screen.on, .screen.on .panel,
+  .screen.leaving, .screen.leaving .panel { animation: none; }
 }
 
 .panel {
