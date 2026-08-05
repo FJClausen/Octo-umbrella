@@ -561,17 +561,29 @@ bindButton($('btn-right'), 'right');
 bindButton($('btn-jump'), 'jump');
 
 const keyMap = {
-  ArrowLeft: 'left', a: 'left',
-  ArrowRight: 'right', d: 'right',
-  ArrowUp: 'jump', ' ': 'jump', w: 'jump',
+  ArrowLeft: 'left', a: 'left', A: 'left',
+  ArrowRight: 'right', d: 'right', D: 'right',
+  ArrowUp: 'jump', ' ': 'jump', w: 'jump', W: 'jump',
 };
+
+// WASD doubles as movement, so those letters must not be stolen from the name
+// box -- typing "Asha" was losing its second letter.
+function isTyping(e) {
+  const t = e.target;
+  return !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+}
+
 addEventListener('keydown', (e) => {
+  if (isTyping(e)) return;
   const k = keyMap[e.key];
-  if (k) { input[k] = true; e.preventDefault(); audio.start(); }
+  // The keys only drive the game while the game is what is on screen; on a
+  // card, space and the arrows belong to the buttons.
+  if (k && state.screen === 'play') { input[k] = true; e.preventDefault(); audio.start(); }
 });
 addEventListener('keyup', (e) => {
+  if (isTyping(e)) return;
   const k = keyMap[e.key];
-  if (k) { input[k] = false; e.preventDefault(); }
+  if (k) { input[k] = false; }   // always release, whatever is on screen
 });
 
 $('sound-btn').onclick = () => {
