@@ -11,6 +11,7 @@ import { chapters, finale, animalNames } from './data.js';
 import { buildLevel, buildFinaleLevel } from './levels.js';
 import { Game, VW, VH } from './engine.js';
 import * as audio from './audio.js';
+import { submitScore, fetchTop, sharedEnabled } from './scores.js';
 
 // Bumping these version numbers retires everything stored under the old ones,
 // which is how the leaderboard and any test progress get wiped on every device
@@ -443,27 +444,49 @@ function showScore() {
     at: Date.now(),
   };
   const times = recordTime(entry);
-  const place = times.indexOf(entry);
 
-  const tumbles = state.falls === 0
+  // Show this device's podium straight away, then quietly upgrade to the shared
+  // one if it arrives. The ending never waits on the network.
+  renderScore(entry);
+  renderBoard(times, entry, false);
+
+  if (sharedEnabled) {
+    submitScore(entry)
+      .then(() => fetchTop(3))
+      .then((rows) => { if (rows && rows.length) renderBoard(rows, entry, true); })
+      .catch(() => {});
+  }
+}
+
+function renderScore(entry) {
+  const tumbles = entry.falls === 0
     ? 'Not a single tumble. Showing off.'
-    : `${state.falls} tumble${state.falls === 1 ? '' : 's'} along the way (+${state.falls * 10}s)`;
+    : `${entry.falls} tumble${entry.falls === 1 ? '' : 's'} along the way (+${entry.falls * 10}s)`;
 
   $('finale-score').innerHTML =
-    `<span class="big">${clock(total)}</span>` +
+    `<span class="big">${clock(entry.total)}</span>` +
     `<span class="small">${tumbles}<br>` +
-    `${state.hearts} heart${state.hearts === 1 ? '' : 's'} · ` +
+    `${entry.hearts} heart${entry.hearts === 1 ? '' : 's'} · ` +
     `${state.companions.length} friend${state.companions.length === 1 ? '' : 's'} picked up` +
     `</span>`;
+}
 
+// `shared` says whether these came from everyone's phones or just this one.
+function renderBoard(rows, entry, shared) {
   const medals = ['🥇', '🥈', '🥉'];
-  const rows = times.slice(0, 3).map((t, i) => {
-    const mine = t === entry ? ' class="you"' : '';
-    return `<li${mine}><span>${medals[i]} ${t.name}</span><span>${clock(t.total)}</span></li>`;
+  const top = rows.slice(0, 3);
+  const mine = top.findIndex((t) => t.name === entry.name && t.total === entry.total);
+
+  const list = top.map((t, i) => {
+    const you = i === mine ? ' class="you"' : '';
+    return `<li${you}><span>${medals[i]} ${t.name}</span><span>${clock(t.total)}</span></li>`;
   }).join('');
 
-  $('finale-board').innerHTML =
-    `<h3>${place < 3 ? 'You made the podium!' : 'Fastest runs home'}</h3><ol>${rows}</ol>`;
+  const heading = mine === 0 && shared ? 'Fastest of anyone so far!'
+    : mine >= 0 ? 'You made the podium!'
+    : shared ? 'Fastest runs home' : 'Fastest runs on this phone';
+
+  $('finale-board').innerHTML = `<h3>${heading}</h3><ol>${list}</ol>`;
 }
 
 function revealFinale({ songAlreadyPlaying = false } = {}) {

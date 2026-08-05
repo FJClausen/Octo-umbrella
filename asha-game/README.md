@@ -16,7 +16,8 @@ end — where the group photo and the birthday song unlock.
   behind her: chicken, pelican, raccoon, dodo, praying mantis, red panda,
   capuchin. The pelican flies; the rest walk.
 - **A clock and a podium.** Falling costs ten seconds, and the ending shows her
-  time against the three fastest runs saved on the device.
+  time against the three fastest runs — shared across phones if you set up the
+  shared podium below, otherwise kept per device.
 - **Forgiving on purpose** — unlimited lives, instant respawn at the last
   checkpoint, no enemies, and wrong answers only ever cost a retry (a hint
   appears after the second miss). Falling only costs time, never the run —
@@ -24,9 +25,9 @@ end — where the group photo and the birthday song unlock.
 - **Phone first** — on-screen left / right / jump under the thumbs. Keyboard
   (arrows + space) works too.
 - **Saves automatically**, so she can close the tab and pick it back up.
-- **No build step, no dependencies, no backend.** Plain HTML, CSS and ES
-  modules. Sound and characters are generated in code, so the only files to
-  upload are the photos.
+- **No build step and no dependencies.** Plain HTML, CSS and ES modules. Sound
+  and characters are generated in code, so the only files to upload are the
+  photos. The only optional server is Supabase, purely for the shared podium.
 
 ---
 
@@ -51,6 +52,29 @@ python3 -m http.server 8000
 
 If you'd rather it live in its own repository, this folder is completely
 self-contained: copy it out, `git init`, and deploy exactly the same way.
+
+## A podium shared across phones
+
+Out of the box each phone keeps its own times. To have everyone's runs appear
+on the same podium, point the game at a Supabase project:
+
+1. In Supabase, open the **SQL editor** and run `supabase/scores.sql`. It
+   creates the table and its access rules.
+2. **Project Settings → API**: copy the **Project URL** and the **anon public**
+   key.
+3. Paste both into `src/config.js`, commit and push.
+
+That is the whole setup — no build step, no server. The anon key belongs in the
+page; the table's rules only allow adding a run and reading the list, and rows
+can never be edited or deleted through it.
+
+Leave `src/config.js` empty and nothing breaks: the podium simply shows the
+runs from that phone, headed "Fastest runs on this phone". The same is true if
+the network is down or Supabase is unreachable — every call gives up after four
+seconds, so the ending never waits.
+
+To wipe the shared podium before sending the game:
+`truncate public.asha_scores;`
 
 ## Making it private
 
@@ -120,6 +144,8 @@ asha-game/
 ├── photos/           your uploaded photos (+ naming guide)
 └── src/
     ├── data.js       ← the story: chapters, questions, photos
+    ├── config.js     Supabase keys for the shared podium (optional)
+    ├── scores.js     posting and reading the shared podium
     ├── main.js       game flow, saving, input
     ├── engine.js     physics, collision, rendering
     ├── levels.js     level layouts + painted backgrounds
