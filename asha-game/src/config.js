@@ -15,5 +15,6 @@
 // table's rules only allow adding a score and reading the list.
 // ---------------------------------------------------------------------------
 
-export const SUPABASE_URL = '';       // e.g. 'https://abcdefgh.supabase.co'
-export const SUPABASE_ANON_KEY = '';  // the long "anon public" key
+export const SUPABASE_URL = 'https://rfmqyxhtmmuertjmlazs.supabase.co';
+export const SUPABASE_ANON_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJmbXF5eGh0bW11ZXJ0am1sYXpzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODU5NTkzMDIsImV4cCI6MjEwMTUzNTMwMn0.3IWpbimcemu-2uXuSDRvtp5sY03qboMs_Me2KqNfRmw';
