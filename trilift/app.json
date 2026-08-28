@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "TriLift",
+    "slug": "trilift",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "trilift",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0B0F14"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.trilift.app",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "TriLift needs photo access so you can attach progress photos to your weekly check-ins.",
+        "NSCameraUsageDescription": "TriLift uses the camera to capture progress photos for your check-ins."
+      }
+    },
+    "android": {
+      "package": "com.trilift.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B0F14",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": { "favicon": "./assets/favicon.png", "bundler": "metro" },
+    "plugins": [
+      "expo-router",
+      "expo-web-browser",
+      "expo-secure-store",
+      ["expo-image-picker", {
+        "photosPermission": "TriLift needs photo access so you can attach progress photos to your weekly check-ins."
+      }]
+    ],
+    "experiments": { "typedRoutes": true },
+    "extra": {
+      "supabaseUrl": "",
+      "supabaseAnonKey": ""
+    }
+  }
+}
