@@ -1,0 +1,26 @@
+{
+  "cli": {
+    "version": ">= 5.9.0"
+  },
+  "build": {
+    "production": {
+      "ios": {
+        "image": "latest",
+        "type": "archive"
+      }
+    },
+    "preview": {
+      "ios": {
+        "image": "latest",
+        "type": "simulator"
+      }
+    }
+  },
+  "submit": {
+    "production": {
+      "ios": {
+        "ascAppId": "YOUR_APP_STORE_CONNECT_APP_ID"
+      }
+    }
+  }
+}
