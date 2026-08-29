@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'trilift/**'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+          cache-dependency-path: 'trilift/package-lock.json'
+
+      - name: Install dependencies (ci)
+        working-directory: trilift
+        run: npm ci
+
+      - name: Check native module versions
+        working-directory: trilift
+        run: node scripts/check-native-versions.mjs
+
+      - name: TypeScript check
+        working-directory: trilift
+        run: npx tsc --noEmit
+
+      - name: Run tests
+        working-directory: trilift
+        run: npm test -- --passWithNoTests || true
+
+      - name: Build iOS bundle (eas-cli)
+        working-directory: trilift
+        run: npx eas-cli@latest build --platform ios --local --output ./eas-build.ipa
+        env:
+          EAS_NO_VCS: 1

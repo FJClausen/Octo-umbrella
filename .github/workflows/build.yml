@@ -1,0 +1,102 @@
+name: Build iOS
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'EAS build profile'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
+      submit_to_testflight:
+        description: 'Submit to TestFlight after build'
+        required: false
+        type: boolean
+        default: false
+
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 120
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+          cache-dependency-path: 'trilift/package-lock.json'
+
+      - name: Setup EAS
+        working-directory: trilift
+        run: npm install -g eas-cli
+
+      - name: Install dependencies (ci)
+        working-directory: trilift
+        run: npm ci
+
+      - name: Check native module versions
+        working-directory: trilift
+        run: node scripts/check-native-versions.mjs
+
+      - name: Build iOS app with EAS
+        working-directory: trilift
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          eas build \
+            --platform ios \
+            --profile ${{ github.event.inputs.profile }} \
+            --wait \
+            --json > eas-build.json
+
+          # Extract build ID and status
+          BUILD_ID=$(jq -r '.id' eas-build.json)
+          BUILD_STATUS=$(jq -r '.status' eas-build.json)
+          BUILD_URL=$(jq -r '.url' eas-build.json)
+
+          echo "Build ID: $BUILD_ID"
+          echo "Status: $BUILD_STATUS"
+          echo "URL: $BUILD_URL"
+
+          if [ "$BUILD_STATUS" != "FINISHED" ]; then
+            echo "❌ Build failed with status: $BUILD_STATUS"
+            exit 1
+          fi
+
+          echo "BUILD_ID=$BUILD_ID" >> $GITHUB_ENV
+          echo "BUILD_URL=$BUILD_URL" >> $GITHUB_ENV
+
+      - name: Submit to TestFlight
+        if: github.event.inputs.submit_to_testflight == 'true'
+        working-directory: trilift
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "${{ env.BUILD_ID }}" ]; then
+            echo "❌ ERROR: Build did not complete, cannot submit to TestFlight"
+            echo "Re-run the workflow with the 'Run workflow' button, not 'Re-run jobs'"
+            exit 1
+          fi
+
+          npx eas-cli@latest submit \
+            --platform ios \
+            --build-id "${{ env.BUILD_ID }}" \
+            --latest
+
+          echo "✓ Submitted build to TestFlight"
+
+      - name: Upload build artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: trilift/eas-build.json
+          retention-days: 30
