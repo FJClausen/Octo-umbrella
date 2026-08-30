@@ -42,8 +42,6 @@ jobs:
         working-directory: trilift
         run: npm test -- --passWithNoTests || true
 
-      - name: Build iOS bundle (eas-cli)
+      - name: Export JS bundle
         working-directory: trilift
-        run: npx eas-cli@latest build --platform ios --local --output ./eas-build.ipa
-        env:
-          EAS_NO_VCS: 1
+        run: npx expo export --platform ios
