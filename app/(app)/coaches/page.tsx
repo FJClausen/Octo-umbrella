@@ -21,23 +21,43 @@ export default async function CoachesOverview() {
   const dayStart = `${today}T00:00:00`;
   const reminderEnd = `${addDays(new Date(), 2).toISOString().slice(0, 10)}T23:59:59`;
 
-  const [pending, { data: upcomingEvents }, { data: allSnacks }] =
-    await Promise.all([
-      count(
-        supabase
-          .from("profiles")
-          .select("*", { count: "exact", head: true })
-          .eq("status", "pending")
-      ),
+  const [
+    pending,
+    { data: upcomingEvents },
+    { data: allSnacks },
+    { data: approvedParents },
+    { data: linkedPlayers },
+  ] = await Promise.all([
+    count(
       supabase
-        .from("events")
-        .select("*")
-        .gte("starts_at", dayStart)
-        .order("starts_at"),
-      supabase
-        .from("snack_slots")
-        .select("event_id, claimed_by, claimed_by_name"),
-    ]);
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending")
+    ),
+    supabase
+      .from("events")
+      .select("*")
+      .gte("starts_at", dayStart)
+      .order("starts_at"),
+    supabase
+      .from("snack_slots")
+      .select("event_id, claimed_by, claimed_by_name"),
+    supabase
+      .from("profiles")
+      .select("id")
+      .eq("status", "approved")
+      .eq("role", "parent"),
+    supabase.from("players").select("parent_id").eq("active", true),
+  ]);
+
+  // An approved parent with no child linked can't RSVP for anything, so
+  // this is the first thing to fix after approving someone.
+  const linkedParents = new Set(
+    (linkedPlayers ?? []).map((p) => p.parent_id).filter(Boolean)
+  );
+  const unlinkedParents = (approvedParents ?? []).filter(
+    (p) => !linkedParents.has(p.id)
+  ).length;
 
   const snackByEvent = new Map(
     (allSnacks ?? [])
@@ -81,6 +101,14 @@ export default async function CoachesOverview() {
     todos.push({
       href: "/coaches/approvals",
       text: `${pending} parent account${pending === 1 ? "" : "s"} waiting for approval`,
+    });
+  }
+  if (unlinkedParents > 0) {
+    todos.push({
+      href: "/coaches/roster",
+      text: `${unlinkedParents} approved parent${
+        unlinkedParents === 1 ? " has" : "s have"
+      } no player linked — they can't RSVP until you link their child`,
     });
   }
   if (nextGame && !nextGameHasLineup) {

@@ -125,6 +125,17 @@ export default async function HomePage() {
         <h1 className="text-2xl font-bold text-brand-ink">{firstName}</h1>
       </div>
 
+      {/* Until a coach links their child, a parent has nothing to RSVP for —
+          say so rather than showing an empty-looking home page. */}
+      {!isCoach && (myPlayers ?? []).length === 0 ? (
+        <Alert variant="info" title="Your child isn’t linked yet">
+          <p>
+            Ask your coach to link your player to your account — then you can
+            RSVP for games and practices right from this page.
+          </p>
+        </Alert>
+      ) : null}
+
       {actionItems.length > 0 ? (
         <Alert variant="warning" title="Action needed">
           <ul className="space-y-1">

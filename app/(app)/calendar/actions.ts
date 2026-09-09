@@ -42,6 +42,7 @@ export async function setRsvpAction(
   if (error) return { error: error.message };
 
   revalidatePath(`/calendar/${eventId}`);
+  revalidatePath("/calendar");
   revalidatePath("/home");
   return {};
 }
@@ -53,6 +54,7 @@ export async function claimSnackAction(
   const { error } = await supabase.rpc("claim_snack_slot", { slot_id: slotId });
   if (error) return { error: error.message };
   revalidatePath("/calendar/[id]", "page");
+  revalidatePath("/calendar");
   revalidatePath("/home");
   return {};
 }
@@ -66,6 +68,7 @@ export async function releaseSnackAction(
   });
   if (error) return { error: error.message };
   revalidatePath("/calendar/[id]", "page");
+  revalidatePath("/calendar");
   revalidatePath("/home");
   return {};
 }
