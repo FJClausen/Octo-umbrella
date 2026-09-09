@@ -188,9 +188,6 @@ export default async function CoachesOverview() {
         <Link href="/coaches/approvals" className="hover:text-brand-ink">
           Approvals
         </Link>
-        <Link href="/coaches/news" className="hover:text-brand-ink">
-          News
-        </Link>
         <Link href="/coaches/documents" className="hover:text-brand-ink">
           Documents
         </Link>

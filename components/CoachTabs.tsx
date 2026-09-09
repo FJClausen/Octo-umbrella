@@ -9,6 +9,7 @@ const TABS = [
   { href: "/coaches/events", label: "Events" },
   { href: "/coaches/gameday", label: "Game Day" },
   { href: "/coaches/practice", label: "Practice" },
+  { href: "/coaches/news", label: "News" },
 ];
 
 export function CoachTabs() {
