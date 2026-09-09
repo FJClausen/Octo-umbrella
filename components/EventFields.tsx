@@ -11,8 +11,15 @@ function toInputDT(value?: string | null): string {
 }
 
 /** Event create/edit fields — only shows what's relevant for the chosen
- *  type (opponent, jerseys, and score are game-only). */
-export function EventFields({ event }: { event?: EventRow }) {
+ *  type (opponent, jerseys, score, and snack duty are game-only). */
+export function EventFields({
+  event,
+  hasSnackSlot = false,
+}: {
+  event?: EventRow;
+  /** A slot already exists, so don't offer to create another. */
+  hasSnackSlot?: boolean;
+}) {
   const [type, setType] = useState(event?.type ?? "game");
   const isGame = type === "game";
 
@@ -105,6 +112,23 @@ export function EventFields({ event }: { event?: EventRow }) {
           placeholder="Arrive 30 minutes early…"
         />
       </div>
+      {isGame && !hasSnackSlot ? (
+        <div className="rounded-lg border border-slate-200 p-3 sm:col-span-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+            {/* Games get snack duty by default — practices never do. */}
+            <input type="checkbox" name="add_snack_slot" defaultChecked />
+            Create a snack slot for this game
+          </label>
+          <div className="mt-2">
+            <label className="label">Snack slot label (optional)</label>
+            <input
+              name="snack_label"
+              className="input"
+              placeholder="e.g. Half-time snack + water"
+            />
+          </div>
+        </div>
+      ) : null}
       {isGame ? (
         <div className="sm:col-span-2">
           <label className="label">

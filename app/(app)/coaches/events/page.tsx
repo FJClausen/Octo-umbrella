@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { Card, SubmitButton, eventCardTint } from "@/components/ui";
+import {
+  Alert,
+  Card,
+  EmptyState,
+  SectionHeading,
+  SubmitButton,
+  eventCardTint,
+} from "@/components/ui";
 import { EventCardBody } from "@/components/EventCard";
 import { EventFields } from "@/components/EventFields";
 import { countRsvpsByEvent } from "@/lib/rsvp";
@@ -14,28 +21,10 @@ import {
   deleteEvent,
   removeEventSnackSlot,
   postResultNews,
+  backfillGameSnackSlots,
 } from "./actions";
 
 export const metadata = { title: "Manage Events" };
-
-function AddSnackSlotFields() {
-  return (
-    <div className="rounded-lg border border-slate-200 p-3">
-      <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
-        <input type="checkbox" name="add_snack_slot" />
-        Also create a snack slot for this event
-      </label>
-      <div className="mt-2">
-        <label className="label">Snack slot label (optional)</label>
-        <input
-          name="snack_label"
-          className="input"
-          placeholder="e.g. Half-time snack + water"
-        />
-      </div>
-    </div>
-  );
-}
 
 export default async function ManageEventsPage({
   searchParams,
@@ -48,7 +37,7 @@ export default async function ManageEventsPage({
       supabase
         .from("events")
         .select("*")
-        .order("starts_at", { ascending: false }),
+        .order("starts_at", { ascending: true }),
       supabase.from("snack_slots").select("*"),
       supabase.from("rsvps").select("event_id, status"),
       supabase.from("practice_plans").select("id, event_id"),
@@ -66,6 +55,18 @@ export default async function ManageEventsPage({
       .map((s) => [s.event_id as string, s])
   );
   const rsvpCounts = countRsvpsByEvent(rsvps);
+
+  // Chronological: the next event first, past events after it (most recent
+  // first) so the season reads in order without old dates on top.
+  const dayStart = `${new Date().toISOString().slice(0, 10)}T00:00:00`;
+  const eventList = events ?? [];
+  const upcoming = eventList.filter((e) => e.starts_at >= dayStart);
+  const past = eventList.filter((e) => e.starts_at < dayStart).reverse();
+
+  // Games without snack duty, so they can be backfilled in one tap.
+  const gamesMissingSnacks = eventList.filter(
+    (e) => e.type === "game" && !snackSlotByEvent.has(e.id)
+  ).length;
 
   const shareEvent = searchParams.share
     ? (events ?? []).find((e) => e.id === searchParams.share)
@@ -138,7 +139,7 @@ export default async function ManageEventsPage({
           <EventFields />
           <div className="rounded-lg border border-slate-200 p-3">
             <label className="label">
-              🔁 Repeat weekly until (optional — e.g. for practices)
+              Repeat weekly until (optional — e.g. for practices)
             </label>
             <input type="date" name="repeat_until" className="input" />
             <p className="mt-1 text-xs text-slate-500">
@@ -146,15 +147,49 @@ export default async function ManageEventsPage({
               date.
             </p>
           </div>
-          <AddSnackSlotFields />
           <SubmitButton>Add event</SubmitButton>
         </form>
       </details>
 
       <ImportSchedule />
 
+      {gamesMissingSnacks > 0 ? (
+        <Alert variant="warning" title="Games without a snack slot">
+          <p className="mb-2">
+            {gamesMissingSnacks} game
+            {gamesMissingSnacks === 1 ? " has" : "s have"} no snack duty yet,
+            so parents can’t sign up for {gamesMissingSnacks === 1 ? "it" : "them"}.
+          </p>
+          <form action={backfillGameSnackSlots}>
+            <SubmitButton>
+              Add snack slots to {gamesMissingSnacks} game
+              {gamesMissingSnacks === 1 ? "" : "s"}
+            </SubmitButton>
+          </form>
+        </Alert>
+      ) : null}
+
+      {renderSection("Upcoming", upcoming)}
+      {past.length > 0 ? renderSection("Past", past) : null}
+    </div>
+  );
+
+  function renderSection(label: string, list: EventRow[]) {
+    if (list.length === 0) {
+      return (
+        <div className="space-y-2">
+          <SectionHeading>{label}</SectionHeading>
+          <EmptyState
+            title="No upcoming events"
+            hint="Add one above, or import your season schedule."
+          />
+        </div>
+      );
+    }
+    return (
       <div className="space-y-2">
-        {(events ?? []).map((e) => {
+        <SectionHeading>{label}</SectionHeading>
+        {list.map((e) => {
           const slot = snackSlotByEvent.get(e.id);
           return (
           <Card key={e.id} className={eventCardTint(e.type)}>
@@ -215,8 +250,8 @@ export default async function ManageEventsPage({
                 <EventFields
                   key={`${e.id}:${e.type}:${e.starts_at}:${e.title}:${e.opponent ?? ""}:${e.location ?? ""}`}
                   event={e}
+                  hasSnackSlot={!!slot}
                 />
-                {!slot ? <AddSnackSlotFields /> : null}
                 <div className="flex gap-2">
                   <SubmitButton>Save</SubmitButton>
                 </div>
@@ -250,6 +285,6 @@ export default async function ManageEventsPage({
           );
         })}
       </div>
-    </div>
-  );
+    );
+  }
 }
