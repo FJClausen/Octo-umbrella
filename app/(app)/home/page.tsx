@@ -11,6 +11,7 @@ import { RsvpControl } from "@/components/RsvpControl";
 import { SnackButton } from "@/components/SnackButton";
 import { formatDay } from "@/lib/format";
 import { rsvpCountsFromRpc } from "@/lib/rsvp";
+import { getMyPlayers } from "@/lib/players";
 import { site, type RsvpStatus } from "@/lib/site";
 
 export const metadata = { title: "Home" };
@@ -30,7 +31,7 @@ export default async function HomePage() {
     { data: snackSlots },
     { data: rsvps },
     { data: rsvpCountRows },
-    { data: myPlayers },
+    myPlayers,
   ] = await Promise.all([
     supabase
       .from("events")
@@ -51,12 +52,7 @@ export default async function HomePage() {
     // rsvp_counts() function below.
     supabase.from("rsvps").select("event_id, player_id, status"),
     supabase.rpc("rsvp_counts"),
-    supabase
-      .from("players")
-      .select("id, first_name")
-      .eq("parent_id", current?.userId ?? "")
-      .eq("active", true)
-      .order("first_name"),
+    getMyPlayers(supabase, current?.userId),
   ]);
 
   // Events over the next two weeks, for the "action needed" strip.

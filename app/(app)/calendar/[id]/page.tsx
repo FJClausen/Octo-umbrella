@@ -7,6 +7,7 @@ import { ScoreBadge } from "@/components/EventCard";
 import { RsvpControl } from "@/components/RsvpControl";
 import { SnackButton } from "@/components/SnackButton";
 import { formatEventWhen, formatDay } from "@/lib/format";
+import { getMyPlayers } from "@/lib/players";
 import { RSVP_LABELS, type RsvpStatus } from "@/lib/site";
 
 export default async function EventDetailPage({
@@ -26,13 +27,8 @@ export default async function EventDetailPage({
 
   if (!event) notFound();
 
-  const [{ data: myPlayers }, { data: snackSlots }] = await Promise.all([
-    supabase
-      .from("players")
-      .select("id, first_name")
-      .eq("parent_id", current?.userId ?? "")
-      .eq("active", true)
-      .order("first_name"),
+  const [myPlayers, { data: snackSlots }] = await Promise.all([
+    getMyPlayers(supabase, current?.userId),
     supabase
       .from("snack_slots")
       .select("id, label, claimed_by, claimed_by_name")

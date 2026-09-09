@@ -2,6 +2,11 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { PageHeader, Card } from "@/components/ui";
+import { getMyPlayers } from "@/lib/players";
+import {
+  PlayerLinkPicker,
+  type LinkablePlayer,
+} from "@/components/PlayerLinkPicker";
 import { updateProfileAction } from "./actions";
 
 export const metadata = { title: "Account" };
@@ -11,11 +16,34 @@ export default async function AccountPage() {
   const current = await getCurrentProfile();
   const profile = current?.profile;
 
-  const { data: myPlayers } = await supabase
-    .from("players")
-    .select("id, first_name, positions")
-    .eq("parent_id", current?.userId ?? "")
-    .order("first_name");
+  const myPlayers = await getMyPlayers(supabase, current?.userId);
+
+  // Siblings: let a parent claim another child without a coach's help.
+  const mineIds = new Set(myPlayers.map((p) => p.id));
+  const [{ data: roster }, { data: myRequests }] = await Promise.all([
+    supabase
+      .from("players")
+      .select("id, first_name")
+      .eq("active", true)
+      .order("first_name"),
+    supabase
+      .from("player_link_requests")
+      .select("id, player_id, status")
+      .eq("parent_id", current?.userId ?? ""),
+  ]);
+  const requestByPlayer = new Map(
+    (myRequests ?? []).map((r) => [r.player_id, r])
+  );
+  const linkable: LinkablePlayer[] = (roster ?? [])
+    .filter((p) => !mineIds.has(p.id))
+    .map((p) => {
+      const request = requestByPlayer.get(p.id);
+      return {
+        id: p.id,
+        first_name: p.first_name,
+        request: request ? { id: request.id, status: request.status } : undefined,
+      };
+    });
 
   return (
     <div className="space-y-6">
@@ -63,15 +91,18 @@ export default async function AccountPage() {
                 <span className="font-medium text-brand-ink">
                   {p.first_name}
                 </span>
-                {p.positions && p.positions.length > 0 ? (
-                  <span className="text-slate-500">
-                    · {p.positions.join(", ")}
-                  </span>
-                ) : null}
               </li>
             ))}
           </ul>
-        ) : (
+        ) : null}
+
+        {myPlayers.length > 0 ? (
+          <div className="mt-3">
+            <PlayerLinkPicker players={linkable} mode="add" />
+          </div>
+        ) : null}
+
+        {myPlayers.length === 0 ? (
           <p className="text-sm text-slate-500">
             No players are linked to your account yet — pick your child on the{" "}
             <Link href="/home" className="text-brand-blue underline">
@@ -79,7 +110,7 @@ export default async function AccountPage() {
             </Link>{" "}
             and your coach will confirm it.
           </p>
-        )}
+        ) : null}
       </Card>
 
       <p className="text-center text-xs text-slate-400">

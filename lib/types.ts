@@ -218,6 +218,21 @@ export interface Database {
         >;
         Relationships: [];
       };
+      player_parents: {
+        Row: {
+          player_id: string;
+          parent_id: string;
+          created_at: string;
+        };
+        Insert: {
+          player_id: string;
+          parent_id: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["player_parents"]["Insert"]
+        >;
+        Relationships: [];
+      };
       player_link_requests: {
         Row: {
           id: string;

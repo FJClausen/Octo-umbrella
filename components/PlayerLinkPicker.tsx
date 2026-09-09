@@ -16,11 +16,19 @@ export type LinkablePlayer = {
  * list of first names they can claim, which raises a request for a coach to
  * approve. Replaces telling them to go and ask a coach out-of-band.
  */
-export function PlayerLinkPicker({ players }: { players: LinkablePlayer[] }) {
+export function PlayerLinkPicker({
+  players,
+  /** "claim" = no children linked yet; "add" = linking a sibling. */
+  mode = "claim",
+}: {
+  players: LinkablePlayer[];
+  mode?: "claim" | "add";
+}) {
   const pending = players.filter((p) => p.request?.status === "pending");
   const denied = players.filter((p) => p.request?.status === "denied");
 
   if (players.length === 0) {
+    if (mode === "add") return null;
     return (
       <Alert variant="info" title="No players on the roster yet">
         <p>
@@ -56,10 +64,14 @@ export function PlayerLinkPicker({ players }: { players: LinkablePlayer[] }) {
   }
 
   return (
-    <Alert variant="info" title="Which player is yours?">
+    <Alert
+      variant="info"
+      title={mode === "add" ? "Another child on the team?" : "Which player is yours?"}
+    >
       <p className="mb-3">
-        Pick your child from the team roster. Your coach gets a note to
-        confirm it, and then you can RSVP for games and practices.
+        {mode === "add"
+          ? "Pick them from the roster and your coach will confirm the link."
+          : "Pick your child from the team roster. Your coach gets a note to confirm it, and then you can RSVP for games and practices."}
       </p>
       {denied.length > 0 ? (
         <p className="mb-3">

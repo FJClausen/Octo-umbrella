@@ -87,15 +87,24 @@ export default async function ApprovalsPage() {
   const denied = (members ?? []).filter((m) => m.status === "denied");
 
   // Parents who picked their child themselves and are waiting on a coach.
-  const [{ data: linkRequests }, { data: roster }] = await Promise.all([
+  const [{ data: linkRequests }, { data: roster }, { data: existingLinks }] =
+    await Promise.all([
     supabase
       .from("player_link_requests")
       .select("id, player_id, parent_id, created_at")
       .eq("status", "pending")
       .order("created_at"),
-    supabase.from("players").select("id, first_name, parent_id"),
+    supabase.from("players").select("id, first_name"),
+    supabase.from("player_parents").select("player_id, parent_id"),
   ]);
   const playerById = new Map((roster ?? []).map((p) => [p.id, p]));
+  const linkCountByPlayer = new Map<string, number>();
+  for (const l of existingLinks ?? []) {
+    linkCountByPlayer.set(
+      l.player_id,
+      (linkCountByPlayer.get(l.player_id) ?? 0) + 1
+    );
+  }
   const memberById = new Map((members ?? []).map((m) => [m.id, m]));
 
   return (
@@ -115,8 +124,9 @@ export default async function ApprovalsPage() {
             {(linkRequests ?? []).map((r) => {
               const player = playerById.get(r.player_id);
               const parent = memberById.get(r.parent_id);
-              const takenBySomeoneElse =
-                player?.parent_id && player.parent_id !== r.parent_id;
+              // Several parents per child is normal, so this is context,
+              // not a warning.
+              const alreadyLinked = linkCountByPlayer.get(r.player_id) ?? 0;
               return (
                 <div
                   key={r.id}
@@ -129,8 +139,8 @@ export default async function ApprovalsPage() {
                     </p>
                     <p className="text-sm text-slate-500">
                       {parent?.email}
-                      {takenBySomeoneElse
-                        ? " · heads up: this player is already linked to another account, and confirming will move them"
+                      {alreadyLinked > 0
+                        ? ` · ${alreadyLinked} parent${alreadyLinked === 1 ? "" : "s"} already linked to this player`
                         : ""}
                     </p>
                   </div>

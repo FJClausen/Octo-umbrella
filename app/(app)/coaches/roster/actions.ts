@@ -38,7 +38,6 @@ export async function createPlayer(formData: FormData) {
     .insert({
       first_name,
       positions: getPositions(formData),
-      parent_id: clean(formData.get("parent_id")),
       photo_url,
     })
     .select("id")
@@ -63,7 +62,6 @@ export async function updatePlayer(formData: FormData) {
   const patch: PlayerUpdate = {
     first_name: String(formData.get("first_name") || "").trim(),
     positions: getPositions(formData),
-    parent_id: clean(formData.get("parent_id")),
     active: formData.get("active") === "on",
   };
 
