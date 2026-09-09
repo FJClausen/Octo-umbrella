@@ -27,6 +27,7 @@ export default async function CoachesOverview() {
     { data: allSnacks },
     { data: approvedParents },
     { data: linkedPlayers },
+    linkRequests,
   ] = await Promise.all([
     count(
       supabase
@@ -48,6 +49,12 @@ export default async function CoachesOverview() {
       .eq("status", "approved")
       .eq("role", "parent"),
     supabase.from("players").select("parent_id").eq("active", true),
+    count(
+      supabase
+        .from("player_link_requests")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending")
+    ),
   ]);
 
   // An approved parent with no child linked can't RSVP for anything, so
@@ -101,6 +108,14 @@ export default async function CoachesOverview() {
     todos.push({
       href: "/coaches/approvals",
       text: `${pending} parent account${pending === 1 ? "" : "s"} waiting for approval`,
+    });
+  }
+  if (linkRequests > 0) {
+    todos.push({
+      href: "/coaches/approvals",
+      text: `${linkRequests} parent${
+        linkRequests === 1 ? "" : "s"
+      } asked to be linked to a player — confirm so they can RSVP`,
     });
   }
   if (unlinkedParents > 0) {
