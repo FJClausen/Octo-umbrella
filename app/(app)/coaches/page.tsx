@@ -48,7 +48,7 @@ export default async function CoachesOverview() {
       .select("id")
       .eq("status", "approved")
       .eq("role", "parent"),
-    supabase.from("players").select("parent_id").eq("active", true),
+    supabase.from("player_parents").select("parent_id"),
     count(
       supabase
         .from("player_link_requests")
@@ -60,7 +60,7 @@ export default async function CoachesOverview() {
   // An approved parent with no child linked can't RSVP for anything, so
   // this is the first thing to fix after approving someone.
   const linkedParents = new Set(
-    (linkedPlayers ?? []).map((p) => p.parent_id).filter(Boolean)
+    (linkedPlayers ?? []).map((l) => l.parent_id)
   );
   const unlinkedParents = (approvedParents ?? []).filter(
     (p) => !linkedParents.has(p.id)

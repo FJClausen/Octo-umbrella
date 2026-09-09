@@ -3,25 +3,74 @@ import { Card, SubmitButton, EmptyState } from "@/components/ui";
 import { PLAYER_POSITIONS } from "@/lib/site";
 import type { Player, PlayerPrivate, Profile } from "@/lib/types";
 import { createPlayer, updatePlayer, deletePlayer } from "./actions";
+import {
+  linkParentToPlayer,
+  unlinkParentFromPlayer,
+} from "@/app/(app)/account/link-actions";
 
 export const metadata = { title: "Manage Roster" };
 
-function ParentSelect({
-  parents,
-  value,
+/**
+ * A player can be linked to several parents (two guardians, separated
+ * families, a grandparent doing pickup). Each link is added and removed on
+ * its own, outside the player's main edit form.
+ */
+function LinkedParents({
+  playerId,
+  linked,
+  allParents,
 }: {
-  parents: Pick<Profile, "id" | "full_name" | "email">[];
-  value?: string | null;
+  playerId: string;
+  linked: Pick<Profile, "id" | "full_name" | "email">[];
+  allParents: Pick<Profile, "id" | "full_name" | "email">[];
 }) {
+  const linkedIds = new Set(linked.map((p) => p.id));
+  const available = allParents.filter((p) => !linkedIds.has(p.id));
+
   return (
-    <select name="parent_id" defaultValue={value ?? ""} className="input">
-      <option value="">— no parent linked —</option>
-      {parents.map((p) => (
-        <option key={p.id} value={p.id}>
-          {p.full_name || p.email}
-        </option>
-      ))}
-    </select>
+    <div className="space-y-2">
+      {linked.length > 0 ? (
+        <ul className="space-y-1">
+          {linked.map((p) => (
+            <li
+              key={p.id}
+              className="flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-1.5 text-sm"
+            >
+              <span className="text-slate-700">{p.full_name || p.email}</span>
+              <form action={unlinkParentFromPlayer}>
+                <input type="hidden" name="player_id" value={playerId} />
+                <input type="hidden" name="parent_id" value={p.id} />
+                <button
+                  type="submit"
+                  className="text-xs text-slate-400 hover:text-red-600"
+                >
+                  Unlink
+                </button>
+              </form>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-sm text-slate-400">No parents linked yet.</p>
+      )}
+
+      {available.length > 0 ? (
+        <form action={linkParentToPlayer} className="flex items-center gap-2">
+          <input type="hidden" name="player_id" value={playerId} />
+          <select name="parent_id" defaultValue="" className="input" required>
+            <option value="" disabled>
+              Link a parent…
+            </option>
+            {available.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.full_name || p.email}
+              </option>
+            ))}
+          </select>
+          <SubmitButton variant="outline">Link</SubmitButton>
+        </form>
+      ) : null}
+    </div>
   );
 }
 
@@ -54,7 +103,7 @@ export default async function ManageRosterPage({
 }) {
   const supabase = createClient();
 
-  const [{ data: players }, { data: priv }, { data: parents }] =
+  const [{ data: players }, { data: priv }, { data: parents }, { data: links }] =
     await Promise.all([
       supabase.from("players").select("*").order("first_name"),
       supabase.from("player_private").select("*"),
@@ -63,12 +112,22 @@ export default async function ManageRosterPage({
         .select("id, full_name, email")
         .eq("status", "approved")
         .order("full_name"),
+      supabase.from("player_parents").select("player_id, parent_id"),
     ]);
 
   const privById = new Map<string, PlayerPrivate>(
     (priv ?? []).map((p) => [p.player_id, p])
   );
   const parentList = parents ?? [];
+  const parentById = new Map(parentList.map((p) => [p.id, p]));
+  const parentsByPlayer = new Map<string, typeof parentList>();
+  for (const l of links ?? []) {
+    const parent = parentById.get(l.parent_id);
+    if (!parent) continue;
+    const list = parentsByPlayer.get(l.player_id) ?? [];
+    list.push(parent);
+    parentsByPlayer.set(l.player_id, list);
+  }
 
   return (
     <div className="space-y-6">
@@ -88,10 +147,6 @@ export default async function ManageRosterPage({
           <div className="sm:col-span-2">
             <label className="label">Positions</label>
             <PositionCheckboxes />
-          </div>
-          <div>
-            <label className="label">Parent account</label>
-            <ParentSelect parents={parentList} />
           </div>
           <div>
             <label className="label">Photo</label>
@@ -172,10 +227,6 @@ export default async function ManageRosterPage({
                       <PositionCheckboxes selected={pl.positions ?? []} />
                     </div>
                     <div>
-                      <label className="label">Parent account</label>
-                      <ParentSelect parents={parentList} value={pl.parent_id} />
-                    </div>
-                    <div>
                       <label className="label">Replace photo</label>
                       <input
                         type="file"
@@ -206,6 +257,16 @@ export default async function ManageRosterPage({
                       <SubmitButton>Save</SubmitButton>
                     </div>
                   </form>
+
+                  <div className="mt-3">
+                    <label className="label">Parent accounts</label>
+                    <LinkedParents
+                      playerId={pl.id}
+                      linked={parentsByPlayer.get(pl.id) ?? []}
+                      allParents={parentList}
+                    />
+                  </div>
+
                   <form action={deletePlayer} className="mt-2">
                     <input type="hidden" name="id" value={pl.id} />
                     <SubmitButton variant="danger">Delete player</SubmitButton>
