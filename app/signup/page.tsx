@@ -13,8 +13,9 @@ export default async function SignupPage() {
   return (
     <AuthShell title="Request an account">
       <p className="mb-4 text-sm text-slate-500">
-        Create your account to join the team hub. A coach will review and
-        approve new families before you get access.
+        Create your account to join the team hub. Signing up sends an access
+        request to your coach, who approves new families before they can see
+        the team’s calendar and roster.
       </p>
       <AuthForm mode="signup" action={signUpAction} />
     </AuthShell>

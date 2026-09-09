@@ -34,7 +34,7 @@ export async function signUpAction(
   if (!data.session) {
     return {
       success:
-        "Account created! Check your email to confirm your address, then sign in. A coach will approve your access.",
+        "Account created and your access request is with your coach. Check your email to confirm your address, then sign in — you'll be let in as soon as a coach approves you.",
     };
   }
 
