@@ -87,8 +87,9 @@ export default async function HomePage() {
 
   const firstName = current?.profile?.full_name?.split(" ")[0] || "there";
 
-  // What still needs this family's attention in the next two weeks:
-  // missing RSVPs for their kids, and unclaimed game snacks.
+  // What still needs this family's attention: missing RSVPs for the next
+  // two events only (the ones shown below), and unclaimed game snacks
+  // across the coming fortnight.
   const eventLabel = (e: {
     title: string;
     opponent: string | null;
@@ -96,7 +97,7 @@ export default async function HomePage() {
   }) =>
     `${e.title}${e.opponent ? ` vs ${e.opponent}` : ""} (${formatDay(e.starts_at)})`;
   const actionItems: { href: string; text: string }[] = [];
-  for (const e of fortnight ?? []) {
+  for (const e of (fortnight ?? []).slice(0, 2)) {
     const unanswered = (myPlayers ?? []).filter(
       (p) => !myStatusByEventPlayer.has(`${e.id}:${p.id}`)
     );

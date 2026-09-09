@@ -218,6 +218,22 @@ export interface Database {
         >;
         Relationships: [];
       };
+      game_notes: {
+        Row: {
+          event_id: string;
+          note: string;
+          author_id: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          event_id: string;
+          note?: string;
+          author_id?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["game_notes"]["Insert"]>;
+        Relationships: [];
+      };
       exercise_notes: {
         Row: {
           id: string;
