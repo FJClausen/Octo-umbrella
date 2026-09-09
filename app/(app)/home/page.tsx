@@ -6,7 +6,7 @@ import { EventCard } from "@/components/EventCard";
 import { RsvpControl } from "@/components/RsvpControl";
 import { SnackButton } from "@/components/SnackButton";
 import { formatDay } from "@/lib/format";
-import { countRsvpsByEvent } from "@/lib/rsvp";
+import { rsvpCountsFromRpc } from "@/lib/rsvp";
 import { site, type RsvpStatus } from "@/lib/site";
 
 export const metadata = { title: "Home" };
@@ -25,6 +25,7 @@ export default async function HomePage() {
     { data: latestNews },
     { data: snackSlots },
     { data: rsvps },
+    { data: rsvpCountRows },
     { data: myPlayers },
   ] = await Promise.all([
     supabase
@@ -42,7 +43,10 @@ export default async function HomePage() {
     supabase
       .from("snack_slots")
       .select("id, event_id, label, claimed_by, claimed_by_name"),
+    // Only this family's rows come back — headcounts come from the
+    // rsvp_counts() function below.
     supabase.from("rsvps").select("event_id, player_id, status"),
+    supabase.rpc("rsvp_counts"),
     supabase
       .from("players")
       .select("id, first_name")
@@ -64,7 +68,7 @@ export default async function HomePage() {
       .filter((s) => s.event_id)
       .map((s) => [s.event_id as string, s])
   );
-  const rsvpCounts = countRsvpsByEvent(rsvps);
+  const rsvpCounts = rsvpCountsFromRpc(rsvpCountRows);
   const isCoach = current?.profile?.role === "coach";
 
   // My kids' RSVP status per event, for the inline RSVP buttons.

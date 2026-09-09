@@ -7,7 +7,7 @@ import {
   SubmitButton,
 } from "@/components/ui";
 import { EventCard } from "@/components/EventCard";
-import { countRsvpsByEvent } from "@/lib/rsvp";
+import { rsvpCountsFromRpc } from "@/lib/rsvp";
 import { saveGameNote } from "./actions";
 
 export const metadata = { title: "Calendar" };
@@ -21,7 +21,7 @@ export default async function CalendarPage() {
     { data: upcoming },
     { data: past },
     { data: snackSlots },
-    { data: rsvps },
+    { data: rsvpCountRows },
   ] = await Promise.all([
     supabase
       .from("events")
@@ -37,7 +37,7 @@ export default async function CalendarPage() {
     supabase
       .from("snack_slots")
       .select("event_id, claimed_by, claimed_by_name"),
-    supabase.from("rsvps").select("event_id, status"),
+    supabase.rpc("rsvp_counts"),
   ]);
 
   const snackByEvent = new Map(
@@ -45,7 +45,7 @@ export default async function CalendarPage() {
       .filter((s) => s.event_id)
       .map((s) => [s.event_id as string, s])
   );
-  const rsvpCounts = countRsvpsByEvent(rsvps);
+  const rsvpCounts = rsvpCountsFromRpc(rsvpCountRows);
   const countsFor = (e: { id: string; type: string }) =>
     e.type === "game" ? rsvpCounts.get(e.id) : undefined;
   // Coaches jump straight to the event's edit form; parents to the detail.
