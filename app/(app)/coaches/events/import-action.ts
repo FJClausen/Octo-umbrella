@@ -13,6 +13,10 @@ export type ParsedEvent = {
   end_time: string | null;
   location: string | null;
   jersey_color: "blue" | "red" | null;
+  /** Set by the calendar-link importer when the source gave an absolute
+   *  timestamp; the browser converts it to the coach's local wall time. */
+  start_iso?: string;
+  end_iso?: string;
 };
 
 const OUTPUT_SCHEMA = {
