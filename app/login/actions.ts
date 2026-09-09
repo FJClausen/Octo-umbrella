@@ -23,5 +23,11 @@ export async function signInAction(
     return { error: error.message };
   }
 
-  redirect(redirectTo.startsWith("/") ? redirectTo : "/home");
+  // Only same-site paths: "//host" and "/\host" are protocol-relative URLs
+  // that would send someone straight off the site after signing in.
+  const safe =
+    redirectTo.startsWith("/") && !/^\/[/\\]/.test(redirectTo)
+      ? redirectTo
+      : "/home";
+  redirect(safe);
 }
