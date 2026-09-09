@@ -89,16 +89,22 @@ security definer
 set search_path = public
 as $$
 declare
-  was_coach boolean;
   remaining int;
 begin
-  was_coach := (old.role = 'coach' and old.status = 'approved');
-  if not was_coach then
-    return case when tg_op = 'DELETE' then old else new end;
+  -- NB: never mention NEW inside an expression that a DELETE can reach.
+  -- plpgsql passes every referenced record as a query parameter, so even an
+  -- unreached CASE branch would fail with "record new is not assigned yet".
+  -- Hence the separate IF/RETURN statements below.
+
+  -- Only an approved coach losing that status is interesting.
+  if old.role <> 'coach' or old.status <> 'approved' then
+    if tg_op = 'DELETE' then
+      return old;
+    end if;
+    return new;
   end if;
 
-  if tg_op = 'UPDATE'
-     and new.role = 'coach' and new.status = 'approved' then
+  if tg_op = 'UPDATE' and new.role = 'coach' and new.status = 'approved' then
     return new;
   end if;
 
@@ -110,7 +116,10 @@ begin
     raise exception 'Cannot remove the last approved coach';
   end if;
 
-  return case when tg_op = 'DELETE' then old else new end;
+  if tg_op = 'DELETE' then
+    return old;
+  end if;
+  return new;
 end;
 $$;
 
