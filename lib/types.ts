@@ -218,6 +218,25 @@ export interface Database {
         >;
         Relationships: [];
       };
+      player_link_requests: {
+        Row: {
+          id: string;
+          player_id: string;
+          parent_id: string;
+          status: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          player_id: string;
+          parent_id: string;
+          status?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["player_link_requests"]["Insert"]
+        >;
+        Relationships: [];
+      };
       game_notes: {
         Row: {
           event_id: string;

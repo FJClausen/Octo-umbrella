@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { PageHeader, Card } from "@/components/ui";
@@ -72,8 +73,11 @@ export default async function AccountPage() {
           </ul>
         ) : (
           <p className="text-sm text-slate-500">
-            No players are linked to your account yet. Ask your coach to link
-            your child to you so you can RSVP for games.
+            No players are linked to your account yet — pick your child on the{" "}
+            <Link href="/home" className="text-brand-blue underline">
+              home page
+            </Link>{" "}
+            and your coach will confirm it.
           </p>
         )}
       </Card>

@@ -2,6 +2,10 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
 import { Alert, Card, EmptyState, SectionHeading } from "@/components/ui";
+import {
+  PlayerLinkPicker,
+  type LinkablePlayer,
+} from "@/components/PlayerLinkPicker";
 import { EventCard } from "@/components/EventCard";
 import { RsvpControl } from "@/components/RsvpControl";
 import { SnackButton } from "@/components/SnackButton";
@@ -91,6 +95,36 @@ export default async function HomePage() {
 
   const firstName = current?.profile?.full_name?.split(" ")[0] || "there";
 
+  // Roster to choose from when this parent has no child linked yet, with
+  // any request they've already raised.
+  let linkablePlayers: LinkablePlayer[] = [];
+  if (!isCoach && (myPlayers ?? []).length === 0) {
+    const [{ data: roster }, { data: myRequests }] = await Promise.all([
+      supabase
+        .from("players")
+        .select("id, first_name")
+        .eq("active", true)
+        .order("first_name"),
+      supabase
+        .from("player_link_requests")
+        .select("id, player_id, status")
+        .eq("parent_id", current?.userId ?? ""),
+    ]);
+    const requestByPlayer = new Map(
+      (myRequests ?? []).map((r) => [r.player_id, r])
+    );
+    linkablePlayers = (roster ?? []).map((p) => {
+      const request = requestByPlayer.get(p.id);
+      return {
+        id: p.id,
+        first_name: p.first_name,
+        request: request
+          ? { id: request.id, status: request.status }
+          : undefined,
+      };
+    });
+  }
+
   // What still needs this family's attention: missing RSVPs for the next
   // two events only (the ones shown below), and unclaimed game snacks
   // across the coming fortnight.
@@ -129,15 +163,10 @@ export default async function HomePage() {
         <h1 className="text-2xl font-bold text-brand-ink">{firstName}</h1>
       </div>
 
-      {/* Until a coach links their child, a parent has nothing to RSVP for —
-          say so rather than showing an empty-looking home page. */}
+      {/* Until a child is linked, a parent has nothing to RSVP for — let
+          them claim their player instead of sending them to find a coach. */}
       {!isCoach && (myPlayers ?? []).length === 0 ? (
-        <Alert variant="info" title="Your child isn’t linked yet">
-          <p>
-            Ask your coach to link your player to your account — then you can
-            RSVP for games and practices right from this page.
-          </p>
-        </Alert>
+        <PlayerLinkPicker players={linkablePlayers} />
       ) : null}
 
       {actionItems.length > 0 ? (
