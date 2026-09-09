@@ -7,10 +7,33 @@
 --   2. Signing up while no coach existed made you an approved head coach.
 --   3. Every approved parent could read every child's RSVP row.
 --   4. RSVP writes and snack releases never re-checked approval.
+--
+-- IMPORTANT — run PART 1A, 1B, 2, 3 and 4 as SEPARATE queries, not all at
+-- once. The SQL editor wraps a whole script in one transaction, which holds
+-- locks on storage.objects and storage.buckets at the same time while
+-- Supabase's storage service is using both — that deadlocks
+-- ("40P01: deadlock detected"). One part per run keeps each lock brief.
+-- A deadlock is harmless and changes nothing: just re-run that part.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------
--- 1. Storage: stop anonymous enumeration of the photos bucket.
+-- PART 1A — run on its own.
+-- Cap what can be stored in the bucket, and to which image types.
+-- Touches storage.buckets only.
+-- -----------------------------------------------------------------------------
+
+set lock_timeout = '5s';
+
+update storage.buckets
+set file_size_limit = 10485760,  -- 10 MB
+    allowed_mime_types = array[
+      'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'
+    ]
+where id = 'photos';
+
+-- -----------------------------------------------------------------------------
+-- PART 1B — run on its own, after 1A.
+-- Storage: stop anonymous enumeration of the photos bucket.
 --
 -- The old policy granted `select` on storage.objects to every role including
 -- anon, which is what the storage *list* endpoint checks — so anyone with the
@@ -21,21 +44,17 @@
 -- or downloads from storage, so nothing breaks.
 -- -----------------------------------------------------------------------------
 
+set lock_timeout = '5s';
+
 drop policy if exists photos_public_read on storage.objects;
+drop policy if exists photos_read_approved on storage.objects;
 create policy photos_read_approved on storage.objects
   for select to authenticated
   using (bucket_id = 'photos' and public.is_approved());
 
--- Cap what can be parked in the bucket, and to what types.
-update storage.buckets
-set file_size_limit = 10485760,  -- 10 MB
-    allowed_mime_types = array[
-      'image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif'
-    ]
-where id = 'photos';
-
 -- -----------------------------------------------------------------------------
--- 2. New accounts are always pending parents.
+-- PART 2 — run on its own.
+-- New accounts are always pending parents.
 --
 -- The head coach already exists, so the "first signup becomes coach"
 -- bootstrap is now only a liability: it re-arms whenever the coach count
@@ -101,7 +120,8 @@ create trigger profiles_guard_last_coach
   for each row execute function public.guard_last_coach();
 
 -- -----------------------------------------------------------------------------
--- 3. RSVPs: back to per-family rows, with headcounts via a function.
+-- PART 3 — run on its own.
+-- RSVPs: back to per-family rows, with headcounts via a function.
 --
 -- Making every RSVP row readable by every parent also exposed the free-text
 -- `note` field. Parents now see only their own children's rows; the event
@@ -137,7 +157,8 @@ $$;
 grant execute on function public.rsvp_counts() to authenticated;
 
 -- -----------------------------------------------------------------------------
--- 4. Re-check approval on writes.
+-- PART 4 — run on its own.
+-- Re-check approval on writes.
 --
 -- A parent whose access was revoked still "owns" their child rows, so the
 -- ownership test alone kept letting them write.
