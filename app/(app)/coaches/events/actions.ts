@@ -80,7 +80,12 @@ export async function createEvent(formData: FormData) {
     .select("id")
     .single();
 
-  if (inserted && formData.get("add_snack_slot") === "on") {
+  // Snack duty is a games-only concept.
+  if (
+    inserted &&
+    payload.type === "game" &&
+    formData.get("add_snack_slot") === "on"
+  ) {
     await supabase.from("snack_slots").insert({
       event_id: inserted.id,
       slot_date: starts_at.slice(0, 10),
@@ -104,7 +109,23 @@ export async function createEvent(formData: FormData) {
         score_them: null,
       });
     }
-    if (repeats.length) await supabase.from("events").insert(repeats);
+    if (repeats.length) {
+      const { data: repeated } = await supabase
+        .from("events")
+        .insert(repeats)
+        .select("id, type, starts_at");
+      // Each repeated game needs its own snack slot, not just the first.
+      if (formData.get("add_snack_slot") === "on") {
+        const slots = (repeated ?? [])
+          .filter((e) => e.type === "game")
+          .map((e) => ({
+            event_id: e.id,
+            slot_date: e.starts_at.slice(0, 10),
+            label: clean(formData.get("snack_label")),
+          }));
+        if (slots.length) await supabase.from("snack_slots").insert(slots);
+      }
+    }
   }
 
   revalidate();
@@ -144,10 +165,49 @@ export async function createEventsBulk(
     }));
   if (!rows.length) return { error: "Nothing to import." };
 
-  const { error } = await supabase.from("events").insert(rows);
+  // Games get snack duty automatically so parents can sign up right away.
+  const { data: inserted, error } = await supabase
+    .from("events")
+    .insert(rows)
+    .select("id, type, starts_at");
   if (error) return { error: error.message };
+
+  const slots = (inserted ?? [])
+    .filter((e) => e.type === "game")
+    .map((e) => ({
+      event_id: e.id,
+      slot_date: e.starts_at.slice(0, 10),
+      label: null,
+    }));
+  if (slots.length) await supabase.from("snack_slots").insert(slots);
+
   revalidate();
   return { created: rows.length };
+}
+
+/** Give every game that has no snack slot one, in a single tap. */
+export async function backfillGameSnackSlots() {
+  await requireCoach();
+  const supabase = createClient();
+
+  const [{ data: games }, { data: existing }] = await Promise.all([
+    supabase.from("events").select("id, starts_at").eq("type", "game"),
+    supabase.from("snack_slots").select("event_id"),
+  ]);
+
+  const covered = new Set(
+    (existing ?? []).map((s) => s.event_id).filter(Boolean)
+  );
+  const slots = (games ?? [])
+    .filter((g) => !covered.has(g.id))
+    .map((g) => ({
+      event_id: g.id,
+      slot_date: g.starts_at.slice(0, 10),
+      label: null,
+    }));
+
+  if (slots.length) await supabase.from("snack_slots").insert(slots);
+  revalidate();
 }
 
 export async function updateEvent(formData: FormData) {
@@ -174,7 +234,7 @@ export async function updateEvent(formData: FormData) {
     payload.score_us != null &&
     payload.score_them != null;
 
-  if (formData.get("add_snack_slot") === "on") {
+  if (payload.type === "game" && formData.get("add_snack_slot") === "on") {
     const { data: existing } = await supabase
       .from("snack_slots")
       .select("id")
