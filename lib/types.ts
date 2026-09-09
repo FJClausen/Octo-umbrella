@@ -342,6 +342,15 @@ export interface Database {
         Args: Record<string, never>;
         Returns: boolean;
       };
+      rsvp_counts: {
+        Args: Record<string, never>;
+        Returns: {
+          event_id: string;
+          going: number;
+          maybe: number;
+          not_going: number;
+        }[];
+      };
       claim_snack_slot: {
         Args: { slot_id: string };
         Returns: undefined;

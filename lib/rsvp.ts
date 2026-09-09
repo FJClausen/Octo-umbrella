@@ -1,5 +1,24 @@
 export type RsvpCounts = { going: number; maybe: number; not_going: number };
 
+/**
+ * Per-event counts from the `rsvp_counts()` database function. Parents can
+ * only read their own children's RSVP rows, so headcounts are aggregated
+ * server-side rather than by counting rows the client fetched.
+ */
+export function rsvpCountsFromRpc(
+  rows:
+    | { event_id: string; going: number; maybe: number; not_going: number }[]
+    | null
+    | undefined
+): Map<string, RsvpCounts> {
+  return new Map(
+    (rows ?? []).map((r) => [
+      r.event_id,
+      { going: r.going, maybe: r.maybe, not_going: r.not_going },
+    ])
+  );
+}
+
 /** Aggregate raw rsvp rows into per-event counts. */
 export function countRsvpsByEvent(
   rows: { event_id: string; status: string }[] | null | undefined
