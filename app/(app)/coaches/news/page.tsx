@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { Card, SubmitButton } from "@/components/ui";
+import { Alert, Card, EmptyState, SubmitButton } from "@/components/ui";
 import { formatDay } from "@/lib/format";
 import { createNews, updateNews, deleteNews } from "./actions";
 
@@ -8,7 +8,7 @@ export const metadata = { title: "News" };
 export default async function ManageNewsPage({
   searchParams,
 }: {
-  searchParams: { add?: string };
+  searchParams: { add?: string; error?: string };
 }) {
   const supabase = createClient();
   const { data: news } = await supabase
@@ -18,6 +18,10 @@ export default async function ManageNewsPage({
 
   return (
     <div className="space-y-6">
+      {searchParams.error ? (
+        <Alert variant="error">{searchParams.error}</Alert>
+      ) : null}
+
       <details className="card p-4" open={searchParams.add === "1"}>
         <summary className="cursor-pointer font-semibold text-brand-ink">
           ＋ Post news
@@ -47,6 +51,13 @@ export default async function ManageNewsPage({
           <SubmitButton>Post news</SubmitButton>
         </form>
       </details>
+
+      {(news ?? []).length === 0 ? (
+        <EmptyState
+          title="No announcements yet"
+          hint="Post one above — published announcements show on the parents' home page."
+        />
+      ) : null}
 
       <div className="space-y-2">
         {(news ?? []).map((n) => (
