@@ -1,8 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
-import { PageHeader, EmptyState } from "@/components/ui";
+import {
+  PageHeader,
+  EmptyState,
+  SectionHeading,
+  SubmitButton,
+} from "@/components/ui";
 import { EventCard } from "@/components/EventCard";
 import { countRsvpsByEvent } from "@/lib/rsvp";
+import { saveGameNote } from "./actions";
 
 export const metadata = { title: "Calendar" };
 
@@ -47,8 +53,17 @@ export default async function CalendarPage() {
   const hrefFor = (e: { id: string }) =>
     isCoach ? `/coaches/events?edit=${e.id}#event-${e.id}` : undefined;
 
+  // "Games Played" is games only — past practices and team events drop off
+  // the calendar rather than cluttering it.
   const playedGames = (past ?? []).filter((e) => e.type === "game");
-  const otherPast = (past ?? []).filter((e) => e.type !== "game");
+
+  // Coaches' private notes on those games.
+  const { data: gameNotes } = isCoach
+    ? await supabase.from("game_notes").select("event_id, note, updated_at")
+    : { data: [] };
+  const noteByEvent = new Map(
+    (gameNotes ?? []).map((n) => [n.event_id, n])
+  );
 
   return (
     <div className="space-y-6">
@@ -58,9 +73,7 @@ export default async function CalendarPage() {
       />
 
       <section className="space-y-2">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-          Upcoming
-        </h2>
+        <SectionHeading>Upcoming</SectionHeading>
         {upcoming && upcoming.length > 0 ? (
           upcoming.map((e) => (
             <EventCard
@@ -82,30 +95,42 @@ export default async function CalendarPage() {
 
       {playedGames.length > 0 ? (
         <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-            Played Games
-          </h2>
+          <SectionHeading>Games Played</SectionHeading>
           <div className="space-y-2">
             {playedGames.map((e) => (
-              <EventCard
-                key={e.id}
-                event={e}
-                rsvpCounts={countsFor(e)}
-                href={hrefFor(e)}
-              />
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      {otherPast.length > 0 ? (
-        <section className="space-y-2">
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-400">
-            Past
-          </h2>
-          <div className="space-y-2 opacity-75">
-            {otherPast.map((e) => (
-              <EventCard key={e.id} event={e} href={hrefFor(e)} />
+              <div key={e.id} className="space-y-1">
+                <EventCard
+                  event={e}
+                  rsvpCounts={countsFor(e)}
+                  href={hrefFor(e)}
+                />
+                {isCoach ? (
+                  <details className="card p-3">
+                    <summary className="cursor-pointer text-sm text-brand-blue">
+                      Coach’s game notes
+                      {noteByEvent.get(e.id)?.note ? " ✓" : ""}
+                    </summary>
+                    <form
+                      action={saveGameNote}
+                      className="mt-2 space-y-2"
+                      key={noteByEvent.get(e.id)?.updated_at ?? "new"}
+                    >
+                      <input type="hidden" name="event_id" value={e.id} />
+                      <textarea
+                        name="note"
+                        rows={3}
+                        defaultValue={noteByEvent.get(e.id)?.note ?? ""}
+                        className="input"
+                        placeholder="How did it go? What worked, what to work on next?"
+                      />
+                      <SubmitButton>Save notes</SubmitButton>
+                    </form>
+                    <p className="mt-1 text-xs text-slate-400">
+                      Only coaches can see these.
+                    </p>
+                  </details>
+                ) : null}
+              </div>
             ))}
           </div>
         </section>

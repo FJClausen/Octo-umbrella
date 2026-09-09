@@ -1,5 +1,6 @@
 "use server";
 
+import Anthropic from "@anthropic-ai/sdk";
 import { requireCoach } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { site } from "@/lib/site";
@@ -167,6 +168,129 @@ function splitDateTime(input: string): { date: string; time: string } {
   return { date, time: time ?? "" };
 }
 
+/** Raw text of one calendar entry, for the enrichment pass. */
+type RawEntry = { summary: string; description: string; location: string };
+
+const ENRICH_SCHEMA = {
+  type: "object",
+  properties: {
+    events: {
+      type: "array",
+      description: "One entry per numbered calendar item, in the same order",
+      items: {
+        type: "object",
+        properties: {
+          index: { type: "integer", description: "The item's number" },
+          opponent: {
+            type: "string",
+            description:
+              "The other team's name, cleaned of age/gender codes and our own club name. Empty string if this isn't a game or no opponent is named.",
+          },
+          home_or_away: {
+            type: "string",
+            enum: ["home", "away", ""],
+            description:
+              "home if we host, away if we travel, empty if unclear",
+          },
+          venue: {
+            type: "string",
+            description:
+              "Name of the field/park/complex (e.g. 'Riverside Park Field 3'), without the street address. Empty string if not stated.",
+          },
+          address: {
+            type: "string",
+            description:
+              "Street address of the venue, without the venue name. Empty string if not stated.",
+          },
+        },
+        required: ["index", "opponent", "home_or_away", "venue", "address"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["events"],
+  additionalProperties: false,
+} as const;
+
+/**
+ * Clubs describe games very differently in their calendar feeds — the
+ * opponent and the field name can live in the title, the description, or
+ * be mixed into the address. A single model pass reads the raw text of
+ * every entry and pulls those out. Best effort: on any failure the
+ * regex-derived values stand.
+ */
+async function enrich(
+  events: ParsedEvent[],
+  raw: RawEntry[]
+): Promise<void> {
+  if (!process.env.ANTHROPIC_API_KEY) return;
+
+  const listing = raw
+    .map((r, i) => {
+      const parts = [`[${i}]`, `TITLE: ${r.summary}`];
+      if (r.location) parts.push(`LOCATION: ${r.location}`);
+      if (r.description) parts.push(`DETAILS: ${r.description.slice(0, 400)}`);
+      return parts.join("\n");
+    })
+    .join("\n\n");
+
+  try {
+    const client = new Anthropic();
+    const response = await client.messages.create({
+      model: "claude-opus-4-8",
+      max_tokens: 16000,
+      output_config: {
+        format: { type: "json_schema", schema: ENRICH_SCHEMA },
+      },
+      system: `You read youth soccer calendar entries and extract structured details. Our team is "${site.teamName}" — never return our own team as the opponent. Team names in these feeds often carry age/gender codes ("2016G", "U10 Girls", "07B"); strip those from the opponent name. Only report what the text actually says: leave a field empty rather than guessing.`,
+      messages: [
+        {
+          role: "user",
+          content: `Extract the opponent, whether we are home or away, and the venue name and street address for each entry.\n\n${listing}`,
+        },
+      ],
+    });
+
+    if (response.stop_reason === "refusal") return;
+    let out = "";
+    for (const block of response.content) {
+      if (block.type === "text") out += block.text;
+    }
+    if (!out) return;
+
+    const parsed = JSON.parse(out) as {
+      events: {
+        index: number;
+        opponent: string;
+        home_or_away: string;
+        venue: string;
+        address: string;
+      }[];
+    };
+
+    for (const item of parsed.events ?? []) {
+      const target = events[item.index];
+      if (!target) continue;
+
+      if (target.type === "game") {
+        const opponent = item.opponent?.trim();
+        if (opponent && !isUs(opponent)) target.opponent = opponent;
+        if (item.home_or_away === "home") target.jersey_color = "blue";
+        else if (item.home_or_away === "away") target.jersey_color = "red";
+      }
+
+      // Keep the field name in front of the address — coaches navigate by
+      // the venue name, parents need the address for the map.
+      const venue = item.venue?.trim();
+      const address = item.address?.trim();
+      const location = [venue, address].filter(Boolean).join(" — ");
+      if (location) target.location = location;
+    }
+  } catch {
+    // Enrichment is optional; the deterministic parse already stands.
+  }
+}
+
 export async function importFromIcsUrlAction(rawUrl: string): Promise<{
   events?: ParsedEvent[];
   existing?: string[];
@@ -217,6 +341,7 @@ export async function importFromIcsUrlAction(rawUrl: string): Promise<{
   }
 
   const events: ParsedEvent[] = [];
+  const rawEntries: RawEntry[] = [];
   let current: Record<string, { params: string; value: string }> | null = null;
   let sawRecurrence = false;
 
@@ -273,6 +398,11 @@ export async function importFromIcsUrlAction(rawUrl: string): Promise<{
             }
           }
           events.push(base);
+          rawEntries.push({
+            summary,
+            description: unescapeText(current.DESCRIPTION?.value ?? ""),
+            location: unescapeText(current.LOCATION?.value ?? ""),
+          });
         }
       }
       current = null;
@@ -296,6 +426,9 @@ export async function importFromIcsUrlAction(rawUrl: string): Promise<{
     return { error: "No events found in that calendar." };
   }
 
+  const capped = events.slice(0, MAX_EVENTS);
+  await enrich(capped, rawEntries.slice(0, MAX_EVENTS));
+
   // Hand back what's already on the calendar so the browser — which is the
   // only side that knows the coach's local wall time for absolute
   // timestamps — can flag re-imports instead of creating duplicates.
@@ -303,7 +436,7 @@ export async function importFromIcsUrlAction(rawUrl: string): Promise<{
   const { data: existing } = await supabase.from("events").select("starts_at");
 
   return {
-    events: events.slice(0, MAX_EVENTS),
+    events: capped,
     existing: (existing ?? []).map((e) => e.starts_at.slice(0, 16)),
     note: sawRecurrence
       ? "Some entries repeat via a rule; only the dates listed in the file were read, so double-check recurring practices."

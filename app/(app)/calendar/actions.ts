@@ -2,7 +2,24 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { requireCoach } from "@/lib/auth";
 import { RSVP_STATUSES } from "@/lib/site";
+
+/** Save a coach's private note on a game that's been played. */
+export async function saveGameNote(formData: FormData) {
+  const coach = await requireCoach();
+  const eventId = String(formData.get("event_id") || "");
+  if (!eventId) return;
+
+  const supabase = createClient();
+  await supabase.from("game_notes").upsert({
+    event_id: eventId,
+    note: String(formData.get("note") || "").trim(),
+    author_id: coach.id,
+    updated_at: new Date().toISOString(),
+  });
+  revalidatePath("/calendar");
+}
 
 export async function setRsvpAction(
   eventId: string,
