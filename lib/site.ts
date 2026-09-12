@@ -12,6 +12,10 @@ export const site = {
   logoUrl: process.env.NEXT_PUBLIC_LOGO_URL || null,
   // Public URL of the deployed site — used in WhatsApp share messages.
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL || "https://mundorainbows.com",
+  // The team's local timezone. Event times are stored as plain wall-clock
+  // ("2026-09-12T09:00"), so anything comparing them against "now" has to
+  // ask what time it is *here* — the server itself runs on UTC.
+  timeZone: process.env.NEXT_PUBLIC_TEAM_TIMEZONE || "America/New_York",
 };
 
 export const PLAYER_POSITIONS = [

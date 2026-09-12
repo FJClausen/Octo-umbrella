@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
+import { pastCutoff } from "@/lib/time";
 import {
   PageHeader,
   EmptyState,
@@ -15,7 +16,8 @@ export const metadata = { title: "Calendar" };
 export default async function CalendarPage() {
   const supabase = createClient();
   const current = await getCurrentProfile();
-  const dayStart = `${new Date().toISOString().slice(0, 10)}T00:00:00`;
+  // Games drop out of Upcoming once they have actually been played.
+  const cutoff = pastCutoff();
 
   const [
     { data: upcoming },
@@ -26,12 +28,12 @@ export default async function CalendarPage() {
     supabase
       .from("events")
       .select("*")
-      .gte("starts_at", dayStart)
+      .gte("starts_at", cutoff)
       .order("starts_at", { ascending: true }),
     supabase
       .from("events")
       .select("*")
-      .lt("starts_at", dayStart)
+      .lt("starts_at", cutoff)
       .order("starts_at", { ascending: false })
       .limit(20),
     supabase

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { pastCutoff } from "@/lib/time";
 import { Card, EmptyState, SubmitButton } from "@/components/ui";
 import { EventCardBody } from "@/components/EventCard";
 import { LineupEditor } from "@/components/LineupEditor";
@@ -16,7 +17,8 @@ export const metadata = { title: "Game Day" };
 
 export default async function GameDayPage() {
   const supabase = createClient();
-  const dayStart = `${new Date().toISOString().slice(0, 10)}T00:00:00`;
+  // A game that has already been played is no longer "next".
+  const cutoff = pastCutoff();
 
   const [{ data: nextGame }, { data: generalLineup }, { data: players }] =
     await Promise.all([
@@ -24,7 +26,7 @@ export default async function GameDayPage() {
         .from("events")
         .select("*")
         .eq("type", "game")
-        .gte("starts_at", dayStart)
+        .gte("starts_at", cutoff)
         .order("starts_at")
         .limit(1)
         .maybeSingle(),
