@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
+import { pastCutoff, teamDateIn } from "@/lib/time";
 import { Alert, Card, EmptyState, SectionHeading } from "@/components/ui";
 import {
   PlayerLinkPicker,
@@ -19,11 +20,8 @@ export const metadata = { title: "Home" };
 export default async function HomePage() {
   const supabase = createClient();
   const current = await getCurrentProfile();
-  const today = new Date().toISOString().slice(0, 10);
-  const dayStart = `${today}T00:00:00`;
-  const twoWeeksOut = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  const cutoff = pastCutoff();
+  const twoWeeksOut = teamDateIn(14);
 
   const [
     { data: upcoming },
@@ -36,7 +34,7 @@ export default async function HomePage() {
     supabase
       .from("events")
       .select("*")
-      .gte("starts_at", dayStart)
+      .gte("starts_at", cutoff)
       .order("starts_at", { ascending: true })
       .limit(2),
     supabase
@@ -59,7 +57,7 @@ export default async function HomePage() {
   const { data: fortnight } = await supabase
     .from("events")
     .select("id, type, title, opponent, starts_at")
-    .gte("starts_at", dayStart)
+    .gte("starts_at", cutoff)
     .lte("starts_at", `${twoWeeksOut}T23:59:59`)
     .order("starts_at");
 

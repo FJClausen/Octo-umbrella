@@ -3,6 +3,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { requireCoach } from "@/lib/auth";
 import { site } from "@/lib/site";
+import { teamToday } from "@/lib/time";
 
 export type ParsedEvent = {
   type: "game" | "practice" | "event";
@@ -90,7 +91,7 @@ export async function parseScheduleAction(
   const raw = text.trim().slice(0, 20000);
   if (!raw) return { error: "Paste a schedule first." };
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = teamToday();
   const client = new Anthropic();
 
   try {

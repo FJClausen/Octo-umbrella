@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { teamToday } from "@/lib/time";
 import { Alert, Card, SubmitButton, EmptyState } from "@/components/ui";
 import { formatDate } from "@/lib/format";
 import { PracticePlanEditor } from "@/components/PracticePlanEditor";
@@ -15,7 +16,7 @@ export default async function PracticePlannerPage({
   searchParams: { error?: string; open?: string; event?: string };
 }) {
   const supabase = createClient();
-  const today = new Date().toISOString().slice(0, 10);
+  const today = teamToday();
 
   const [{ data: plans }, { data: templates }, { data: practiceEvents }] =
     await Promise.all([

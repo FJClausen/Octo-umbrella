@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { addDays } from "date-fns";
 import { createClient } from "@/lib/supabase/server";
+import { pastCutoff, teamDateIn } from "@/lib/time";
 import { Alert, Card, EventTypeBadge, eventCardTint } from "@/components/ui";
 import { formatEventWhen, formatDay } from "@/lib/format";
 import { reminderMessage } from "@/lib/whatsapp";
@@ -17,9 +17,8 @@ async function count(
 
 export default async function CoachesOverview() {
   const supabase = createClient();
-  const today = new Date().toISOString().slice(0, 10);
-  const dayStart = `${today}T00:00:00`;
-  const reminderEnd = `${addDays(new Date(), 2).toISOString().slice(0, 10)}T23:59:59`;
+  const cutoff = pastCutoff();
+  const reminderEnd = `${teamDateIn(2)}T23:59:59`;
 
   const [
     pending,
@@ -38,7 +37,7 @@ export default async function CoachesOverview() {
     supabase
       .from("events")
       .select("*")
-      .gte("starts_at", dayStart)
+      .gte("starts_at", cutoff)
       .order("starts_at"),
     supabase
       .from("snack_slots")
