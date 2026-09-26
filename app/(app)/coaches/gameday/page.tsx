@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { pastCutoff } from "@/lib/time";
+import { eventFinishedCheck, fetchWindowStart } from "@/lib/time";
 import { Card, EmptyState, SubmitButton } from "@/components/ui";
 import { EventCardBody } from "@/components/EventCard";
 import { LineupEditor } from "@/components/LineupEditor";
@@ -18,18 +18,17 @@ export const metadata = { title: "Game Day" };
 export default async function GameDayPage() {
   const supabase = createClient();
   // A game that has already been played is no longer "next".
-  const cutoff = pastCutoff();
+  const hasFinished = eventFinishedCheck();
 
-  const [{ data: nextGame }, { data: generalLineup }, { data: players }] =
+  const [{ data: candidateGames }, { data: generalLineup }, { data: players }] =
     await Promise.all([
       supabase
         .from("events")
         .select("*")
         .eq("type", "game")
-        .gte("starts_at", cutoff)
+        .gte("starts_at", fetchWindowStart())
         .order("starts_at")
-        .limit(1)
-        .maybeSingle(),
+        .limit(5),
       supabase.from("lineups").select("*").is("event_id", null).maybeSingle(),
       supabase
         .from("players")
@@ -37,6 +36,9 @@ export default async function GameDayPage() {
         .eq("active", true)
         .order("first_name"),
     ]);
+
+  const nextGame =
+    (candidateGames ?? []).find((g) => !hasFinished(g)) ?? null;
 
   const playerList = (players ?? []).map((p) => ({
     id: p.id,

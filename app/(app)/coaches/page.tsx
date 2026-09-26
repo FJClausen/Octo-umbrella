@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { pastCutoff, teamDateIn } from "@/lib/time";
+import { eventFinishedCheck, fetchWindowStart, teamDateIn } from "@/lib/time";
 import { Alert, Card, EventTypeBadge, eventCardTint } from "@/components/ui";
 import { formatEventWhen, formatDay } from "@/lib/format";
 import { reminderMessage } from "@/lib/whatsapp";
@@ -17,12 +17,12 @@ async function count(
 
 export default async function CoachesOverview() {
   const supabase = createClient();
-  const cutoff = pastCutoff();
+  const hasFinished = eventFinishedCheck();
   const reminderEnd = `${teamDateIn(2)}T23:59:59`;
 
   const [
     pending,
-    { data: upcomingEvents },
+    { data: upcomingRaw },
     { data: allSnacks },
     { data: approvedParents },
     { data: linkedPlayers },
@@ -37,7 +37,7 @@ export default async function CoachesOverview() {
     supabase
       .from("events")
       .select("*")
-      .gte("starts_at", cutoff)
+      .gte("starts_at", fetchWindowStart())
       .order("starts_at"),
     supabase
       .from("snack_slots")
@@ -56,6 +56,8 @@ export default async function CoachesOverview() {
     ),
   ]);
 
+  const upcomingEvents = (upcomingRaw ?? []).filter((e) => !hasFinished(e));
+
   // An approved parent with no child linked can't RSVP for anything, so
   // this is the first thing to fix after approving someone.
   const linkedParents = new Set(
@@ -72,7 +74,7 @@ export default async function CoachesOverview() {
   );
 
   // Next game: does it have a lineup and enough RSVPs?
-  const nextGame = (upcomingEvents ?? []).find((e) => e.type === "game") ?? null;
+  const nextGame = upcomingEvents.find((e) => e.type === "game") ?? null;
   let nextGameHasLineup = false;
   let nextGameGoing = 0;
   if (nextGame) {
@@ -149,7 +151,7 @@ export default async function CoachesOverview() {
   }
 
   // Events within the next ~2 days, for one-tap WhatsApp reminders.
-  const soonEvents = (upcomingEvents ?? []).filter(
+  const soonEvents = upcomingEvents.filter(
     (e) => e.starts_at <= reminderEnd
   );
 
