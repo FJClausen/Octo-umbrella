@@ -58,16 +58,34 @@ export function teamDateIn(days: number): string {
 }
 
 /**
- * How long an event stays under "Upcoming" after it kicks off. Without this
- * a game vanishes the moment it starts; with it, the card stays put while
- * everyone's actually at the field and drops to "played" afterwards.
+ * Assumed length of an event with no end time recorded. Imported games and
+ * practices usually carry a real `ends_at`, which is always preferred.
  */
-const IN_PROGRESS_GRACE_MINUTES = 150;
+const ASSUMED_DURATION_MINUTES = 90;
+
+/** How far back to fetch, so nothing still in progress is missed. */
+const FETCH_WINDOW_MINUTES = 6 * 60;
 
 /**
- * The boundary between upcoming and past: events starting before this have
- * finished. Compare against `starts_at`.
+ * Lower bound for "might still be upcoming" when querying the database.
+ * Deliberately generous — narrow the result with `eventFinishedCheck`,
+ * which knows about end times.
  */
-export function pastCutoff(): string {
-  return teamWallClock(-IN_PROGRESS_GRACE_MINUTES);
+export function fetchWindowStart(): string {
+  return teamWallClock(-FETCH_WINDOW_MINUTES);
+}
+
+type TimedEvent = { starts_at: string; ends_at?: string | null };
+
+/**
+ * Has this event finished? Uses the recorded end time where there is one,
+ * otherwise assumes a typical session length after kickoff. Returns a
+ * single-snapshot checker so every event on a page is judged against the
+ * same moment.
+ */
+export function eventFinishedCheck(): (event: TimedEvent) => boolean {
+  const now = teamWallClock();
+  const noEndTimeCutoff = teamWallClock(-ASSUMED_DURATION_MINUTES);
+  return (event) =>
+    event.ends_at ? event.ends_at <= now : event.starts_at <= noEndTimeCutoff;
 }

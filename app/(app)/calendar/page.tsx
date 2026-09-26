@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
-import { pastCutoff } from "@/lib/time";
+import { eventFinishedCheck } from "@/lib/time";
 import {
   PageHeader,
   EmptyState,
@@ -16,31 +16,22 @@ export const metadata = { title: "Calendar" };
 export default async function CalendarPage() {
   const supabase = createClient();
   const current = await getCurrentProfile();
-  // Games drop out of Upcoming once they have actually been played.
-  const cutoff = pastCutoff();
 
-  const [
-    { data: upcoming },
-    { data: past },
-    { data: snackSlots },
-    { data: rsvpCountRows },
-  ] = await Promise.all([
-    supabase
-      .from("events")
-      .select("*")
-      .gte("starts_at", cutoff)
-      .order("starts_at", { ascending: true }),
-    supabase
-      .from("events")
-      .select("*")
-      .lt("starts_at", cutoff)
-      .order("starts_at", { ascending: false })
-      .limit(20),
-    supabase
-      .from("snack_slots")
-      .select("event_id, claimed_by, claimed_by_name"),
-    supabase.rpc("rsvp_counts"),
-  ]);
+  const [{ data: allEvents }, { data: snackSlots }, { data: rsvpCountRows }] =
+    await Promise.all([
+      supabase.from("events").select("*").order("starts_at"),
+      supabase
+        .from("snack_slots")
+        .select("event_id, claimed_by, claimed_by_name"),
+      supabase.rpc("rsvp_counts"),
+    ]);
+
+  // Split on whether each event has actually finished — by its end time
+  // where one is recorded, rather than guessing from the start.
+  const hasFinished = eventFinishedCheck();
+  const events = allEvents ?? [];
+  const upcoming = events.filter((e) => !hasFinished(e));
+  const past = events.filter(hasFinished).reverse();
 
   const snackByEvent = new Map(
     (snackSlots ?? [])
@@ -57,7 +48,7 @@ export default async function CalendarPage() {
 
   // "Games Played" is games only — past practices and team events drop off
   // the calendar rather than cluttering it.
-  const playedGames = (past ?? []).filter((e) => e.type === "game");
+  const playedGames = past.filter((e) => e.type === "game").slice(0, 20);
 
   // Coaches' private notes on those games.
   const { data: gameNotes } = isCoach
@@ -73,27 +64,6 @@ export default async function CalendarPage() {
         title="Calendar"
         subtitle="Games, practices, and team events. Tap an event to RSVP."
       />
-
-      <section className="space-y-2">
-        <SectionHeading>Upcoming</SectionHeading>
-        {upcoming && upcoming.length > 0 ? (
-          upcoming.map((e) => (
-            <EventCard
-              key={e.id}
-              event={e}
-              snack={snackByEvent.get(e.id)}
-              currentUserId={current?.userId}
-              rsvpCounts={countsFor(e)}
-              href={hrefFor(e)}
-            />
-          ))
-        ) : (
-          <EmptyState
-            title="No upcoming events"
-            hint="Your coach hasn’t posted the next games or practices yet."
-          />
-        )}
-      </section>
 
       {playedGames.length > 0 ? (
         <section className="space-y-2">
@@ -137,6 +107,27 @@ export default async function CalendarPage() {
           </div>
         </section>
       ) : null}
+
+      <section className="space-y-2">
+        <SectionHeading>Upcoming</SectionHeading>
+        {upcoming.length > 0 ? (
+          upcoming.map((e) => (
+            <EventCard
+              key={e.id}
+              event={e}
+              snack={snackByEvent.get(e.id)}
+              currentUserId={current?.userId}
+              rsvpCounts={countsFor(e)}
+              href={hrefFor(e)}
+            />
+          ))
+        ) : (
+          <EmptyState
+            title="No upcoming events"
+            hint="Your coach hasn’t posted the next games or practices yet."
+          />
+        )}
+      </section>
     </div>
   );
 }

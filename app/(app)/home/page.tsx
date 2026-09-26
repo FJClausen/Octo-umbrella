@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getCurrentProfile } from "@/lib/auth";
-import { pastCutoff, teamDateIn } from "@/lib/time";
+import { eventFinishedCheck, fetchWindowStart, teamDateIn } from "@/lib/time";
 import { Alert, Card, EmptyState, SectionHeading } from "@/components/ui";
 import {
   PlayerLinkPicker,
@@ -20,11 +20,12 @@ export const metadata = { title: "Home" };
 export default async function HomePage() {
   const supabase = createClient();
   const current = await getCurrentProfile();
-  const cutoff = pastCutoff();
+  const windowStart = fetchWindowStart();
+  const hasFinished = eventFinishedCheck();
   const twoWeeksOut = teamDateIn(14);
 
   const [
-    { data: upcoming },
+    { data: upcomingRaw },
     { data: latestNews },
     { data: snackSlots },
     { data: rsvps },
@@ -34,9 +35,10 @@ export default async function HomePage() {
     supabase
       .from("events")
       .select("*")
-      .gte("starts_at", cutoff)
+      // Over-fetch, then drop anything already finished and keep two.
+      .gte("starts_at", windowStart)
       .order("starts_at", { ascending: true })
-      .limit(2),
+      .limit(8),
     supabase
       .from("news")
       .select("*")
@@ -53,13 +55,18 @@ export default async function HomePage() {
     getMyPlayers(supabase, current?.userId),
   ]);
 
+  // Only events that haven't finished, and just the next two.
+  const upcoming = (upcomingRaw ?? []).filter((e) => !hasFinished(e)).slice(0, 2);
+
   // Events over the next two weeks, for the "action needed" strip.
-  const { data: fortnight } = await supabase
+  const { data: fortnightRaw } = await supabase
     .from("events")
-    .select("id, type, title, opponent, starts_at")
-    .gte("starts_at", cutoff)
+    .select("id, type, title, opponent, starts_at, ends_at")
+    .gte("starts_at", windowStart)
     .lte("starts_at", `${twoWeeksOut}T23:59:59`)
     .order("starts_at");
+  // Nothing already played should still be asking for an RSVP.
+  const fortnight = (fortnightRaw ?? []).filter((e) => !hasFinished(e));
 
   const snackByEvent = new Map(
     (snackSlots ?? [])
@@ -129,7 +136,7 @@ export default async function HomePage() {
   }) =>
     `${e.title}${e.opponent ? ` vs ${e.opponent}` : ""} (${formatDay(e.starts_at)})`;
   const actionItems: { href: string; text: string }[] = [];
-  for (const e of (fortnight ?? []).slice(0, 2)) {
+  for (const e of fortnight.slice(0, 2)) {
     const unanswered = (myPlayers ?? []).filter(
       (p) => !myStatusByEventPlayer.has(`${e.id}:${p.id}`)
     );
@@ -140,7 +147,7 @@ export default async function HomePage() {
       });
     }
   }
-  for (const e of fortnight ?? []) {
+  for (const e of fortnight) {
     const slot = snackByEvent.get(e.id);
     if (e.type === "game" && slot && !slot.claimed_by) {
       actionItems.push({
@@ -197,7 +204,7 @@ export default async function HomePage() {
           </Link>
         </div>
         <div className="space-y-2">
-          {upcoming && upcoming.length > 0 ? (
+          {upcoming.length > 0 ? (
             upcoming.map((e) => {
               const slot = snackByEvent.get(e.id);
               const players = rsvpPlayersFor(e.id);

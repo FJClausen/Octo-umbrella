@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { pastCutoff } from "@/lib/time";
+import { eventFinishedCheck } from "@/lib/time";
 import {
   Alert,
   Card,
@@ -59,10 +59,10 @@ export default async function ManageEventsPage({
 
   // Chronological: the next event first, past events after it (most recent
   // first) so the season reads in order without old dates on top.
-  const cutoff = pastCutoff();
+  const hasFinished = eventFinishedCheck();
   const eventList = events ?? [];
-  const upcoming = eventList.filter((e) => e.starts_at >= cutoff);
-  const past = eventList.filter((e) => e.starts_at < cutoff).reverse();
+  const upcoming = eventList.filter((e) => !hasFinished(e));
+  const past = eventList.filter(hasFinished).reverse();
 
   // Games without snack duty, so they can be backfilled in one tap.
   const gamesMissingSnacks = eventList.filter(
