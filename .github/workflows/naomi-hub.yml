@@ -1,0 +1,120 @@
+name: Naomi Hub
+
+on:
+  push:
+    paths:
+      - 'naomi-hub/**'
+      - '.github/workflows/naomi-hub.yml'
+  pull_request:
+    paths:
+      - 'naomi-hub/**'
+      - '.github/workflows/naomi-hub.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: naomi-hub-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    working-directory: naomi-hub/app
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: naomi-hub/app/package-lock.json
+      - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npx vitest run
+      - name: Bundle check
+        run: npx expo export --platform ios --output-dir "$RUNNER_TEMP/export"
+
+  # Push to main (or a manual run on main) builds on EAS and submits to TestFlight.
+  build:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    env:
+      EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      ASC_APP_ID: ${{ secrets.NAOMI_ASC_APP_ID }}
+      ASC_API_KEY_P8: ${{ secrets.ASC_API_KEY_P8 }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_TEAM_TYPE: ${{ secrets.APPLE_TEAM_TYPE }}
+    steps:
+      - name: Check EXPO_TOKEN
+        id: gate
+        working-directory: .
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::warning::EXPO_TOKEN secret is not set; skipping the EAS build."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.ready == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: naomi-hub/app/package-lock.json
+
+      - uses: expo/expo-github-action@v8
+        if: steps.gate.outputs.ready == 'true'
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - if: steps.gate.outputs.ready == 'true'
+        run: npm ci
+
+      - name: Link the EAS project
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          if [ "$(jq -r '.expo.extra.eas.projectId // empty' app.json)" = "" ]; then
+            eas init --non-interactive --force
+            echo "::notice::EAS project ID is $(jq -r '.expo.extra.eas.projectId' app.json). Commit it to naomi-hub/app/app.json under expo.extra.eas.projectId to skip this step."
+          fi
+
+      - name: App Store Connect key
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          if [ -n "$ASC_API_KEY_P8" ] && [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ]; then
+            KEY="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+            printf '%s\n' "$ASC_API_KEY_P8" > "$KEY"
+            {
+              echo "EXPO_ASC_API_KEY_PATH=$KEY"
+              echo "EXPO_ASC_KEY_ID=$ASC_KEY_ID"
+              echo "EXPO_ASC_ISSUER_ID=$ASC_ISSUER_ID"
+              [ -n "$APPLE_TEAM_ID" ] && echo "EXPO_APPLE_TEAM_ID=$APPLE_TEAM_ID"
+              echo "EXPO_APPLE_TEAM_TYPE=${APPLE_TEAM_TYPE:-INDIVIDUAL}"
+            } >> "$GITHUB_ENV"
+            jq --arg p "$KEY" --arg k "$ASC_KEY_ID" --arg i "$ASC_ISSUER_ID" \
+              '.submit.production.ios += {ascApiKeyPath: $p, ascApiKeyId: $k, ascApiKeyIssuerId: $i}' \
+              eas.json > eas.tmp && mv eas.tmp eas.json
+          else
+            echo "::notice::No ASC_API_KEY_P8/ASC_KEY_ID/ASC_ISSUER_ID secrets; EAS will use credentials already stored on expo.dev."
+          fi
+
+      - name: Build (and submit to TestFlight)
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          SUBMIT=""
+          if [ -n "$ASC_APP_ID" ]; then
+            jq --arg id "$ASC_APP_ID" '.submit.production.ios.ascAppId = $id' eas.json > eas.tmp && mv eas.tmp eas.json
+            SUBMIT="--auto-submit"
+          else
+            echo "::warning::NAOMI_ASC_APP_ID secret is not set; building without TestFlight submission."
+          fi
+          eas build --platform ios --profile production --non-interactive --no-wait $SUBMIT
