@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { countLogicGridSolutions, generateLogicGrid } from './logicGrid';
+import { countLogicGridSolutions, generateLogicGrid, MAX_CLUES } from './logicGrid';
 
 describe('logic grid', () => {
   for (const size of [3, 4, 5] as const) {
@@ -8,6 +8,7 @@ describe('logic grid', () => {
         const p = generateLogicGrid(size, seed * 31337);
         expect(countLogicGridSolutions(size, p.categories.length, p.rawClues, 2)).toBe(1);
         expect(p.clues.length).toBe(p.rawClues.length);
+        expect(p.clues.length).toBeLessThanOrEqual(MAX_CLUES[size]);
         p.categories.forEach((c) => expect(c.items).toHaveLength(size));
       }
     });
@@ -18,6 +19,12 @@ describe('logic grid', () => {
     for (const clue of p.rawClues) {
       const without = p.rawClues.filter((c) => c !== clue);
       expect(countLogicGridSolutions(4, p.categories.length, without, 2)).toBe(2);
+    }
+  });
+
+  it('uses the right article', () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      generateLogicGrid(4, seed).clues.forEach((c) => expect(c).not.toMatch(/\ba [aeiou]/i));
     }
   });
 

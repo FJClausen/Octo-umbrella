@@ -1,29 +1,38 @@
 {
   "expo": {
-    "name": "app",
-    "slug": "app",
+    "name": "Naomi's Hub",
+    "slug": "naomi-hub",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
+    "scheme": "naomihub",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFF8EE"
+    },
     "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
+      "supportsTablet": true,
+      "isTabletOnly": true,
+      "requireFullScreen": true,
+      "bundleIdentifier": "com.fjclausen.naomihub",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown",
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight"
+        ]
+      }
     },
     "plugins": [
       "expo-router",
       "expo-secure-store"
-    ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
   }
 }

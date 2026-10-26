@@ -1,4 +1,4 @@
-import { makeRng, pick, shuffle } from './rng';
+import { makeRng, pick, shuffle, type Rng } from './rng';
 
 export interface Category {
   name: string;
@@ -29,10 +29,9 @@ export interface LogicGridPuzzle {
   rawClues: Clue[];
 }
 
-const THEMES: { title: string; intro: string; peopleWord: string; people: string[]; cats: { name: string; pool: string[]; is: string; isNot: string; whose: string }[] }[] = [
+const THEMES: { title: string; peopleWord: string; people: string[]; cats: { name: string; pool: string[]; is: string; isNot: string; whose: string }[] }[] = [
   {
     title: 'The Science Fair',
-    intro: 'Each student built one project and won one ribbon color.',
     peopleWord: 'student',
     people: ['Ava', 'Ben', 'Chloe', 'Diego', 'Emma'],
     cats: [
@@ -43,18 +42,16 @@ const THEMES: { title: string; intro: string; peopleWord: string; people: string
   },
   {
     title: 'Pet Parade',
-    intro: 'Each friend brought one pet and one snack to the parade.',
     peopleWord: 'friend',
     people: ['Finn', 'Greta', 'Hugo', 'Isla', 'Jonas'],
     cats: [
       { name: 'Pet', pool: ['parrot', 'tortoise', 'ferret', 'rabbit', 'gecko'], is: 'owns the {x}', isNot: 'does not own the {x}', whose: 'who owns the {x}' },
       { name: 'Snack', pool: ['pretzels', 'grapes', 'popcorn', 'cheese', 'apple slices'], is: 'brought {x}', isNot: 'did not bring {x}', whose: 'who brought {x}' },
-      { name: 'Costume', pool: ['pirate', 'astronaut', 'knight', 'wizard', 'detective'], is: 'dressed as a {x}', isNot: 'did not dress as a {x}', whose: 'dressed as a {x}' },
+      { name: 'Costume', pool: ['pirate', 'astronaut', 'knight', 'wizard', 'detective'], is: 'dressed as {a x}', isNot: 'did not dress as {a x}', whose: 'dressed as {a x}' },
     ],
   },
   {
     title: 'Chess Club Tournament',
-    intro: 'Each player has a favorite opening piece and finished with a different score.',
     peopleWord: 'player',
     people: ['Kira', 'Leo', 'Mila', 'Noah', 'Olga'],
     cats: [
@@ -66,7 +63,8 @@ const THEMES: { title: string; intro: string; peopleWord: string; people: string
 ];
 
 function fmt(template: string, x: string): string {
-  return template.replace('{x}', x);
+  const article = /^[aeiou]/i.test(x) ? 'an' : 'a';
+  return template.replace('{a x}', `${article} ${x}`).replace('{x}', x);
 }
 
 function capitalize(s: string): string {
@@ -115,10 +113,24 @@ export function countLogicGridSolutions(n: number, cats: number, clues: Clue[], 
   return count;
 }
 
+/** Clue counts that still fit the printed page with the grids. */
+export const MAX_CLUES: Record<3 | 4 | 5, number> = { 3: 8, 4: 12, 5: 12 };
+
+/** Generates candidates until one fits MAX_CLUES (keeping the shortest if none do). */
 export function generateLogicGrid(size: 3 | 4 | 5 = 4, seed?: number): LogicGridPuzzle {
   const rng = makeRng(seed);
+  let best: LogicGridPuzzle | null = null;
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const p = generateOnce(size, rng);
+    if (!best || p.clues.length < best.clues.length) best = p;
+    if (best.clues.length <= MAX_CLUES[size]) break;
+  }
+  return best!;
+}
+
+function generateOnce(size: 3 | 4 | 5, rng: Rng): LogicGridPuzzle {
   const theme = pick(rng, THEMES);
-  const extraCats = size === 3 ? 2 : size === 4 ? 2 : 3;
+  const extraCats = 2;
   const people = shuffle(rng, theme.people).slice(0, size);
   const chosen = shuffle(rng, theme.cats).slice(0, extraCats);
   const cats: Category[] = [
@@ -147,8 +159,9 @@ export function generateLogicGrid(size: 3 | 4 | 5 = 4, seed?: number): LogicGrid
       for (let ia = 0; ia < size; ia++) {
         for (let ib = 0; ib < size; ib++) {
           const positive = owner(solution, ca, ia) === owner(solution, cb, ib);
-          // Keep positives rarer so the puzzle needs real deduction.
-          if (positive && rng() < 0.5) continue;
+          // Mostly negatives so the puzzle needs real deduction, but enough
+          // positives to keep the clue list short enough for one page.
+          if (positive ? rng() < 0.6 : rng() < 0.2) continue;
           const [first, second] = rng() < 0.5 || ca === 0 ? [{ cat: ca, item: ia }, { cat: cb, item: ib }] : [{ cat: cb, item: ib }, { cat: ca, item: ia }];
           pool.push({ positive, a: first, b: second });
         }
@@ -175,10 +188,11 @@ export function generateLogicGrid(size: 3 | 4 | 5 = 4, seed?: number): LogicGrid
     return `${capitalize(subject)} ${pred}.`;
   };
 
+  const catNames = cats.slice(1).map((c) => c.name.toLowerCase());
   return {
     kind: 'logic-grid',
     title: theme.title,
-    intro: theme.intro,
+    intro: `Each ${theme.peopleWord} has a different ${catNames.slice(0, -1).join(', ')} and ${catNames[catNames.length - 1]}.`,
     categories: cats.map((c) => ({ name: c.name, items: c.items })),
     clues: clues.map(text),
     solution,
