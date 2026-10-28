@@ -5,20 +5,27 @@ import { Body, Button, Chip, H1, H2 } from '../../components/ui';
 import { dailyPuzzle, pickPuzzle, ROUND_SIZE, THEME_LABELS } from '../../chess/rating';
 import { AVAILABLE_THEMES, PUZZLES } from '../../chess/puzzles';
 import type { ChessPuzzle } from '../../chess/types';
-import { chessSheet } from '../../print/chessSheet';
+import { newSheetCode, registerSheet } from '../../check/register';
+import type { SheetRecord } from '../../check/types';
+import { chessCheckSpec, chessSheet } from '../../print/chessSheet';
 import { loadChess, todayKey, type ChessProgress } from '../../store/chessProgress';
-import { awardPoints, POINTS } from '../../store/points';
 import { printHtml } from '../../store/printer';
+import { loadTickets, loadTicketSettings, spendTickets } from '../../store/tickets';
+import { canAfford, DEFAULT_SETTINGS, type TicketSettings, type TicketState } from '../../tickets/rules';
 import { colors } from '../../theme';
 
 export default function ChessHome() {
   const [progress, setProgress] = useState<ChessProgress | null>(null);
   const [theme, setTheme] = useState<string | undefined>(undefined);
-  const [sheetOut, setSheetOut] = useState(false);
+  const [sheetOut, setSheetOut] = useState<SheetRecord | null>(null);
+  const [tickets, setTickets] = useState<TicketState>({ balance: 0, day: '' });
+  const [settings, setSettings] = useState<TicketSettings>(DEFAULT_SETTINGS);
 
   useFocusEffect(
     useCallback(() => {
       loadChess().then(setProgress);
+      loadTickets().then(setTickets);
+      loadTicketSettings().then(setSettings);
     }, []),
   );
 
@@ -39,16 +46,41 @@ export default function ChessHome() {
     }
     if (!picks.length) return Alert.alert('No puzzles', 'No puzzles match that theme yet.');
     try {
-      await printHtml(chessSheet(picks));
-      setSheetOut(true);
+      const code = newSheetCode();
+      await printHtml(chessSheet(picks, code));
+      setSheetOut(await registerSheet({ code, title: 'Chess puzzle sheet', readKind: 'chess', level: 'chess', spec: chessCheckSpec(picks) }));
     } catch (e) {
       Alert.alert('Could not print', e instanceof Error ? e.message : String(e));
     }
   };
 
+  const cost = settings.enabled ? settings.chessCost : 0;
+  const affordable = canAfford(tickets, settings, cost);
+  const costLabel = cost > 0 ? ` (${cost} 🎟)` : '';
+
+  /** Spends the ticket(s) up front, then starts. */
+  const play = async (params: { mode: 'round' | 'daily'; theme?: string }) => {
+    if (!(await spendTickets(cost))) {
+      Alert.alert('No screen tickets left', 'Earn one by printing a puzzle and checking it with a photo.');
+      return;
+    }
+    router.push({ pathname: '/chess/play', params: { mode: params.mode, theme: params.theme ?? '' } });
+  };
+
   return (
     <ScrollView style={styles.screen} contentContainerStyle={{ padding: 28 }}>
       <H1>Chess Puzzles</H1>
+      {!affordable ? (
+        <View style={styles.locked}>
+          <Body>
+            Playing on the iPad costs {cost} 🎟. You have {tickets.balance}. Earn tickets by solving printed puzzles, like the
+            chess sheet below!
+          </Body>
+          <View style={[styles.row, { marginTop: 8 }]}>
+            <Button label="🖨  Print a puzzle" onPress={() => router.push('/puzzles')} />
+          </View>
+        </View>
+      ) : null}
       <View style={styles.stats}>
         <Stat label="Puzzle rating" value={String(progress.rating)} />
         <Stat label="Solved" value={`${progress.solved}/${progress.played}`} />
@@ -59,9 +91,9 @@ export default function ChessHome() {
       <Body muted>{dailyDone ? 'Done for today. Come back tomorrow!' : 'One special puzzle every day.'}</Body>
       <View style={styles.row}>
         <Button
-          label={dailyDone ? 'Play it again' : 'Play the daily puzzle'}
-          disabled={!dailyPuzzle(PUZZLES, today, progress.rating)}
-          onPress={() => router.push({ pathname: '/chess/play', params: { mode: 'daily' } })}
+          label={`${dailyDone ? 'Play it again' : 'Play the daily puzzle'}${costLabel}`}
+          disabled={!dailyPuzzle(PUZZLES, today, progress.rating) || !affordable}
+          onPress={() => play({ mode: 'daily' })}
         />
       </View>
 
@@ -74,26 +106,18 @@ export default function ChessHome() {
       </View>
 
       <View style={styles.row}>
-        <Button
-          big
-          label={`Start a ${ROUND_SIZE}-puzzle round`}
-          onPress={() => router.push({ pathname: '/chess/play', params: { mode: 'round', theme: theme ?? '' } })}
-        />
-        <Button big kind="secondary" label="🖨  Print 6 puzzles" onPress={printSheet} />
+        <Button big label={`Start a ${ROUND_SIZE}-puzzle round${costLabel}`} disabled={!affordable} onPress={() => play({ mode: 'round', theme })} />
+        <Button big kind="secondary" label="🖨  Print 6 puzzles (earn 1 🎟)" onPress={printSheet} />
       </View>
 
       {sheetOut ? (
         <View style={styles.done}>
-          <Body>Solve the sheet on a real board or in your head, then check page 2.</Body>
+          <Body>
+            Solve sheet {sheetOut.code} on a real board or in your head and write your moves under the boards. Get at least 4 of 6
+            right to earn a ticket.
+          </Body>
           <View style={[styles.row, { marginTop: 12 }]}>
-            <Button
-              label={`I finished the sheet! +${POINTS.desk}`}
-              onPress={async () => {
-                await awardPoints('Chess sheet', 'desk');
-                setSheetOut(false);
-                Alert.alert('Great!', `+${POINTS.desk} points`);
-              }}
-            />
+            <Button label="📷  I'm done, check it" onPress={() => router.push(`/check/${sheetOut.id}`)} />
           </View>
         </View>
       ) : null}
@@ -116,5 +140,6 @@ const styles = StyleSheet.create({
   stat: { backgroundColor: colors.card, borderRadius: 16, padding: 16, minWidth: 150, borderWidth: 2, borderColor: colors.border },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 },
   wrap: { flexDirection: 'row', flexWrap: 'wrap' },
+  locked: { marginTop: 12, padding: 18, borderRadius: 18, backgroundColor: colors.disabled, borderWidth: 2, borderColor: colors.border },
   done: { marginTop: 24, padding: 20, borderRadius: 18, backgroundColor: colors.card, borderWidth: 2, borderColor: colors.border },
 });

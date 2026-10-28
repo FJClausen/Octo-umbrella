@@ -25,13 +25,14 @@ function sudokuTable(p: SudokuPuzzle, values: number[], cell: number): string {
   return `<table class="grid">${rows.join('')}</table>`;
 }
 
-export function sudokuSheet(p: SudokuPuzzle): string {
+export function sudokuSheet(p: SudokuPuzzle, code?: string): string {
   const cell = p.size === 6 ? 70 : 54;
   const rule =
     p.size === 6
       ? 'Fill the grid so every row, column and 2×3 box contains 1–6 exactly once.'
       : 'Fill the grid so every row, column and 3×3 box contains 1–9 exactly once.';
   return renderSheet({
+    code,
     title: `Sudoku ${p.size}×${p.size} (${p.difficulty})`,
     subtitle: rule,
     css: GRID_CSS,
@@ -72,9 +73,10 @@ function kenkenTable(p: KenKenPuzzle, showSolution: boolean, cell: number): stri
   return `<table>${rows.join('')}</table>`;
 }
 
-export function kenkenSheet(p: KenKenPuzzle): string {
+export function kenkenSheet(p: KenKenPuzzle, code?: string): string {
   const cell = p.size <= 4 ? 100 : p.size === 5 ? 86 : 74;
   return renderSheet({
+    code,
     title: `KenKen ${p.size}×${p.size}`,
     subtitle: `Use 1–${p.size} once in every row and column. The numbers in each thick-outlined cage must make the target using the operation shown.`,
     puzzleHtml: `<div class="center">${kenkenTable(p, false, cell)}</div>`,
@@ -82,7 +84,7 @@ export function kenkenSheet(p: KenKenPuzzle): string {
   });
 }
 
-export function logicGridSheet(p: LogicGridPuzzle): string {
+export function logicGridSheet(p: LogicGridPuzzle, code?: string): string {
   const people = p.categories[0];
   const cellStyle = 'border:1px solid #000;width:26px;height:26px;';
   const headStyle = 'border:1px solid #000;padding:2px 5px;font-size:12pt;font-weight:600;';
@@ -100,15 +102,22 @@ export function logicGridSheet(p: LogicGridPuzzle): string {
   }
   const grid = `<div style="display:flex;flex-wrap:wrap;column-gap:14px">${grids.join('')}</div>`;
   const twoCols = p.clues.length > 8 ? 'column-count:2;column-gap:24px;' : '';
-  const clues = `<ol style="${twoCols}margin:0;padding-left:28px">${p.clues.map((c) => `<li style="margin-bottom:4pt;break-inside:avoid">${escapeHtml(c)}</li>`).join('')}</ol>`;
+  const clues = `<ol style="${twoCols}margin:0;padding-left:28px">${p.clues.map((c) => `<li style="margin-bottom:2pt;break-inside:avoid">${escapeHtml(c)}</li>`).join('')}</ol>`;
+  // Names across the top, one row per category: three short rows fit the page better than one row per person.
+  const answerTable = `<table><tr><th style="${headStyle}"></th>${people.items.map((person) => `<th style="${headStyle}">${escapeHtml(person)}</th>`).join('')}</tr>${p.categories
+    .slice(1)
+    .map((c) => `<tr><th style="${headStyle};text-align:left">${escapeHtml(c.name)}</th>${people.items.map(() => `<td style="${headStyle};min-width:96px;height:30px"></td>`).join('')}</tr>`)
+    .join('')}</table>`;
   const answerHead = `<tr>${p.categories.map((c) => `<th style="${headStyle}">${escapeHtml(c.name)}</th>`).join('')}</tr>`;
   const answerRows = people.items
     .map((_, person) => `<tr>${p.categories.map((c, ci) => `<td style="${headStyle}">${escapeHtml(c.items[p.solution[ci][person]])}</td>`).join('')}</tr>`)
     .join('');
   return renderSheet({
+    code,
     title: `Logic Grid: ${p.title}`,
     subtitle: `${p.intro} Use the clues. Mark ✗ for "no" and ● for "yes".`,
-    puzzleHtml: `<h2>Clues</h2>${clues}<h2>Grid</h2>${grid}`,
+    css: '.logic h2 { margin: 8pt 0 4pt; }',
+    puzzleHtml: `<div class="logic"><h2>Clues</h2>${clues}<h2>Work it out</h2>${grid}<h2>My answers</h2>${answerTable}</div>`,
     answerHtml: `<table>${answerHead}${answerRows}</table>`,
   });
 }
@@ -128,9 +137,10 @@ function pyramidHtml(rows: (number | null)[][], cellW: number): string {
   return lines.join('');
 }
 
-export function pyramidSheet(p: PyramidPuzzle): string {
+export function pyramidSheet(p: PyramidPuzzle, code?: string): string {
   const cellW = p.rows[0].length >= 6 ? 84 : 96;
   return renderSheet({
+    code,
     title: 'Number Pyramid',
     subtitle: 'Each brick is the sum of the two bricks directly below it. Fill in every empty brick.',
     puzzleHtml: pyramidHtml(p.shown, cellW),
@@ -138,7 +148,7 @@ export function pyramidSheet(p: PyramidPuzzle): string {
   });
 }
 
-export function magicSquareSheet(p: MagicSquarePuzzle): string {
+export function magicSquareSheet(p: MagicSquarePuzzle, code?: string): string {
   const last = p.start + p.size * p.size - 1;
   const table = (values: number[], cell: number) =>
     `<table class="grid">${Array.from({ length: p.size }, (_, r) => `<tr>${values
@@ -146,6 +156,7 @@ export function magicSquareSheet(p: MagicSquarePuzzle): string {
       .map((v) => `<td style="width:${cell}px;height:${cell}px;font-size:${Math.round(cell * 0.4)}px">${v || ''}</td>`)
       .join('')}</tr>`).join('')}</table>`;
   return renderSheet({
+    code,
     title: `Magic Square ${p.size}×${p.size}`,
     subtitle: `Use each number from ${p.start} to ${last} exactly once. Every row, column and both diagonals must add up to ${p.magicSum}.`,
     css: GRID_CSS,
