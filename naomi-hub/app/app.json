@@ -2,6 +2,7 @@
   "expo": {
     "name": "Numi's Super App",
     "slug": "naomi-hub",
+    "owner": "fjclausen",
     "version": "1.0.0",
     "orientation": "default",
     "icon": "./assets/icon.png",
@@ -33,6 +34,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f68ff8c9-01d7-4441-b7c5-b8d32c39ef5d"
+      }
     }
   }
 }
