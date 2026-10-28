@@ -92,7 +92,7 @@ jobs:
         run: |
           if [ -n "$ASC_API_KEY_P8" ] && [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ]; then
             KEY="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
-            printf '%s\n' "$ASC_API_KEY_P8" > "$KEY"
+            bash ../scripts/ci-asc-key.sh "$KEY"
             {
               echo "EXPO_ASC_API_KEY_PATH=$KEY"
               echo "EXPO_ASC_KEY_ID=$ASC_KEY_ID"
@@ -117,7 +117,7 @@ jobs:
         env:
           CI: 'false'
         run: |
-          ( while sleep 3; do printf '\r'; done ) | timeout 600 \
+          ( while sleep 3; do printf '\r' 2>/dev/null || exit 0; done ) | timeout 600 \
             script -qefc "eas credentials:configure-build --platform ios --profile production" /dev/null
 
       - name: Build (and submit to TestFlight)
