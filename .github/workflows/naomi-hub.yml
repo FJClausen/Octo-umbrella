@@ -107,6 +107,19 @@ jobs:
             echo "::notice::No ASC_API_KEY_P8/ASC_KEY_ID/ASC_ISSUER_ID secrets; EAS will use credentials already stored on expo.dev."
           fi
 
+      # EAS will not attach a distribution certificate or create a provisioning
+      # profile in non-interactive mode. Run its interactive setup in a pseudo-
+      # terminal and press Enter at every prompt, which takes the defaults
+      # (reuse the team's existing certificate, generate the profile with the
+      # ASC key). Once credentials exist this only validates them.
+      - name: Set up iOS signing
+        if: steps.gate.outputs.ready == 'true'
+        env:
+          CI: 'false'
+        run: |
+          ( while sleep 3; do printf '\r'; done ) | timeout 600 \
+            script -qefc "eas credentials:configure-build --platform ios --profile production" /dev/null
+
       - name: Build (and submit to TestFlight)
         if: steps.gate.outputs.ready == 'true'
         run: |
