@@ -2,6 +2,7 @@ import { pieceGlyph } from '../chess/glyphs';
 import { solutionSan, startPosition } from '../chess/game';
 import type { ChessPuzzle } from '../chess/types';
 import { THEME_LABELS } from '../chess/rating';
+import type { CheckSpec } from '../check/types';
 import { escapeHtml, renderSheet } from './html';
 
 const FILES = 'abcdefgh';
@@ -37,7 +38,7 @@ function label(p: ChessPuzzle): string {
 }
 
 /** Up to six diagrams, three per row. Page 2 has the solutions. */
-export function chessSheet(puzzles: ChessPuzzle[]): string {
+export function chessSheet(puzzles: ChessPuzzle[], code?: string): string {
   const six = puzzles.slice(0, 6);
   const cells = six
     .map((p, i) => {
@@ -53,9 +54,22 @@ ${diagram(p, 22)}
     .map((p) => `<li style="margin-bottom:6pt">${escapeHtml(solutionSan(p, false))} <span class="small">(rating ${p.rating})</span></li>`)
     .join('')}</ol>`;
   return renderSheet({
+    code,
     title: 'Chess Puzzle Sheet',
     subtitle: 'Find the best move for the side to move. Write your answer under each board.',
     puzzleHtml: cells,
     answerHtml: answers,
   });
+}
+
+/** Check data for a printed chess sheet: the position she sees and the first winning move. */
+export function chessCheckSpec(puzzles: ChessPuzzle[]): CheckSpec {
+  return {
+    type: 'chess',
+    puzzles: puzzles.slice(0, 6).map((p) => ({
+      fen: startPosition(p).fen(),
+      solution: p.moves[1],
+      mateInOne: p.moves.length === 2 && p.themes.includes('mateIn1'),
+    })),
+  };
 }

@@ -34,6 +34,12 @@ jobs:
       - run: npx vitest run
       - name: Bundle check
         run: npx expo export --platform ios --output-dir "$RUNNER_TEMP/export"
+      - name: API tests
+        working-directory: naomi-hub/api
+        run: |
+          npm ci
+          npx tsc --noEmit
+          npx vitest run
 
   # Push to main (or a manual run on main) builds on EAS and submits to TestFlight.
   build:
@@ -48,6 +54,8 @@ jobs:
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       APPLE_TEAM_TYPE: ${{ secrets.APPLE_TEAM_TYPE }}
+      NAOMI_API_URL: ${{ secrets.NAOMI_API_URL }}
+      NAOMI_APP_SECRET: ${{ secrets.NAOMI_APP_SECRET }}
     steps:
       - name: Check EXPO_TOKEN
         id: gate
@@ -105,6 +113,18 @@ jobs:
               eas.json > eas.tmp && mv eas.tmp eas.json
           else
             echo "::notice::No ASC_API_KEY_P8/ASC_KEY_ID/ASC_ISSUER_ID secrets; EAS will use credentials already stored on expo.dev."
+          fi
+
+      # The app reads these at build time (EXPO_PUBLIC_*), so they live in the
+      # EAS "production" environment that the cloud build uses.
+      - name: App config for the build
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          if [ -n "$NAOMI_API_URL" ] && [ -n "$NAOMI_APP_SECRET" ]; then
+            eas env:set production --name EXPO_PUBLIC_API_URL --value "$NAOMI_API_URL" --visibility plaintext --non-interactive
+            eas env:set production --name EXPO_PUBLIC_APP_SECRET --value "$NAOMI_APP_SECRET" --visibility sensitive --non-interactive
+          else
+            echo "::warning::NAOMI_API_URL / NAOMI_APP_SECRET secrets are not set; photo checks will fall back to parent approval."
           fi
 
       # EAS will not attach a distribution certificate or create a provisioning

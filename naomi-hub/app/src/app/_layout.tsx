@@ -20,6 +20,8 @@ export default function RootLayout() {
         <Stack.Screen name="puzzles" options={{ title: 'Puzzle Printer' }} />
         <Stack.Screen name="chess/index" options={{ title: 'Chess Puzzles' }} />
         <Stack.Screen name="chess/play" options={{ title: 'Chess round' }} />
+        <Stack.Screen name="sheets" options={{ title: 'My sheets' }} />
+        <Stack.Screen name="check/[id]" options={{ title: 'Check my answers' }} />
       </Stack>
     </>
   );

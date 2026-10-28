@@ -2,10 +2,12 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PinPad } from '../components/PinPad';
-import { Body, Button, H1, H2 } from '../components/ui';
+import { Body, Button, Chip, H1, H2 } from '../components/ui';
 import { checkPin, hasPin, isUnlocked, lock, markUnlocked, setPin } from '../store/pin';
 import { loadPrinter, type PrinterSettings } from '../store/printer';
 import { loadPoints, type PointsState } from '../store/points';
+import { earnTickets, loadTickets, loadTicketSettings, saveTicketSettings } from '../store/tickets';
+import { DEFAULT_SETTINGS, type TicketSettings } from '../tickets/rules';
 import { colors } from '../theme';
 
 type Mode = 'loading' | 'create' | 'confirm' | 'enter' | 'menu' | 'change' | 'change-confirm';
@@ -16,12 +18,16 @@ export default function Parent() {
   const [error, setError] = useState<string | null>(null);
   const [printer, setPrinter] = useState<PrinterSettings>({ name: null, url: null });
   const [points, setPoints] = useState<PointsState>({ total: 0, log: [] });
+  const [tickets, setTickets] = useState(0);
+  const [ticketSettings, setTicketSettings] = useState<TicketSettings>(DEFAULT_SETTINGS);
 
   useFocusEffect(
     useCallback(() => {
       hasPin().then((exists) => setMode(!exists ? 'create' : isUnlocked() ? 'menu' : 'enter'));
       loadPrinter().then(setPrinter);
       loadPoints().then(setPoints);
+      loadTickets().then((t) => setTickets(t.balance));
+      loadTicketSettings().then(setTicketSettings);
     }, []),
   );
 
@@ -45,6 +51,12 @@ export default function Parent() {
         setMode('menu');
       } else setError('Wrong PIN.');
     }
+  };
+
+  const updateTickets = async (patch: Partial<TicketSettings>) => {
+    const next = { ...ticketSettings, ...patch };
+    setTicketSettings(next);
+    await saveTicketSettings(next);
   };
 
   if (mode === 'loading') return <View style={styles.screen} />;
@@ -75,6 +87,37 @@ export default function Parent() {
         <Button label="Printer setup" onPress={() => router.push('/printer')} />
       </View>
 
+      <H2>Screen tickets</H2>
+      <Body>
+        {ticketSettings.enabled
+          ? `Naomi has ${tickets} 🎟. Printed sheets she checks by photo earn tickets; chess on the iPad costs ${ticketSettings.chessCost}.`
+          : 'Tickets are off: everything on the iPad is free until you turn them back on.'}
+      </Body>
+      <View style={styles.row}>
+        <Button
+          label="Give 1 ticket"
+          onPress={async () => setTickets((await earnTickets(1)).state.balance)}
+          disabled={!ticketSettings.enabled}
+        />
+        <Button
+          label={ticketSettings.enabled ? 'Turn tickets off (holiday / sick day)' : 'Turn tickets back on'}
+          kind="secondary"
+          onPress={() => updateTickets({ enabled: !ticketSettings.enabled })}
+        />
+      </View>
+      <Body muted>Free tickets each morning</Body>
+      <View style={styles.chips}>
+        {[0, 1, 2].map((n) => (
+          <Chip key={n} label={String(n)} selected={ticketSettings.dailyFree === n} onPress={() => updateTickets({ dailyFree: n })} />
+        ))}
+      </View>
+      <Body muted>Cost of a chess round on the iPad</Body>
+      <View style={styles.chips}>
+        {[0, 1, 2].map((n) => (
+          <Chip key={n} label={n === 0 ? 'Free' : `${n} 🎟`} selected={ticketSettings.chessCost === n} onPress={() => updateTickets({ chessCost: n })} />
+        ))}
+      </View>
+
       <H2>Points</H2>
       <Body>{points.total} points so far.</Body>
       {points.log.slice(0, 10).map((e, i) => (
@@ -103,6 +146,7 @@ export default function Parent() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.bg },
   center: { alignItems: 'center', justifyContent: 'center' },
-  row: { flexDirection: 'row', gap: 12, marginTop: 12 },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12, marginBottom: 12 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 6 },
   log: { fontSize: 15, color: colors.muted, marginTop: 4 },
 });

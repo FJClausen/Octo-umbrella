@@ -16,6 +16,8 @@ h2 { font-size: 18pt; margin: 14pt 0 6pt; }
 .name { font-size: 13pt; margin-bottom: 10pt; }
 .center { display: flex; flex-direction: column; align-items: center; }
 .small { font-size: 12pt; }
+.top { display: flex; justify-content: space-between; align-items: baseline; }
+.code { font-size: 14pt; font-weight: 700; border: 2px solid #000; padding: 2pt 6pt; letter-spacing: 2pt; }
 table { border-collapse: collapse; }
 `;
 
@@ -25,6 +27,8 @@ export interface Sheet {
   puzzleHtml: string;
   answerHtml: string;
   css?: string;
+  /** Printed on page 1 only, so a photo of the answer key can't pass as her work. */
+  code?: string;
 }
 
 /** Page 1: puzzle. Page 2: answer key. */
@@ -34,7 +38,7 @@ export function renderSheet(sheet: Sheet): string {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>${BASE_CSS}${sheet.css ?? ''}</style></head><body>
 <section class="page">
-  <div class="name">Name: ______________________ &nbsp; Date: ____________</div>
+  <div class="top"><div class="name">Name: ______________________ &nbsp; Date: ____________</div>${sheet.code ? `<div class="code">Sheet ${escapeHtml(sheet.code)}</div>` : ''}</div>
   <h1>${escapeHtml(sheet.title)}</h1>${sub}
   ${sheet.puzzleHtml}
 </section>
