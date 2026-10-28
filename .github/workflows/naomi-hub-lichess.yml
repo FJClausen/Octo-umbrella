@@ -1,0 +1,46 @@
+name: Naomi Hub – import Lichess puzzles
+
+# Run from the Actions tab. Downloads the Lichess puzzle database (CC0),
+# rebuilds naomi-hub/content/puzzles.json, verifies every puzzle with the
+# chess tests, and commits the result to the branch it ran on.
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Number of puzzles'
+        default: '3000'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: naomi-hub/app/package-lock.json
+      - name: Import
+        working-directory: naomi-hub
+        run: node scripts/lichess-import.ts --target "${{ inputs.target }}"
+      - name: Verify puzzles
+        working-directory: naomi-hub/app
+        run: |
+          npm ci
+          npx vitest run src/chess
+      - name: Commit
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add naomi-hub/content/puzzles.json
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git commit -m "naomi-hub: import Lichess puzzles"
+            git push
+          fi
