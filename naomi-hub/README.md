@@ -61,3 +61,12 @@ Run **Actions → Naomi Hub – import Lichess puzzles** once. It replaces the 6
 ```bash
 cd app && npm ci && npm test
 ```
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| Build job fails with `PLA Update available` / Apple 403 | Apple updated the Program License Agreement | Account holder signs in at developer.apple.com/account and accepts it (and any agreement banner in App Store Connect), then re-run the workflow |
+| TestFlight says it isn't available for this account | TestFlight needs an Apple ID aged 13+ | On the iPad: Settings → Naomi → Media & Purchases → sign in with the parent's Apple ID (the one in the TestFlight tester group). iCloud and Screen Time stay on Naomi's account |
+| Build is in App Store Connect but not in TestFlight on the iPad | Not a tester, or a different Apple ID | App Store Connect → TestFlight → Internal Testing → add yourself to the group; the App Store account on the iPad must be that tester |
+| App crashes immediately at launch | Usually a native module that doesn't match the Expo SDK | Run **Actions → Naomi Hub – simulator smoke test**: it launches a Release build on an iPad simulator and attaches the crash report. CI's `expo install --check` step blocks most mismatches before a build |
