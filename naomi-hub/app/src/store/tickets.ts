@@ -1,12 +1,14 @@
-import { DEFAULT_SETTINGS, earn, rollDay, spend, type TicketSettings, type TicketState } from '../tickets/rules';
+import { DEFAULT_SETTINGS, earn, rollDay, spend, TICKETS_ENABLED, type TicketSettings, type TicketState } from '../tickets/rules';
 import { todayKey } from './chessProgress';
 import { loadJson, saveJson } from './storage';
 
 const STATE_KEY = 'tickets-v1';
 const SETTINGS_KEY = 'ticket-settings-v1';
 
+/** Saved settings; the gate always reads as off while TICKETS_ENABLED is false. */
 export async function loadTicketSettings(): Promise<TicketSettings> {
-  return loadJson(SETTINGS_KEY, DEFAULT_SETTINGS);
+  const s = await loadJson(SETTINGS_KEY, DEFAULT_SETTINGS);
+  return TICKETS_ENABLED ? s : { ...s, enabled: false };
 }
 
 export async function saveTicketSettings(s: TicketSettings): Promise<void> {
@@ -23,6 +25,7 @@ export async function loadTickets(): Promise<TicketState> {
 }
 
 export async function earnTickets(n: number): Promise<{ state: TicketState; added: number }> {
+  if (!TICKETS_ENABLED) return { state: await loadTickets(), added: 0 };
   const result = earn(await loadTickets(), await loadTicketSettings(), n);
   await saveJson(STATE_KEY, result.state);
   return result;

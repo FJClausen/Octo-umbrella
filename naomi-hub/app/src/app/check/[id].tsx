@@ -11,6 +11,7 @@ import type { CheckResult, SheetRecord } from '../../check/types';
 import { checkPin, hasPin } from '../../store/pin';
 import { getSheet, updateSheet } from '../../store/sheets';
 import { apiConfigured } from '../../config';
+import { TICKETS_ENABLED } from '../../tickets/rules';
 import { colors } from '../../theme';
 
 type Phase =
@@ -171,7 +172,7 @@ export default function CheckSheet() {
           <Text style={styles.big}>🎉</Text>
           <Text style={styles.title}>{phase.how === 'photo' ? 'All correct!' : 'Approved!'}</Text>
           <Body>
-            {phase.tickets > 0 ? `+${phase.tickets} 🎟 screen ticket${phase.tickets === 1 ? '' : 's'} · ` : 'Ticket wallet is full · '}+{phase.points} points
+            {TICKETS_ENABLED ? (phase.tickets > 0 ? `+${phase.tickets} 🎟 screen ticket${phase.tickets === 1 ? '' : 's'} · ` : 'Ticket wallet is full · ') : ''}+{phase.points} points
           </Body>
           <View style={styles.row}>
             <Button label="Back to the hub" onPress={() => router.dismissAll()} />

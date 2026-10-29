@@ -53,7 +53,7 @@ Routes so far: `POST /api/read-sheet` (photo → transcription JSON, Claude visi
 
 ## Rewards
 
-**Screen tickets (gate):** every on-screen activity costs tickets; off-screen work earns them. A checked printed sheet earns 1 (Brain-buster: 2). One free ticket each morning, at most 1 carried over, wallet capped at 3. Chess rounds and the daily puzzle cost 1 (Geography Quiz, speaking partner and field-guide browsing will too). Parent area: give a ticket, turn the gate off (holidays, sick days), set the daily free count and chess cost. Rules live in `app/src/tickets/rules.ts`.
+**Screen tickets (gate):** ⏸ paused (`TICKETS_ENABLED = false` in `app/src/tickets/rules.ts`) until more activities exist; points still count. When on: every on-screen activity costs tickets; off-screen work earns them. A checked printed sheet earns 1 (Brain-buster: 2). One free ticket each morning, at most 1 carried over, wallet capped at 3. Chess rounds and the daily puzzle cost 1 (Geography Quiz, speaking partner and field-guide browsing will too). Parent area: give a ticket, turn the gate off (holidays, sick days), set the daily free count and chess cost. Rules live in `app/src/tickets/rules.ts`.
 
 **Photo answer checks:** each printed sheet carries a 4-character code on page 1 only (never on the answer key). She photographs the finished page; `/api/read-sheet` has Claude transcribe what is written (it never judges correctness), and the app compares the transcription with the stored solution (`app/src/check/compare.ts`). Wrong sheet, answer-key page, missing code, unreadable or empty cells each get a kid-friendly retry message. Chess sheets pass at 4 of 6. No network or no API configured: a parent approves with the PIN.
 
@@ -62,13 +62,13 @@ Points: Expedition 50, backyard 30, desk or house 20, iPad 10, Misión bonus +10
 ## Build order
 
 1. **Foundations**: Expo app scaffold, `eas.json`, GitHub Actions → EAS build, home hub, parent PIN, printer setup screen. ✅
-2. **Printer + Chess**: puzzle generators with tests, HTML print templates, Lichess import script, chess UI, basic points. **First TestFlight release.** ✅ code done; Kakuro and the Claude-backed word puzzles (crossword, word search) are still to do. First EAS build not yet run.
+2. **Printer + Chess**: puzzle generators with tests, HTML print templates, Lichess import script, chess UI, basic points. **First TestFlight release.** ✅ code done; Kakuro and the Claude-backed word puzzles (crossword, word search) are still to do. Shipping to TestFlight.
 3. Vercel routes + Supabase schema/migrations + sync + `/api/generate`. ✅ started: screen tickets, photo answer checks and `/api/read-sheet`.
 4. Art Studio + `/api/feedback` + gallery.
-5. Animal Detective.
+5. Animal Detective. ✅ (offline: 40 curated DC backyard species, seasonal missions at named yard spots, 5/10/15-minute sits, squirrel roster, printable field notes; species-ID-by-photo still to do)
 6. Language Lab.
 7. Geo Quest + `/spots` parent page.
-8. Math in the Wild, Inventor's Challenge, Geography Quiz.
+8. Math in the Wild, Inventor's Challenge, Geography Quiz. ✅ (shipped early as Batch A, offline; geography data from Natural Earth via `scripts/build-geo.ts`)
 9. Full rewards layer.
 
 ## Repo layout

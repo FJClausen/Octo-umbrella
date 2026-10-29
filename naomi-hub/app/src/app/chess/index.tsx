@@ -11,7 +11,7 @@ import { chessCheckSpec, chessSheet } from '../../print/chessSheet';
 import { loadChess, todayKey, type ChessProgress } from '../../store/chessProgress';
 import { printHtml } from '../../store/printer';
 import { loadTickets, loadTicketSettings, spendTickets } from '../../store/tickets';
-import { canAfford, DEFAULT_SETTINGS, type TicketSettings, type TicketState } from '../../tickets/rules';
+import { canAfford, DEFAULT_SETTINGS, TICKETS_ENABLED, type TicketSettings, type TicketState } from '../../tickets/rules';
 import { colors } from '../../theme';
 
 export default function ChessHome() {
@@ -107,7 +107,7 @@ export default function ChessHome() {
 
       <View style={styles.row}>
         <Button big label={`Start a ${ROUND_SIZE}-puzzle round${costLabel}`} disabled={!affordable} onPress={() => play({ mode: 'round', theme })} />
-        <Button big kind="secondary" label="🖨  Print 6 puzzles (earn 1 🎟)" onPress={printSheet} />
+        <Button big kind="secondary" label={TICKETS_ENABLED ? '🖨  Print 6 puzzles (earn 1 🎟)' : '🖨  Print 6 puzzles'} onPress={printSheet} />
       </View>
 
       {sheetOut ? (

@@ -2,7 +2,9 @@
 
 iPad app (Expo, SDK 58) that hands Naomi activities which end away from the screen. Spec and conventions: [CLAUDE.md](CLAUDE.md).
 
-Milestones 1–2 are in place: the hub, parent PIN, printer setup, Puzzle Printer (Sudoku 6×6/9×9, KenKen, logic grid, number pyramid, magic square) and Chess Puzzles. On top of that, screen tickets: playing chess on the iPad costs a ticket, and solving a printed sheet (checked by photo) earns one.
+Milestones 1–2 are in place: the hub, parent PIN, printer setup, Puzzle Printer (Sudoku 6×6/9×9, KenKen, logic grid, number pyramid, magic square) and Chess Puzzles. Batch A adds Math in the Wild, Inventor's Challenge, Geography Quiz (world, regions and US states; English, German or Spanish names) and Animal Detective. Screen tickets are built but paused (`TICKETS_ENABLED` in `app/src/tickets/rules.ts`).
+
+Regenerate the geography data (Natural Earth, public domain) with `node scripts/build-geo.ts`.
 
 ## First TestFlight build (no Mac needed)
 
