@@ -30,9 +30,11 @@ jobs:
           cache: npm
           cache-dependency-path: naomi-hub/app/package-lock.json
       - run: npm ci
-      # Native modules must match the Expo SDK exactly; a mismatch builds fine but crashes at launch.
+      # Native modules must match the Expo SDK; a mismatch builds fine but crashes at launch.
+      # EXPO_OFFLINE checks against the version list inside the installed expo package, so the
+      # result depends only on the lockfile (the online list can change overnight).
       - name: Expo package versions
-        run: npx expo install --check
+        run: EXPO_OFFLINE=1 npx expo install --check
       - run: npx tsc --noEmit
       - run: npx vitest run
       - name: Bundle check
