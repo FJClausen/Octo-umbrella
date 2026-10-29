@@ -34,7 +34,7 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "Take a photo of a finished puzzle sheet so the app can check the answers.",
+          "cameraPermission": "Take photos of finished puzzle sheets to check the answers, and of inventions and backyard animals for the gallery and field log.",
           "photosPermission": false,
           "microphonePermission": false
         }

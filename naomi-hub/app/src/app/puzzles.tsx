@@ -8,7 +8,7 @@ import { buildSheet, type Kind } from '../print/buildSheet';
 import type { Difficulty } from '../puzzles';
 import { printHtml } from '../store/printer';
 import { loadSheets, openSheets } from '../store/sheets';
-import { sheetReward } from '../tickets/rules';
+import { sheetReward, TICKETS_ENABLED } from '../tickets/rules';
 import { colors } from '../theme';
 
 const KINDS: { id: Kind; label: string; about: string }[] = [
@@ -64,8 +64,8 @@ export default function PuzzlePrinter() {
     <ScrollView style={styles.screen} contentContainerStyle={{ padding: 28 }}>
       <H1>Puzzle Printer</H1>
       <Body muted>
-        Every puzzle is brand new and has exactly one answer. Solve it on paper, then take a photo to earn {reward} 🎟 screen
-        ticket{reward === 1 ? '' : 's'}. The answer key prints on page 2. No peeking!
+        Every puzzle is brand new and has exactly one answer. Solve it on paper, then check it
+        {TICKETS_ENABLED ? ` to earn ${reward} 🎟 screen ticket${reward === 1 ? '' : 's'}` : ' for points'}. The answer key prints on page 2. No peeking!
       </Body>
 
       <H2>Puzzle</H2>
@@ -79,7 +79,7 @@ export default function PuzzlePrinter() {
       <H2>Level</H2>
       <View style={styles.wrap}>
         {LEVELS.map((l) => (
-          <Chip key={l.id} label={l.id === 'hard' ? `${l.label} (2 🎟)` : l.label} selected={level === l.id} onPress={() => setLevel(l.id)} />
+          <Chip key={l.id} label={TICKETS_ENABLED && l.id === 'hard' ? `${l.label} (2 🎟)` : l.label} selected={level === l.id} onPress={() => setLevel(l.id)} />
         ))}
       </View>
 

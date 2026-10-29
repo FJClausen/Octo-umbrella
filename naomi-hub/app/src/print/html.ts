@@ -27,6 +27,8 @@ export interface Sheet {
   puzzleHtml: string;
   answerHtml: string;
   css?: string;
+  /** Page 2 heading; defaults to "Answer key: <title>". */
+  page2Title?: string;
   /** Printed on page 1 only, so a photo of the answer key can't pass as her work. */
   code?: string;
 }
@@ -43,7 +45,7 @@ export function renderSheet(sheet: Sheet): string {
   ${sheet.puzzleHtml}
 </section>
 <section class="page">
-  <h1>Answer key: ${escapeHtml(sheet.title)}</h1>
+  <h1>${escapeHtml(sheet.page2Title ?? `Answer key: ${sheet.title}`)}</h1>
   ${sheet.answerHtml}
 </section>
 </body></html>`;

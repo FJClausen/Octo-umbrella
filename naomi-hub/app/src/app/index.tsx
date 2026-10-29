@@ -4,6 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, Vi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ACTIVITIES, type Activity } from '../activities';
 import { TicketBadge } from '../components/Tickets';
+import { TICKETS_ENABLED } from '../tickets/rules';
 import { loadPoints, todayPoints, type PointsState } from '../store/points';
 import { loadSheets, openSheets } from '../store/sheets';
 import { loadTickets, loadTicketSettings } from '../store/tickets';
@@ -42,7 +43,7 @@ export default function Hub() {
           <Text style={styles.hello}>Hi Naomi!</Text>
           <Text style={styles.sub}>Pick something to do. Every activity ends away from the iPad.</Text>
         </View>
-        <TicketBadge count={tickets} gateOn={gateOn} />
+        {TICKETS_ENABLED ? <TicketBadge count={tickets} gateOn={gateOn} /> : null}
         <View style={styles.points} accessibilityLabel={`${points.total} points`}>
           <Text style={styles.pointsNum}>{points.total}</Text>
           <Text style={styles.pointsLabel}>points · +{todayPoints(points)} today</Text>
@@ -55,7 +56,7 @@ export default function Hub() {
       {toCheck > 0 ? (
         <Pressable accessibilityRole="button" onPress={() => router.push('/sheets')} style={styles.banner}>
           <Text style={styles.bannerText}>
-            📷 {toCheck} sheet{toCheck === 1 ? '' : 's'} waiting to be checked. Finish {toCheck === 1 ? 'it' : 'them'} to earn screen tickets!
+            📷 {toCheck} sheet{toCheck === 1 ? '' : 's'} waiting to be checked.{TICKETS_ENABLED ? ` Finish ${toCheck === 1 ? 'it' : 'them'} to earn screen tickets!` : ''}
           </Text>
         </Pressable>
       ) : null}

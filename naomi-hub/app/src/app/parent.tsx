@@ -7,7 +7,7 @@ import { checkPin, hasPin, isUnlocked, lock, markUnlocked, setPin } from '../sto
 import { loadPrinter, type PrinterSettings } from '../store/printer';
 import { loadPoints, type PointsState } from '../store/points';
 import { earnTickets, loadTickets, loadTicketSettings, saveTicketSettings } from '../store/tickets';
-import { DEFAULT_SETTINGS, type TicketSettings } from '../tickets/rules';
+import { DEFAULT_SETTINGS, TICKETS_ENABLED, type TicketSettings } from '../tickets/rules';
 import { colors } from '../theme';
 
 type Mode = 'loading' | 'create' | 'confirm' | 'enter' | 'menu' | 'change' | 'change-confirm';
@@ -87,6 +87,8 @@ export default function Parent() {
         <Button label="Printer setup" onPress={() => router.push('/printer')} />
       </View>
 
+      {TICKETS_ENABLED ? (
+        <>
       <H2>Screen tickets</H2>
       <Body>
         {ticketSettings.enabled
@@ -117,6 +119,9 @@ export default function Parent() {
           <Chip key={n} label={n === 0 ? 'Free' : `${n} 🎟`} selected={ticketSettings.chessCost === n} onPress={() => updateTickets({ chessCost: n })} />
         ))}
       </View>
+
+        </>
+      ) : null}
 
       <H2>Points</H2>
       <Body>{points.total} points so far.</Body>

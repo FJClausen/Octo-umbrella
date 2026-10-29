@@ -1,3 +1,9 @@
+/**
+ * Master switch for the whole ticket system. Off while the activity set is still
+ * being built out: no badge, no costs, no earning. Turn back on to restore it as is.
+ */
+export const TICKETS_ENABLED = false;
+
 export interface TicketSettings {
   /** Off = every on-screen activity is free (holidays, sick days). */
   enabled: boolean;
