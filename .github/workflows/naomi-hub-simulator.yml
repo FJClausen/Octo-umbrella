@@ -1,13 +1,15 @@
 name: Naomi Hub – simulator smoke test
 
 # Builds a Release simulator app on EAS, launches it on an iPad simulator and
-# keeps the crash report, JS log and a screenshot as artifacts. Used to debug
-# launch crashes without a device.
+# keeps the crash report, JS log and a screenshot as artifacts. Runs whenever
+# native dependencies or app config change, and fails if the app doesn't stay up.
 on:
   workflow_dispatch:
   push:
     paths:
       - '.github/workflows/naomi-hub-simulator.yml'
+      - 'naomi-hub/app/package-lock.json'
+      - 'naomi-hub/app/app.json'
 
 jobs:
   build:
@@ -69,12 +71,13 @@ jobs:
           xcrun simctl io "$UDID" screenshot out/screen.png || true
           kill %1 || true
           echo "--- running? ---"
-          xcrun simctl spawn "$UDID" launchctl list | grep -i naomihub || echo "NOT RUNNING (crashed or exited)"
+          if xcrun simctl spawn "$UDID" launchctl list | grep -i naomihub; then RUNNING=1; else RUNNING=0; echo "NOT RUNNING (crashed or exited)"; fi
           echo "--- crash reports ---"
           find ~/Library/Logs/DiagnosticReports -name "*.ips" -newer app.tar.gz -print -exec cp {} out/ \; || true
           for f in out/*.ips; do [ -f "$f" ] && head -c 6000 "$f"; echo; done
           echo "--- JS / app log (errors) ---"
           grep -iE "error|exception|fatal|unhandled|invariant" out/app.log | head -80 || true
+          [ "$RUNNING" = 1 ] || exit 1
       - uses: actions/upload-artifact@v4
         if: always()
         with:
