@@ -1,0 +1,82 @@
+name: Naomi Hub – simulator smoke test
+
+# Builds a Release simulator app on EAS, launches it on an iPad simulator and
+# keeps the crash report, JS log and a screenshot as artifacts. Used to debug
+# launch crashes without a device.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/naomi-hub-simulator.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      url: ${{ steps.build.outputs.url }}
+    defaults:
+      run:
+        working-directory: naomi-hub/app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: naomi-hub/app/package-lock.json
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: npm ci
+      - name: EAS simulator build
+        id: build
+        run: |
+          set -o pipefail
+          eas build --platform ios --profile simulator --non-interactive --wait --json > build.json
+          jq '.[0] | {id, status, error}' build.json
+          echo "url=$(jq -r '.[0].artifacts.buildUrl' build.json)" >> "$GITHUB_OUTPUT"
+
+  run:
+    needs: build
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - name: Download app
+        run: |
+          curl -sSL "${{ needs.build.outputs.url }}" -o app.tar.gz
+          mkdir app && tar -xzf app.tar.gz -C app
+          APP=$(find app -maxdepth 2 -name '*.app' | head -1)
+          echo "APP=$APP" >> "$GITHUB_ENV"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist"
+          echo "EXE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist")" >> "$GITHUB_ENV"
+      - name: Boot an iPad simulator
+        run: |
+          UDID=$(xcrun simctl list devices available -j | jq -r '[.devices | to_entries[] | select(.key | test("iOS")) | .value[] | select(.name | test("iPad"))] | last | .udid')
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcrun simctl bootstatus "$UDID" -b
+      - name: Install and launch
+        run: |
+          mkdir -p out
+          xcrun simctl install "$UDID" "$APP"
+          xcrun simctl spawn "$UDID" log stream --style compact \
+            --predicate "process == \"$EXE\" OR subsystem == \"com.facebook.react.log\"" > out/app.log 2>&1 &
+          sleep 3
+          xcrun simctl launch "$UDID" com.fjclausen.naomihub || true
+          sleep 25
+          xcrun simctl io "$UDID" screenshot out/screen.png || true
+          kill %1 || true
+          echo "--- running? ---"
+          xcrun simctl spawn "$UDID" launchctl list | grep -i naomihub || echo "NOT RUNNING (crashed or exited)"
+          echo "--- crash reports ---"
+          find ~/Library/Logs/DiagnosticReports -name "*.ips" -newer app.tar.gz -print -exec cp {} out/ \; || true
+          for f in out/*.ips; do [ -f "$f" ] && head -c 6000 "$f"; echo; done
+          echo "--- JS / app log (errors) ---"
+          grep -iE "error|exception|fatal|unhandled|invariant" out/app.log | head -80 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: simulator-run
+          path: out/

@@ -16,6 +16,13 @@
       "ios": {
         "image": "latest"
       }
+    },
+    "simulator": {
+      "ios": {
+        "simulator": true,
+        "buildConfiguration": "Release",
+        "image": "latest"
+      }
     }
   },
   "submit": {
