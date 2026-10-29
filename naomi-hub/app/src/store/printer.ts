@@ -1,4 +1,6 @@
 import * as Print from 'expo-print';
+import { splitSheet } from '../print/html';
+import { addAnswerKey } from './answerKeys';
 import { loadJson, saveJson } from './storage';
 
 export interface PrinterSettings {
@@ -27,14 +29,14 @@ export async function forgetPrinter(): Promise<void> {
 
 /**
  * One-tap print. With a saved printer URL iOS prints straight away with no dialog;
- * without one it falls back to the system print sheet.
+ * without one it falls back to the system print sheet. The answer key never prints:
+ * it is kept in the app (parent area → Answer keys).
  */
-export async function printHtml(html: string): Promise<'direct' | 'dialog'> {
+export async function printHtml(html: string, opts: { keepAnswerKey?: boolean } = {}): Promise<'direct' | 'dialog'> {
+  const { print, answers, title } = splitSheet(html);
   const { url } = await loadPrinter();
-  if (url) {
-    await Print.printAsync({ html, printerUrl: url });
-    return 'direct';
-  }
-  await Print.printAsync({ html });
-  return 'dialog';
+  if (url) await Print.printAsync({ html: print, printerUrl: url });
+  else await Print.printAsync({ html: print });
+  if (answers && opts.keepAnswerKey !== false) await addAnswerKey(title, answers);
+  return url ? 'direct' : 'dialog';
 }

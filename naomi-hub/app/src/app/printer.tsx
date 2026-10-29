@@ -10,7 +10,7 @@ const TEST_PAGE = renderSheet({
   title: 'Printer test',
   subtitle: 'If you can read this, one-tap printing works.',
   puzzleHtml: '<p>Black and white only. This line is 14 point.</p>',
-  answerHtml: '<p>Page 2 is where answer keys go.</p>',
+  answerHtml: '<p>Answer keys stay in the app.</p>',
 });
 
 export default function PrinterSetup() {
@@ -56,7 +56,7 @@ export default function PrinterSetup() {
           label="Print test page"
           kind="secondary"
           disabled={busy}
-          onPress={() => run(async () => void (await printHtml(TEST_PAGE)))}
+          onPress={() => run(async () => void (await printHtml(TEST_PAGE, { keepAnswerKey: false })))}
         />
         {printer.name ? (
           <Button

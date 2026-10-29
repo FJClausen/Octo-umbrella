@@ -29,7 +29,9 @@ export interface Sheet {
   css?: string;
   /** Page 2 heading; defaults to "Answer key: <title>". */
   page2Title?: string;
-  /** Printed on page 1 only, so a photo of the answer key can't pass as her work. */
+  /** Page 2 is reference material (not solutions), so it prints too. Answer keys never print. */
+  printPage2?: boolean;
+  /** Printed on page 1 only, so a photo of the answer key can't pass as Naomi's work. */
   code?: string;
 }
 
@@ -44,9 +46,26 @@ export function renderSheet(sheet: Sheet): string {
   <h1>${escapeHtml(sheet.title)}</h1>${sub}
   ${sheet.puzzleHtml}
 </section>
-<section class="page">
+${sheet.printPage2 ? '' : ANSWERS_START}<section class="page">
   <h1>${escapeHtml(sheet.page2Title ?? `Answer key: ${sheet.title}`)}</h1>
   ${sheet.answerHtml}
-</section>
+</section>${sheet.printPage2 ? '' : ANSWERS_END}
 </body></html>`;
+}
+
+const ANSWERS_START = '<!--answers-->';
+const ANSWERS_END = '<!--/answers-->';
+
+/**
+ * Splits a rendered sheet into what goes to the printer (never the answer key) and the
+ * answer key on its own, for viewing in the app. `answers` is null when the sheet has none.
+ */
+export function splitSheet(html: string): { print: string; answers: string | null; title: string } {
+  const title = (html.match(/<h1>([^<]*)<\/h1>/)?.[1] ?? 'Sheet').replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+  const start = html.indexOf(ANSWERS_START);
+  const end = html.indexOf(ANSWERS_END);
+  if (start < 0 || end < start) return { print: html, answers: null, title };
+  const head = html.slice(0, html.indexOf('<body>') + '<body>'.length);
+  const answers = `${head.replace('</head>', '<style>body{padding:24px}</style></head>')}${html.slice(start + ANSWERS_START.length, end)}</body></html>`;
+  return { print: html.slice(0, start) + html.slice(end + ANSWERS_END.length), answers, title };
 }
