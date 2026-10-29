@@ -65,7 +65,7 @@ export default function PuzzlePrinter() {
       <H1>Puzzle Printer</H1>
       <Body muted>
         Every puzzle is brand new and has exactly one answer. Solve it on paper, then check it
-        {TICKETS_ENABLED ? ` to earn ${reward} 🎟 screen ticket${reward === 1 ? '' : 's'}` : ' for points'}. The answer key prints on page 2. No peeking!
+        {TICKETS_ENABLED ? ` to earn ${reward} 🎟 screen ticket${reward === 1 ? '' : 's'}` : ' for points'}. The answer key stays in the app for a parent.
       </Body>
 
       <H2>Puzzle</H2>

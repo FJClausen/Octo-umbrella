@@ -18,6 +18,7 @@ export default function MathMissionScreen() {
   const [run, setRun] = useState<MathRun | null>(null);
   const [inputs, setInputs] = useState<Record<string, string>>({});
   const [feedback, setFeedback] = useState<Feedback[] | null>(null);
+  const [showHints, setShowHints] = useState(false);
 
   useEffect(() => {
     if (!mission) return;
@@ -80,6 +81,15 @@ export default function MathMissionScreen() {
       <View style={styles.row}>
         <Button big label={run.printedAt ? '🖨  Print again' : '🖨  Print my sheet'} onPress={print} />
       </View>
+
+      {mission.hints.length ? (
+        <>
+          <View style={styles.row}>
+            <Button label={showHints ? 'Hide hints' : '💡  Need a hint?'} kind="secondary" onPress={() => setShowHints(!showHints)} />
+          </View>
+          {showHints ? mission.hints.map((h) => <Body key={h}>• {h}</Body>) : null}
+        </>
+      ) : null}
 
       <H2>My answers</H2>
       {needsPrint ? (

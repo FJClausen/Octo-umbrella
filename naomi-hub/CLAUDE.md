@@ -33,7 +33,7 @@ Routes so far: `POST /api/read-sheet` (photo → transcription JSON, Claude visi
 
 ## Activities (9)
 
-1. **Puzzle Printer**: code-generated Sudoku (6×6, 9×9), KenKen, Kakuro, logic grids, magic squares, number pyramids, each solver-verified to have exactly one solution. Claude supplies word lists, clues and word problems; code builds the crossword and word-search grids. Chess diagram sheet. Answer key on page 2.
+1. **Puzzle Printer**: code-generated Sudoku (6×6, 9×9), KenKen, Kakuro, logic grids, magic squares, number pyramids, each solver-verified to have exactly one solution. Claude supplies word lists, clues and word problems; code builds the crossword and word-search grids. Chess diagram sheet. Answer keys never print: `printHtml` strips them and keeps them in the app (parent PIN → Answer keys).
 2. **Geo Quest**: Backyard solo (riddle hints, find the object, draw it, Claude feedback). Neighborhood Expedition (parent PIN, spots from Supabase, 3 hints per spot, GPS geofence of about 25 m or a parent-confirm fallback). AirTag treasure mode (clues only; the app cannot read the AirTag).
 3. **Chess Puzzles**: about 3,000 puzzles from the Lichess puzzle DB (CC0), rated 400–1800, bundled as JSON. Her puzzle rating starts at 600 and adjusts with an Elo-style update. Themes, daily puzzle, 5-puzzle rounds. Use `chess.js` for move validation.
 4. **Language Lab**: German and Spanish reading and writing tasks; speaking partner (iOS speech recognition → `/api/talk` → iOS text-to-speech), 5-minute cap, corrections at the end; printable sheets.
@@ -86,7 +86,7 @@ Inside `/app/src`: `app/` routes only; `puzzles/` generators + solvers; `print/`
 ## Conventions
 
 - TypeScript strict. Unit tests (vitest) for every puzzle generator and solver.
-- Print templates: HTML + CSS, A4/Letter safe margins, black and white only, minimum 12 pt. `src/print/sheets.test.ts` enforces two pages, grayscale and ≥12 pt.
+- Print templates: HTML + CSS, A4/Letter safe margins, black and white only, minimum 12 pt. `renderSheet` builds page 1 (printed) and the answer key (in-app only, split off by `splitSheet`); only reference pages such as the field-notes ID guide set `printPage2`. `src/print/sheets.test.ts` and `batchA.test.ts` enforce a one-page printout with no answer key, grayscale and ≥12 pt.
 - Commit small; each milestone ends with an EAS build.
 - Expo SDK 58. Add native packages with `npx expo install <pkg>` (in a sandbox without api.expo.dev, prefix `EXPO_OFFLINE=1`). Never create `ios/` or `android/` by hand.
 - Generators take a seed (`makeRng`) so a sheet can be regenerated exactly.

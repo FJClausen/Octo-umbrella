@@ -5,6 +5,7 @@ import { setById } from '../geo/data';
 import { MISSIONS, variantFor } from '../math/missions';
 import { fieldNotesSheet } from './fieldNotesSheet';
 import { mapSheet } from './mapSheet';
+import { splitSheet } from './html';
 import { mathSheet } from './mathSheet';
 
 const sheets: Record<string, string> = {
@@ -21,8 +22,13 @@ for (const id of ['migration-watch', 'squirrel-census', 'secret-sit']) {
 
 describe('batch A print sheets', () => {
   for (const [name, html] of Object.entries(sheets)) {
-    it(`${name}: two pages`, () => {
-      expect(html.match(/<section class="page">/g) ?? []).toHaveLength(2);
+    it(`${name}: no answer key in the printout`, () => {
+      const { print, answers } = splitSheet(html);
+      const field = name.startsWith('field-');
+      expect(print.match(/<section class="page">/g) ?? []).toHaveLength(field ? 2 : 1);
+      expect(print).not.toContain('Answer key');
+      if (field) expect(answers).toBeNull();
+      else expect(answers).toContain('<section class="page">');
     });
 
     it(`${name}: black, white and gray only`, () => {
@@ -43,8 +49,10 @@ describe('batch A print sheets', () => {
 
   it('map sheet numbers 12 places and lists them on the key page', () => {
     const html = sheets['map-world'];
-    const key = html.slice(html.lastIndexOf('<section class="page">'));
-    expect(key.match(/<li/g)).toHaveLength(12);
+    const { print, answers } = splitSheet(html);
+    expect(answers!.match(/<li/g)).toHaveLength(12);
+    expect(print.match(/<li/g)).toHaveLength(12);
+    expect(print).not.toContain('Canberra');
   });
 
   it('field notes list the tally animals on both pages', () => {
@@ -52,5 +60,16 @@ describe('batch A print sheets', () => {
     expect(html).toContain('Red-tailed hawk');
     expect(html).toContain('ID guide: Migration watch');
     expect(html).not.toContain('Answer key');
+  });
+});
+
+describe('splitSheet', () => {
+  it('pulls the title and keeps the answer page as its own document', () => {
+    const { print, answers, title } = splitSheet(sheets['math-paver-patrol']);
+    expect(title).toBe('Paver Patrol');
+    expect(print.trim().endsWith('</html>')).toBe(true);
+    expect(answers!.startsWith('<!doctype html>')).toBe(true);
+    expect(answers).toContain('Hints and how to check');
+    expect(print).not.toContain('Hints and how to check');
   });
 });

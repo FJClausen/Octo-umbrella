@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { generateKenKen, generateLogicGrid, generateMagicSquare, generatePyramid, generateSudoku } from '../puzzles';
 import { PUZZLES_FOR_TEST } from './testPuzzles';
 import { chessSheet } from './chessSheet';
+import { splitSheet } from './html';
 import { kenkenSheet, logicGridSheet, magicSquareSheet, pyramidSheet, sudokuSheet } from './puzzleSheets';
 
 const sheets = {
@@ -16,10 +17,12 @@ const sheets = {
 
 describe('print sheets', () => {
   for (const [name, html] of Object.entries(sheets)) {
-    it(`${name}: two pages with the answer key second`, () => {
-      const pages = html.match(/<section class="page">/g) ?? [];
-      expect(pages).toHaveLength(2);
-      expect(html.indexOf('Answer key')).toBeGreaterThan(html.indexOf('<section class="page">'));
+    it(`${name}: prints one page; the answer key stays in the app`, () => {
+      const { print, answers } = splitSheet(html);
+      expect(print.match(/<section class="page">/g) ?? []).toHaveLength(1);
+      expect(print).not.toContain('Answer key');
+      expect(answers).toContain('Answer key');
+      expect(answers!.match(/<section class="page">/g) ?? []).toHaveLength(1);
     });
 
     it(`${name}: black, white and gray only`, () => {

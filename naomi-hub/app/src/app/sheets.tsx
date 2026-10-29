@@ -23,6 +23,10 @@ export default function Sheets() {
       <H1>My sheets</H1>
       <Body muted>Finish a printed sheet, then take a photo to earn screen tickets.</Body>
 
+      <View style={styles.row}>
+        <Button label="🔑  Answer keys (parent)" kind="secondary" onPress={() => router.push('/answers')} />
+      </View>
+
       <H2>To check</H2>
       {open.length === 0 ? (
         <View style={styles.row}>

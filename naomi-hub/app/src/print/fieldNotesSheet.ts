@@ -4,7 +4,7 @@ import { escapeHtml, renderSheet } from './html';
 
 const cell = 'border:1px solid #000;padding:4px 6px;font-size:12pt;';
 
-/** Page 1: field notes to fill in outside. Page 2: ID guide for the listed animals. */
+/** Page 1: field notes to fill in outside. Page 2: ID guide for the listed animals (reference, so it prints). */
 export function fieldNotesSheet(m: AnimalMission, spot: Spot, minutes: number, speciesIds: string[]): string {
   const species = speciesIds.map((id) => speciesById(id)).filter((s) => s !== undefined);
   const weather = ['Sunny', 'Cloudy', 'Rainy', 'Windy', 'Cold']
@@ -36,5 +36,6 @@ export function fieldNotesSheet(m: AnimalMission, spot: Spot, minutes: number, s
     puzzleHtml: page1,
     answerHtml: guide,
     page2Title: `ID guide: ${m.title}`,
+    printPage2: true,
   });
 }

@@ -87,6 +87,12 @@ export default function Parent() {
         <Button label="Printer setup" onPress={() => router.push('/printer')} />
       </View>
 
+      <H2>Answer keys</H2>
+      <Body>Answer keys never print. Open them here to check a finished sheet.</Body>
+      <View style={styles.row}>
+        <Button label="🔑  Answer keys" onPress={() => router.push('/answers')} />
+      </View>
+
       {TICKETS_ENABLED ? (
         <>
       <H2>Screen tickets</H2>
